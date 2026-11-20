@@ -112,7 +112,10 @@ export function useReflections() {
   );
 
   const addFreeformReflection = useCallback(
-    (note: string): { ok: boolean; error?: string; record?: ReflectionRecord } => {
+    (
+      note: string,
+      customQuestion?: string
+    ): { ok: boolean; error?: string; record?: ReflectionRecord } => {
       const trimmed = note.trim();
       if (!trimmed) {
         return { ok: false, error: '저장할 내용을 먼저 입력해 주세요.' };
@@ -124,9 +127,11 @@ export function useReflections() {
         id: createRecordId(),
         date: getLocalDateString(now),
         cardId: 'freeform',
-        cardName: '자유 메모',
+        cardName: '자유 기록',
         cardNameEn: 'Personal Note',
-        reflectionQuestion: '마음에 남은 생각이나 나에게 남기고 싶은 문장',
+        reflectionQuestion:
+          customQuestion?.trim() ||
+          '마음에 남은 생각이나 나에게 남기고 싶은 문장',
         userNote: trimmed,
         createdAt: iso,
         updatedAt: iso,
@@ -193,6 +198,55 @@ export function useReflections() {
     [records]
   );
 
+  const importReflections = useCallback(
+    (
+      incoming: ReflectionRecord[],
+      mode: 'merge' | 'replace'
+    ): { ok: boolean; addedCount: number; totalCount: number; error?: string } => {
+      try {
+        let next: ReflectionRecord[];
+        let addedCount = 0;
+
+        if (mode === 'replace') {
+          const uniqueMap = new Map<string, ReflectionRecord>();
+          for (const item of incoming) {
+            if (!uniqueMap.has(item.id)) {
+              uniqueMap.set(item.id, item);
+            }
+          }
+          next = Array.from(uniqueMap.values());
+          addedCount = next.length;
+        } else {
+          const existingIds = new Set(records.map((r) => r.id));
+          const toAdd: ReflectionRecord[] = [];
+          for (const item of incoming) {
+            if (!existingIds.has(item.id)) {
+              existingIds.add(item.id);
+              toAdd.push(item);
+            }
+          }
+          next = [...toAdd, ...records];
+          addedCount = toAdd.length;
+        }
+
+        next.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        setRecords(next);
+        setStorageError(null);
+        return { ok: true, addedCount, totalCount: next.length };
+      } catch {
+        const message = '백업 데이터를 복원하는 중 저장 오류가 발생했습니다.';
+        setStorageError(message);
+        return { ok: false, addedCount: 0, totalCount: records.length, error: message };
+      }
+    },
+    [records]
+  );
+
   return {
     records,
     storageError,
@@ -200,5 +254,109 @@ export function useReflections() {
     addFreeformReflection,
     updateReflection,
     deleteReflection,
+    importReflections,
+  };
+}
+
+export interface BackupValidationResult {
+  ok: boolean;
+  records?: ReflectionRecord[];
+  exportedAt?: string;
+  error?: string;
+}
+
+export function createBackupPayload(records: ReflectionRecord[]): string {
+  const payload = {
+    app: 'LUCIDA',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    count: records.length,
+    records,
+  };
+  return JSON.stringify(payload, null, 2);
+}
+
+export function validateBackupJson(rawText: string): BackupValidationResult {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rawText);
+  } catch {
+    return {
+      ok: false,
+      error: '올바른 JSON 형식의 파일이 아닙니다. 기존 기록은 안전하게 유지됩니다.',
+    };
+  }
+
+  let candidateArray: unknown = null;
+  let exportedAt: string | undefined;
+
+  if (Array.isArray(parsed)) {
+    candidateArray = parsed;
+  } else if (
+    parsed &&
+    typeof parsed === 'object' &&
+    'records' in parsed &&
+    Array.isArray((parsed as { records: unknown }).records)
+  ) {
+    candidateArray = (parsed as { records: unknown[] }).records;
+    const maybeDate = (parsed as { exportedAt?: unknown }).exportedAt;
+    if (typeof maybeDate === 'string') {
+      exportedAt = maybeDate;
+    }
+  }
+
+  if (!Array.isArray(candidateArray)) {
+    return {
+      ok: false,
+      error: 'LUCIDA 백업 파일 구조와 일치하지 않습니다. 기존 기록은 변경되지 않았습니다.',
+    };
+  }
+
+  const validRecords: ReflectionRecord[] = [];
+  for (const item of candidateArray) {
+    if (!item || typeof item !== 'object') {
+      return {
+        ok: false,
+        error: '백업 파일 안에 손상된 기록 항목이 포함되어 있어 복원을 중단했습니다.',
+      };
+    }
+    const r = item as Record<string, unknown>;
+    if (
+      typeof r.id !== 'string' ||
+      !r.id.trim() ||
+      typeof r.date !== 'string' ||
+      typeof r.cardName !== 'string' ||
+      typeof r.userNote !== 'string' ||
+      typeof r.createdAt !== 'string'
+    ) {
+      return {
+        ok: false,
+        error: '필수 항목(id, date, cardName, userNote, createdAt)이 누락된 기록이 있어 복원을 중단했습니다.',
+      };
+    }
+
+    validRecords.push({
+      id: r.id,
+      date: r.date,
+      cardId: typeof r.cardId === 'string' ? r.cardId : 'unknown',
+      cardName: r.cardName,
+      cardNameEn: typeof r.cardNameEn === 'string' ? r.cardNameEn : '',
+      orientation:
+        r.orientation === 'reversed' ? 'reversed' : 'upright',
+      reflectionQuestion:
+        typeof r.reflectionQuestion === 'string' ? r.reflectionQuestion : '',
+      selectedAction:
+        typeof r.selectedAction === 'string' ? r.selectedAction : undefined,
+      userNote: r.userNote,
+      createdAt: r.createdAt,
+      updatedAt:
+        typeof r.updatedAt === 'string' ? r.updatedAt : r.createdAt,
+    });
+  }
+
+  return {
+    ok: true,
+    records: validRecords,
+    exportedAt,
   };
 }

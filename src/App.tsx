@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Sparkles, BookOpen, Compass, Info } from 'lucide-react';
-import { ActiveTab, TarotCard } from './types/reflection';
-import { TAROT_DECK, shuffleDeck } from './data/cards';
+import { ActiveTab, DeckMode, TarotCard } from './types/reflection';
+import { FULL_TAROT_DECK, MAJOR_ARCANA_DECK, shuffleDeck } from './data/cards';
 import { useReflections } from './hooks/useReflections';
 import { TodayView } from './components/TodayView';
 import { JournalView } from './components/JournalView';
@@ -18,11 +18,13 @@ const NAV_ITEMS: { id: ActiveTab; label: string }[] = [
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('today');
+  const [deckMode, setDeckMode] = useState<DeckMode>('full');
   const [drawPhase, setDrawPhase] = useState<DrawPhase>('idle');
   const [spreadCards, setSpreadCards] = useState<TarotCard[]>(() =>
-    shuffleDeck(TAROT_DECK)
+    shuffleDeck(FULL_TAROT_DECK)
   );
   const [selectedCard, setSelectedCard] = useState<TarotCard | null>(null);
+  const [focusedRecordId, setFocusedRecordId] = useState<string | null>(null);
   const shuffleTimerRef = useRef<number | null>(null);
 
   const {
@@ -32,6 +34,7 @@ export default function App() {
     addFreeformReflection,
     updateReflection,
     deleteReflection,
+    importReflections,
   } = useReflections();
 
   useEffect(() => {
@@ -42,19 +45,42 @@ export default function App() {
     };
   }, []);
 
+  const getActiveDeck = useCallback(
+    (mode: DeckMode = deckMode) =>
+      mode === 'major' ? MAJOR_ARCANA_DECK : FULL_TAROT_DECK,
+    [deckMode]
+  );
+
+  const handleChangeDeckMode = useCallback(
+    (nextMode: DeckMode) => {
+      setDeckMode(nextMode);
+      setSpreadCards(shuffleDeck(getActiveDeck(nextMode)));
+    },
+    [getActiveDeck]
+  );
+
   const handleStartShuffle = useCallback(() => {
     if (shuffleTimerRef.current !== null) {
       window.clearTimeout(shuffleTimerRef.current);
     }
     setSelectedCard(null);
-    setSpreadCards(shuffleDeck(TAROT_DECK));
+    setSpreadCards(shuffleDeck(getActiveDeck()));
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReducedMotion) {
+      setDrawPhase('selecting');
+      return;
+    }
+
     setDrawPhase('shuffling');
 
     shuffleTimerRef.current = window.setTimeout(() => {
       setDrawPhase('selecting');
       shuffleTimerRef.current = null;
     }, 900);
-  }, []);
+  }, [getActiveDeck]);
 
   const handleSelectCard = useCallback((card: TarotCard) => {
     setSelectedCard(card);
@@ -74,12 +100,12 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-[#F7F3EA] text-[#34312D]">
       {/* Desktop Top Navigation */}
-      <header className="hidden md:block sticky top-0 z-30 bg-[#F7F3EA]/90 backdrop-blur-md border-b border-[#E7E0D5]">
+      <header className="hidden md:block sticky top-0 z-30 bg-[#F7F3EA]/90 backdrop-blur-md border-b border-[#E5DED1]">
         <div className="max-w-5xl mx-auto px-8 h-16 flex items-center justify-between gap-8">
           <button
             type="button"
             onClick={() => setActiveTab('today')}
-            className="font-serif text-xl font-medium tracking-[0.16em] text-[#34312D] whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#777B61]"
+            className="font-display text-xl font-medium tracking-[0.16em] text-[#34312D] whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#777B61]"
           >
             LUCIDA
           </button>
@@ -128,6 +154,8 @@ export default function App() {
         {activeTab === 'today' && (
           <TodayView
             phase={drawPhase}
+            deckMode={deckMode}
+            onChangeDeckMode={handleChangeDeckMode}
             spreadCards={spreadCards}
             selectedCard={selectedCard}
             onStartShuffle={handleStartShuffle}
@@ -140,9 +168,12 @@ export default function App() {
         {activeTab === 'journal' && (
           <JournalView
             records={records}
+            focusedRecordId={focusedRecordId}
+            onClearFocusedRecord={() => setFocusedRecordId(null)}
             onAddFreeform={addFreeformReflection}
             onUpdate={updateReflection}
             onDelete={deleteReflection}
+            onImport={importReflections}
             onGoToToday={() => setActiveTab('today')}
           />
         )}
@@ -152,6 +183,10 @@ export default function App() {
             records={records}
             onGoToToday={() => setActiveTab('today')}
             onGoToJournal={() => setActiveTab('journal')}
+            onOpenRecord={(recordId) => {
+              setFocusedRecordId(recordId);
+              setActiveTab('journal');
+            }}
           />
         )}
 
@@ -161,7 +196,7 @@ export default function App() {
       {/* Mobile Fixed Bottom Navigation */}
       <nav
         aria-label="하단 메뉴"
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#FFFCF6]/95 backdrop-blur-md border-t border-[#E7E0D5]"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#FFFCF6]/95 backdrop-blur-md border-t border-[#E5DED1]"
       >
         <div className="grid grid-cols-4 h-16 max-w-lg mx-auto">
           {NAV_ITEMS.map((item) => {

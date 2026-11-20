@@ -3,20 +3,30 @@ import { formatKoreanDate } from '../hooks/useReflections';
 
 export type AnalysisRange = 'recent' | 'custom' | 'all';
 
+export interface EvidenceSnippet {
+  id: string;
+  dateLabel: string;
+  cardName: string;
+  excerpt: string;
+}
+
+export interface KeywordObservation {
+  word: string;
+  recordCount: number; // distinct records containing this word
+  totalCount: number; // total occurrences across records
+  evidence: EvidenceSnippet[];
+}
+
 export interface ReflectionAnalysis {
   recordCount: number;
   dateSpanLabel: string;
-  topKeywords: { word: string; count: number }[];
+  hasClearPattern: boolean;
+  topKeywords: KeywordObservation[];
   topCards: { cardName: string; count: number }[];
   themeSummary: string;
-  flowItems: {
-    id: string;
-    dateLabel: string;
-    cardName: string;
-    excerpt: string;
-  }[];
+  flowItems: EvidenceSnippet[];
   flowSummary: string;
-  recurringQuestions: string[];
+  recurringQuestions: { question: string; sourceRecordId: string; dateLabel: string }[];
   newPerspective: string;
   closingQuestions: string[];
 }
@@ -30,17 +40,24 @@ const KOREAN_STOPWORDS = new Set([
   '여기', '거기', '가장', '매우', '아주', '좀더', '더욱', '역시', '아직', '이미',
   '마음', '생각', '느낌', '시간', '사람', '정도', '부분', '가지', '경우', '때문',
   '자신', '스스로', '우리', '모두', '하나', '다른', '많은', '좋은', '작은', '큰',
+  '있어', '있고', '없어', '같아', '되는', '된다', '했다', '했어', '보면', '보니',
 ]);
 
 function normalizeToken(raw: string): string {
   const cleaned = raw.replace(/[^가-힣a-zA-Z0-9]/g, '').trim();
   if (cleaned.length < 2) return '';
-  // Strip common Korean trailing particles softly
   const stripped = cleaned.replace(
     /(에서는|으로는|에게는|까지는|부터는|이라는|에서도|으로도|에게도|은|는|이|가|을|를|에|에서|으로|로|와|과|도|만|의|께|에게|한테|부터|까지)$/,
     ''
   );
   return stripped.length >= 2 ? stripped : cleaned;
+}
+
+function makeExcerpt(note: string, maxLen = 68): string {
+  const cleanText = note.replace(/\s+/g, ' ').trim();
+  return cleanText.length > maxLen
+    ? `${cleanText.slice(0, maxLen)}…`
+    : cleanText;
 }
 
 export function filterRecordsByRange(
@@ -82,22 +99,54 @@ export function analyzeReflections(
       ? formatKoreanDate(first.date)
       : `${formatKoreanDate(first.date)} ~ ${formatKoreanDate(last.date)}`;
 
-  // 1. Keyword frequency from actual userNote text
-  const wordCounts = new Map<string, number>();
+  // 1. Deduplicated per-record keyword frequency (prevents inflation within a single note)
+  const wordStats = new Map<
+    string,
+    { recordIds: Set<string>; totalCount: number; evidence: EvidenceSnippet[] }
+  >();
+
   for (const rec of chronological) {
     const tokens = rec.userNote.split(/\s+/);
-    const seenInRecord = new Set<string>();
+    const seenInThisRecord = new Set<string>();
+
     for (const token of tokens) {
       const norm = normalizeToken(token);
       if (!norm || norm.length < 2 || KOREAN_STOPWORDS.has(norm)) continue;
-      wordCounts.set(norm, (wordCounts.get(norm) ?? 0) + 1);
-      seenInRecord.add(norm);
+
+      let entry = wordStats.get(norm);
+      if (!entry) {
+        entry = { recordIds: new Set(), totalCount: 0, evidence: [] };
+        wordStats.set(norm, entry);
+      }
+
+      entry.totalCount += 1;
+
+      if (!seenInThisRecord.has(norm)) {
+        seenInThisRecord.add(norm);
+        entry.recordIds.add(rec.id);
+        entry.evidence.push({
+          id: rec.id,
+          dateLabel: formatKoreanDate(rec.date),
+          cardName: rec.cardName,
+          excerpt: makeExcerpt(rec.userNote, 58),
+        });
+      }
     }
   }
 
-  const topKeywords = Array.from(wordCounts.entries())
-    .map(([word, count]) => ({ word, count }))
-    .sort((a, b) => b.count - a.count || a.word.localeCompare(b.word))
+  const topKeywords: KeywordObservation[] = Array.from(wordStats.entries())
+    .map(([word, stat]) => ({
+      word,
+      recordCount: stat.recordIds.size,
+      totalCount: stat.totalCount,
+      evidence: stat.evidence.slice(0, 3),
+    }))
+    .sort(
+      (a, b) =>
+        b.recordCount - a.recordCount ||
+        b.totalCount - a.totalCount ||
+        a.word.localeCompare(b.word)
+    )
     .slice(0, 6);
 
   // Card frequency (excluding freeform)
@@ -111,95 +160,103 @@ export function analyzeReflections(
     .sort((a, b) => b.count - a.count)
     .slice(0, 3);
 
-  const repeatedWords = topKeywords.filter((k) => k.count >= 2);
+  // Only treat as a recurring theme if it appeared in 2+ DISTINCT records
+  const multiRecordKeywords = topKeywords.filter((k) => k.recordCount >= 2);
+  const hasClearPattern = multiRecordKeywords.length > 0;
+
   let themeSummary: string;
-  if (repeatedWords.length > 0) {
-    const wordsText = repeatedWords
+  if (hasClearPattern) {
+    const wordsText = multiRecordKeywords
       .slice(0, 3)
-      .map((k) => `‘${k.word}’`)
+      .map((k) => `‘${k.word}’(${k.recordCount}개 기록)`)
       .join(', ');
-    themeSummary = `선택한 범위의 기록에서는 ${wordsText} 같은 표현이 여러 번 나타났습니다. 이 단어들이 지금 마음에 자주 머무는 관심사일 가능성이 있습니다.`;
-  } else if (topKeywords.length > 0) {
-    const wordsText = topKeywords
-      .slice(0, 3)
-      .map((k) => `‘${k.word}’`)
-      .join(', ');
-    themeSummary = `기록마다 서로 다른 이야기가 담겨 있으며, ${wordsText} 등의 표현이 눈에 띕니다. 아직 뚜렷하게 반복되는 단일 주제보다는 다양한 생각을 탐색하는 흐름으로 보입니다.`;
+    themeSummary = `선택한 범위의 여러 기록에서 ${wordsText} 같은 표현이 반복적으로 나타났습니다. 한 기록 안에서의 중복은 제외하고, 서로 다른 기록에 걸쳐 등장한 횟수를 기준으로 정리했습니다.`;
   } else {
     themeSummary =
-      '짧은 문장 위주로 기록이 남아 있어 뚜렷한 반복 키워드는 아직 적습니다. 기록이 조금 더 쌓이면 자주 등장하는 주제를 더 선명하게 살펴볼 수 있습니다.';
+      '아직 여러 기록에 걸쳐 뚜렷하게 반복되는 흐름을 판단하기 어렵습니다. 기록마다 서로 다른 이야기가 담겨 있으므로, 조금 더 기록이 쌓인 뒤 다시 살펴보셔도 좋습니다.';
   }
 
-  // 2. Chronological flow (first, middle if >=3, last)
+  // 2. Chronological flow
   const pickIndices =
     chronological.length <= 3
       ? chronological.map((_, i) => i)
       : [0, Math.floor(chronological.length / 2), chronological.length - 1];
 
-  const flowItems = pickIndices.map((idx) => {
+  const flowItems: EvidenceSnippet[] = pickIndices.map((idx) => {
     const rec = chronological[idx];
-    const cleanText = rec.userNote.replace(/\s+/g, ' ').trim();
-    const excerpt =
-      cleanText.length > 68 ? `${cleanText.slice(0, 68)}…` : cleanText;
     return {
       id: rec.id,
       dateLabel: formatKoreanDate(rec.date),
       cardName: rec.cardName,
-      excerpt,
+      excerpt: makeExcerpt(rec.userNote, 68),
     };
   });
 
   const flowSummary =
     chronological.length >= 3
-      ? `총 ${chronological.length}개의 기록을 시간순으로 나란히 놓아 보았습니다. 처음 남긴 문장과 가장 최근의 문장을 비교하며 관심사나 시선이 어떻게 이어졌는지 살펴보세요.`
-      : `선택한 범위의 ${chronological.length}개 기록을 시간순으로 정리했습니다. 앞선 기록과 다음 기록 사이에 어떤 연결고리가 있는지 천천히 읽어볼 수 있습니다.`;
+      ? `총 ${chronological.length}개의 기록 중 처음·중간·최근 기록을 시간순으로 나란히 놓아 보았습니다. 각 항목을 누르면 원본 기록으로 바로 이동해 전체 문맥을 확인할 수 있습니다.`
+      : `선택한 범위의 ${chronological.length}개 기록을 시간순으로 정리했습니다. 앞선 기록과 다음 기록 사이에 어떤 연결고리가 있는지 직접 확인해 보세요.`;
 
-  // 3. Recurring questions (from userNote sentences ending with '?' or card reflectionQuestions)
-  const userQuestions: string[] = [];
+  // 3. Recurring questions with source record links
+  const userQuestions: { question: string; sourceRecordId: string; dateLabel: string }[] = [];
+  const seenQ = new Set<string>();
   for (const rec of chronological) {
     const matches = rec.userNote.match(/[^.!?\n]+\?/g);
     if (matches) {
       for (const q of matches) {
         const trimmed = q.trim();
-        if (trimmed.length >= 5 && !userQuestions.includes(trimmed)) {
-          userQuestions.push(trimmed);
+        if (trimmed.length >= 5 && !seenQ.has(trimmed)) {
+          seenQ.add(trimmed);
+          userQuestions.push({
+            question: trimmed,
+            sourceRecordId: rec.id,
+            dateLabel: formatKoreanDate(rec.date),
+          });
         }
       }
     }
   }
 
-  const cardQuestions = Array.from(
-    new Set(
-      chronological
-        .filter((r) => r.cardId !== 'freeform' && r.reflectionQuestion)
-        .map((r) => r.reflectionQuestion)
-    )
-  );
+  const cardQuestions = chronological
+    .filter((r) => r.cardId !== 'freeform' && r.reflectionQuestion)
+    .reduce<{ question: string; sourceRecordId: string; dateLabel: string }[]>(
+      (acc, r) => {
+        if (!acc.some((item) => item.question === r.reflectionQuestion)) {
+          acc.push({
+            question: r.reflectionQuestion,
+            sourceRecordId: r.id,
+            dateLabel: formatKoreanDate(r.date),
+          });
+        }
+        return acc;
+      },
+      []
+    );
 
   const recurringQuestions =
     userQuestions.length > 0
       ? userQuestions.slice(0, 3)
       : cardQuestions.slice(0, 2);
 
-  // 4. New perspective (strictly observational connection between records)
+  // 4. Observational new perspective
   const actionsChosen = chronological.filter((r) => Boolean(r.selectedAction));
   let newPerspective: string;
   if (topCards.length > 0 && topCards[0].count >= 2) {
-    newPerspective = `선택한 범위에서 ‘${topCards[0].cardName}’ 카드와 연결된 기록이 ${topCards[0].count}번 남아 있습니다. 같은 카드 앞에서 그때그때 어떤 다른 생각을 적었는지 나란히 비교해 보면 새로운 단서가 보일 수 있습니다.`;
+    newPerspective = `선택한 범위에서 ‘${topCards[0].cardName}’ 카드와 연결된 기록이 ${topCards[0].count}건 확인됩니다. 같은 카드 앞에서 서로 다른 시점에 어떤 생각을 남겼는지 비교해 볼 수 있습니다.`;
   } else if (actionsChosen.length > 0) {
-    newPerspective = `기록 중 ${actionsChosen.length}건에서 작은 시도를 함께 선택하셨습니다. 생각으로만 머문 기록과 작은 시도를 곁들인 기록 사이에 마음의 무게가 어떻게 달랐는지 돌아볼 수 있습니다.`;
-  } else if (repeatedWords.length > 0) {
-    newPerspective = `서로 다른 날에 남긴 기록 속에서도 ‘${repeatedWords[0].word}’라는 표현이 다시 등장했습니다. 겉으로는 다른 상황처럼 보여도 비슷한 마음의 결이 이어지고 있었을 가능성이 있습니다.`;
+    newPerspective = `기록 중 ${actionsChosen.length}건에서 작은 시도를 함께 선택하셨습니다. 생각만 남긴 기록과 작은 시도를 곁들인 기록을 나란히 읽어 보며 어떤 차이가 있었는지 돌아볼 수 있습니다.`;
+  } else if (hasClearPattern) {
+    newPerspective = `서로 다른 기록에서도 ‘${multiRecordKeywords[0].word}’라는 표현이 다시 나타났습니다. 겉으로는 다른 상황처럼 보여도 비슷한 관심사가 이어지고 있었을 가능성이 있습니다.`;
   } else {
     newPerspective =
-      '각 기록이 서로 다른 카드와 주제로 흩어져 있습니다. 하나의 결론을 찾기보다, 요즘 내가 어떤 다양한 장면들에 마음을 쓰고 있는지 가볍게 바라보는 것만으로도 충분합니다.';
+      '기록들이 서로 다른 주제와 카드로 펼쳐져 있습니다. 하나의 패턴으로 묶기보다, 지금 어떤 다양한 생각들이 지나가고 있는지 가볍게 바라보는 참고 자료로 삼아 보세요.';
   }
 
   // 5. Closing reflective questions
   const closingQuestions: string[] = [];
-  if (repeatedWords.length > 0) {
+  if (hasClearPattern) {
     closingQuestions.push(
-      `기록에서 자주 등장한 ‘${repeatedWords[0].word}’에 대해, 지금의 나는 어떤 마음으로 바라보고 있나요?`
+      `여러 기록에서 반복해 등장한 ‘${multiRecordKeywords[0].word}’는 지금 나에게 어떤 의미로 다가오나요?`
     );
   } else {
     closingQuestions.push(
@@ -207,12 +264,13 @@ export function analyzeReflections(
     );
   }
   closingQuestions.push(
-    '그때의 나와 지금의 나 사이에 달라진 점이 있다면, 혹은 여전히 이어지고 있는 마음은 무엇일까요?'
+    '이전 기록과 가장 최근 기록 사이에서 달라진 시선이나 여전히 남아 있는 질문은 무엇인가요?'
   );
 
   return {
     recordCount: chronological.length,
     dateSpanLabel,
+    hasClearPattern,
     topKeywords,
     topCards,
     themeSummary,

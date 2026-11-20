@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { BookOpen, Compass } from 'lucide-react';
+import { BookOpen, Compass, ArrowUpRight } from 'lucide-react';
 import { ReflectionRecord } from '../types/reflection';
 import {
   AnalysisRange,
@@ -12,6 +12,7 @@ interface ReadMyselfViewProps {
   records: ReflectionRecord[];
   onGoToToday: () => void;
   onGoToJournal: () => void;
+  onOpenRecord: (recordId: string) => void;
 }
 
 const RANGE_OPTIONS: { id: AnalysisRange; label: string }[] = [
@@ -24,6 +25,7 @@ export function ReadMyselfView({
   records,
   onGoToToday,
   onGoToJournal,
+  onOpenRecord,
 }: ReadMyselfViewProps) {
   const [range, setRange] = useState<AnalysisRange>('recent');
   const [startDate, setStartDate] = useState('');
@@ -181,7 +183,7 @@ export function ReadMyselfView({
         </div>
       )}
 
-      {/* State 3: Only 1 record in range (insufficient for pattern/flow) */}
+      {/* State 3: Only 1 record in range */}
       {filteredRecords.length === 1 && (
         <div className="bg-[#FFFCF6] border border-[#E7E0D5] rounded-2xl p-6 sm:p-8 space-y-5">
           <div className="flex items-center gap-3 text-[#777B61]">
@@ -195,15 +197,25 @@ export function ReadMyselfView({
             2개 이상의 기록이 모였을 때 반복되는 주제와 생각의 변화를 함께
             살펴보는 편이 더 정확합니다.
           </p>
-          <div className="border-t border-[#E7E0D5] pt-4 space-y-1.5">
-            <p className="text-xs text-[#827B72] tabular-nums">
-              {formatKoreanDate(filteredRecords[0].date)} ·{' '}
-              {filteredRecords[0].cardName}
+          <button
+            type="button"
+            onClick={() => onOpenRecord(filteredRecords[0].id)}
+            className="w-full text-left border-t border-[#E7E0D5] pt-4 space-y-1.5 group cursor-pointer"
+          >
+            <p className="text-xs text-[#827B72] tabular-nums flex items-center justify-between">
+              <span>
+                {formatKoreanDate(filteredRecords[0].date)} ·{' '}
+                {filteredRecords[0].cardName}
+              </span>
+              <span className="inline-flex items-center gap-1 text-[#777B61] group-hover:underline">
+                원본 보기
+                <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
+              </span>
             </p>
             <p className="text-sm leading-relaxed text-[#34312D]/90">
               {filteredRecords[0].userNote}
             </p>
-          </div>
+          </button>
         </div>
       )}
 
@@ -213,63 +225,109 @@ export function ReadMyselfView({
           {/* Scope Summary Line */}
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#827B72] px-1">
             <span className="tabular-nums">
-              분석 대상: {analysis.recordCount}개의 기록
+              분석 대상: {analysis.recordCount}개의 기록 (로컬 규칙 기반 요약)
             </span>
             <span className="tabular-nums">{analysis.dateSpanLabel}</span>
           </div>
 
-          {/* 1. Frequent Themes & Keywords */}
+          {/* 1. Frequent Themes & Keywords with Evidence */}
           <article className="bg-[#FFFCF6] border border-[#E7E0D5] rounded-2xl p-6 sm:p-8 space-y-4">
             <h2 className="text-xs font-medium tracking-wide text-[#777B61]">
-              자주 등장한 주제와 키워드
+              자주 등장한 주제와 단어
             </h2>
             <p className="text-[15px] sm:text-base leading-[1.75] text-[#34312D]">
               {analysis.themeSummary}
             </p>
-            {analysis.topKeywords.length > 0 && (
-              <p className="text-sm text-[#827B72] pt-1">
+            {analysis.hasClearPattern && (
+              <div className="border-t border-[#E7E0D5] pt-4 space-y-4">
                 {analysis.topKeywords
-                  .map((k) => `${k.word} (${k.count})`)
-                  .join(' · ')}
-              </p>
+                  .filter((k) => k.recordCount >= 2)
+                  .slice(0, 4)
+                  .map((kw) => (
+                    <div key={kw.word} className="space-y-1.5">
+                      <p className="text-sm font-medium text-[#34312D]">
+                        {kw.word}
+                        <span className="ml-2 text-xs font-normal text-[#827B72] tabular-nums">
+                          {kw.recordCount}개 기록에서 등장
+                        </span>
+                      </p>
+                      <ul className="space-y-1.5 pl-3 border-l border-[#E7E0D5]">
+                        {kw.evidence.map((ev) => (
+                          <li key={ev.id}>
+                            <button
+                              type="button"
+                              onClick={() => onOpenRecord(ev.id)}
+                              className="text-left text-xs leading-relaxed text-[#827B72] hover:text-[#34312D] transition-colors cursor-pointer"
+                            >
+                              <span className="tabular-nums">
+                                {ev.dateLabel} · {ev.cardName}
+                              </span>{' '}
+                              — “{ev.excerpt}”
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+              </div>
             )}
           </article>
 
-          {/* 2. Flow of Thoughts */}
+          {/* 2. Flow of Thoughts (clickable to original note) */}
           <article className="bg-[#FFFCF6] border border-[#E7E0D5] rounded-2xl p-6 sm:p-8 space-y-5">
             <h2 className="text-xs font-medium tracking-wide text-[#777B61]">
-              생각과 감정의 흐름
+              이전과 최근 기록의 흐름
             </h2>
             <p className="text-[15px] leading-relaxed text-[#34312D]/85">
               {analysis.flowSummary}
             </p>
             <ol className="space-y-4 border-t border-[#E7E0D5] pt-5">
               {analysis.flowItems.map((item) => (
-                <li key={item.id} className="space-y-1">
-                  <p className="text-xs text-[#827B72] tabular-nums">
-                    {item.dateLabel} · {item.cardName}
-                  </p>
-                  <p className="text-[15px] leading-relaxed text-[#34312D]">
-                    {item.excerpt}
-                  </p>
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => onOpenRecord(item.id)}
+                    className="w-full text-left space-y-1 group cursor-pointer"
+                  >
+                    <p className="text-xs text-[#827B72] tabular-nums flex items-center justify-between gap-2">
+                      <span>
+                        {item.dateLabel} · {item.cardName}
+                      </span>
+                      <span className="inline-flex items-center gap-0.5 text-[#777B61] opacity-80 group-hover:opacity-100">
+                        원본
+                        <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
+                      </span>
+                    </p>
+                    <p className="text-[15px] leading-relaxed text-[#34312D] group-hover:text-[#777B61] transition-colors">
+                      {item.excerpt}
+                    </p>
+                  </button>
                 </li>
               ))}
             </ol>
           </article>
 
-          {/* 3. Recurring Questions */}
+          {/* 3. Recurring Questions with source links */}
           {analysis.recurringQuestions.length > 0 && (
             <article className="bg-[#FFFCF6] border border-[#E7E0D5] rounded-2xl p-6 sm:p-8 space-y-4">
               <h2 className="text-xs font-medium tracking-wide text-[#777B61]">
-                반복해서 떠오른 질문
+                반복해서 마음에 남긴 질문
               </h2>
               <ul className="space-y-3">
-                {analysis.recurringQuestions.map((q, idx) => (
-                  <li
-                    key={idx}
-                    className="text-[15px] leading-relaxed text-[#34312D]"
-                  >
-                    • {q}
+                {analysis.recurringQuestions.map((item, idx) => (
+                  <li key={idx}>
+                    <button
+                      type="button"
+                      onClick={() => onOpenRecord(item.sourceRecordId)}
+                      className="text-left space-y-0.5 group cursor-pointer"
+                    >
+                      <p className="text-[15px] leading-relaxed text-[#34312D] group-hover:text-[#777B61] transition-colors">
+                        • {item.question}
+                      </p>
+                      <p className="text-xs text-[#827B72] pl-3 tabular-nums">
+                        근거 기록: {item.dateLabel}
+                      </p>
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -279,7 +337,7 @@ export function ReadMyselfView({
           {/* 4. New Perspective */}
           <article className="bg-[#FFFCF6] border border-[#E7E0D5] rounded-2xl p-6 sm:p-8 space-y-3">
             <h2 className="text-xs font-medium tracking-wide text-[#777B61]">
-              새롭게 발견한 점
+              기록에서 발견되는 연결점
             </h2>
             <p className="text-[15px] sm:text-base leading-[1.75] text-[#34312D]">
               {analysis.newPerspective}
@@ -289,7 +347,7 @@ export function ReadMyselfView({
           {/* 5. Closing Questions */}
           <article className="bg-[#FFFCF6] border border-[#E7E0D5] rounded-2xl p-6 sm:p-8 space-y-4">
             <h2 className="text-xs font-medium tracking-wide text-[#777B61]">
-              나에게 건네는 질문
+              다음에 스스로 살펴볼 질문
             </h2>
             <ul className="space-y-3">
               {analysis.closingQuestions.map((q, idx) => (
@@ -303,11 +361,12 @@ export function ReadMyselfView({
             </ul>
           </article>
 
-          {/* Safety & Reference Notice */}
+          {/* Safety & Local Processing Notice */}
           <p className="text-xs leading-relaxed text-[#827B72] px-1 pt-2">
-            이 정리 내용은 브라우저에 저장된 실제 기록을 바탕으로 구성한 관찰
-            참고 자료입니다. 성격을 규정하거나 심리 상태를 진단하지 않으며,
-            스스로를 돌아보는 참고 관점으로만 활용해 주세요.
+            이 화면은 외부 AI 서버로 기록을 전송하지 않고, 현재 브라우저에
+            저장된 실제 기록만을 바탕으로 정리한 규칙 기반 참고 자료입니다.
+            성격을 규정하거나 심리 상태를 진단하지 않으며, 스스로를 돌아보는
+            참고 관점으로만 활용해 주세요.
           </p>
         </div>
       )}

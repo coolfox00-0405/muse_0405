@@ -1,5 +1,12 @@
+export type TarotArcana = 'major' | 'minor';
+export type TarotSuit = 'wands' | 'cups' | 'swords' | 'pentacles';
+export type DeckMode = 'full' | 'major';
+
 export interface TarotCard {
   id: string;
+  arcana?: TarotArcana;
+  suit?: TarotSuit;
+  suitTheme?: string;
   arcanaNumber: string;
   nameKo: string;
   nameEn: string;

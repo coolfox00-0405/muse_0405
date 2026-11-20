@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --font-serif: "Cormorant Garamond", "Noto Serif KR", Georgia, serif;
-  --font-sans: "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+  --font-display: "Cormorant Garamond", "Noto Serif KR", Georgia, serif;
+  --font-serif: "Noto Serif KR", Georgia, serif;
+  --font-sans: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
 
   --color-canvas: #F7F3EA;
   --color-surface: #FFFCF6;
@@ -10,7 +11,9 @@
   --color-muted: #827B72;
   --color-olive: #777B61;
   --color-olive-hover: #646850;
-  --color-hairline: #E7E0D5;
+  --color-sage: #A6A58C;
+  --color-warm-gold: #B69A70;
+  --color-hairline: #E5DED1;
 }
 
 @layer base {
@@ -19,6 +22,7 @@
     background-color: var(--color-canvas);
     color: var(--color-ink);
     -webkit-tap-highlight-color: transparent;
+    word-break: keep-all;
   }
 
   h1, h2, h3 {
@@ -55,7 +59,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
   .card-inner {
-    transition: opacity 0.2s ease;
+    transition: opacity 0.15s ease !important;
   }
 }

@@ -1,4 +1,5 @@
 import { TarotCard } from '../types/reflection';
+import { MINOR_ARCANA_DECK } from './minorArcana';
 
 export const TAROT_CARD_BACK_IMAGE =
   '/src/assets/images/tarot_card_back_1795152683054.jpg';
@@ -338,7 +339,19 @@ export const TAROT_DECK: TarotCard[] = [
   },
 ];
 
-export function shuffleDeck(deck: TarotCard[] = TAROT_DECK): TarotCard[] {
+export const MAJOR_ARCANA_DECK: TarotCard[] = TAROT_DECK.map((c) => ({
+  ...c,
+  arcana: 'major',
+}));
+
+export const FULL_TAROT_DECK: TarotCard[] = [
+  ...MAJOR_ARCANA_DECK,
+  ...MINOR_ARCANA_DECK,
+];
+
+export { MINOR_ARCANA_DECK };
+
+export function shuffleDeck(deck: TarotCard[] = FULL_TAROT_DECK): TarotCard[] {
   const copy = [...deck];
   for (let i = copy.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));

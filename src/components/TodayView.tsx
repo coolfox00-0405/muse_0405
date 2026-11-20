@@ -1,11 +1,23 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { Shuffle, Check, AlertCircle, ArrowRight } from 'lucide-react';
-import { TarotCard } from '../types/reflection';
+import {
+  Shuffle,
+  Check,
+  AlertCircle,
+  ArrowRight,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
+import { DeckMode, TarotCard } from '../types/reflection';
 import { TarotCardFlip } from './TarotCardFlip';
 import { CardShuffleSpread, DrawPhase } from './CardShuffleSpread';
 
+const ONBOARDING_KEY = 'lucida_onboarding_dismissed';
+const CARD_DRAFT_KEY = 'lucida_draft_card_note';
+
 interface TodayViewProps {
   phase: DrawPhase;
+  deckMode: DeckMode;
+  onChangeDeckMode: (mode: DeckMode) => void;
   spreadCards: TarotCard[];
   selectedCard: TarotCard | null;
   onStartShuffle: () => void;
@@ -20,6 +32,8 @@ interface TodayViewProps {
 
 export function TodayView({
   phase,
+  deckMode,
+  onChangeDeckMode,
   spreadCards,
   selectedCard,
   onStartShuffle,
@@ -27,13 +41,41 @@ export function TodayView({
   onSaveReflection,
   onGoToJournal,
 }: TodayViewProps) {
-  const [note, setNote] = useState('');
+  const [onboardingDismissed, setOnboardingDismissed] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem(ONBOARDING_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [onboardingOpen, setOnboardingOpen] = useState(true);
+
+  const [note, setNote] = useState<string>(() => {
+    try {
+      return window.localStorage.getItem(CARD_DRAFT_KEY) || '';
+    } catch {
+      return '';
+    }
+  });
   const [includeAction, setIncludeAction] = useState(false);
   const [cardFlipped, setCardFlipped] = useState(false);
   const [feedback, setFeedback] = useState<{
     type: 'success' | 'error';
     message: string;
   } | null>(null);
+
+  // Auto-save card reflection draft
+  useEffect(() => {
+    try {
+      if (note.trim()) {
+        window.localStorage.setItem(CARD_DRAFT_KEY, note);
+      } else {
+        window.localStorage.removeItem(CARD_DRAFT_KEY);
+      }
+    } catch {
+      // Ignore storage quota errors for drafts
+    }
+  }, [note]);
 
   useEffect(() => {
     if (phase === 'revealed' && selectedCard) {
@@ -48,6 +90,15 @@ export function TodayView({
     return undefined;
   }, [phase, selectedCard]);
 
+  const handleDismissOnboarding = () => {
+    setOnboardingDismissed(true);
+    try {
+      window.localStorage.setItem(ONBOARDING_KEY, 'true');
+    } catch {
+      // Ignore storage error
+    }
+  };
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!selectedCard) return;
@@ -59,6 +110,11 @@ export function TodayView({
     );
     if (result.ok) {
       setNote('');
+      try {
+        window.localStorage.removeItem(CARD_DRAFT_KEY);
+      } catch {
+        // Ignore
+      }
       setIncludeAction(false);
       setFeedback({
         type: 'success',
@@ -74,7 +130,6 @@ export function TodayView({
 
   const handleReshuffle = () => {
     setFeedback(null);
-    setNote('');
     setIncludeAction(false);
     onStartShuffle();
   };
@@ -83,8 +138,57 @@ export function TodayView({
     return (
       <section
         aria-label="지금, 나에게 — 카드 섞기 및 선택"
-        className="w-full max-w-2xl mx-auto px-5 sm:px-8 pt-6 sm:pt-12 pb-12 flex flex-col items-center text-center"
+        className="w-full max-w-2xl mx-auto px-5 sm:px-8 pt-6 sm:pt-10 pb-12 flex flex-col items-center text-center"
       >
+        {/* Collapsible First-Visit Onboarding Card */}
+        {!onboardingDismissed && (
+          <aside
+            aria-label="LUCIDA 첫 방문 안내"
+            className="w-full mb-7 rounded-2xl bg-[#FFFCF6] border border-[#E7E0D5] px-5 py-4 text-left"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setOnboardingOpen((prev) => !prev)}
+                aria-expanded={onboardingOpen}
+                className="inline-flex items-center gap-2 text-xs font-medium text-[#777B61] cursor-pointer"
+              >
+                <span>처음 오셨나요? LUCIDA 이용 안내</span>
+                {onboardingOpen ? (
+                  <ChevronUp className="w-3.5 h-3.5" aria-hidden="true" />
+                ) : (
+                  <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={handleDismissOnboarding}
+                className="text-xs text-[#827B72] hover:text-[#34312D] underline underline-offset-2 whitespace-nowrap cursor-pointer"
+              >
+                다시 보지 않기
+              </button>
+            </div>
+
+            {onboardingOpen && (
+              <ul className="mt-3 space-y-1.5 text-xs sm:text-[13px] leading-relaxed text-[#34312D]/85 border-t border-[#E7E0D5] pt-3">
+                <li>
+                  • LUCIDA는 미래를 예언하지 않고, 카드를 통해 지금의 나를
+                  돌아보는 자기성찰 도구입니다.
+                </li>
+                <li>
+                  • 특정 시간에 얽매이지 않고 원할 때 언제든 카드를 섞고 뽑아
+                  질문을 만날 수 있습니다.
+                </li>
+                <li>
+                  • 기록은 선택사항이며, 작성한 내용은 현재 브라우저에만
+                  저장되므로 필요 시 인사이트 노트에서 JSON으로 백업할 수
+                  있습니다.
+                </li>
+              </ul>
+            )}
+          </aside>
+        )}
+
         <header className="mb-7 sm:mb-9 space-y-2.5">
           <p className="font-serif text-sm tracking-[0.2em] text-[#827B72]">
             LUCIDA
@@ -109,6 +213,37 @@ export function TodayView({
         <div className="mt-7 sm:mt-8 space-y-4 w-full max-w-sm">
           {phase === 'idle' && (
             <>
+              <div
+                role="group"
+                aria-label="덱 구성 선택"
+                className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#FFFCF6] border border-[#E7E0D5]"
+              >
+                <button
+                  type="button"
+                  onClick={() => onChangeDeckMode('full')}
+                  aria-pressed={deckMode === 'full'}
+                  className={`min-h-[36px] px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                    deckMode === 'full'
+                      ? 'bg-[#777B61] text-[#FFFCF6]'
+                      : 'text-[#827B72] hover:text-[#34312D]'
+                  }`}
+                >
+                  전체 78장
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onChangeDeckMode('major')}
+                  aria-pressed={deckMode === 'major'}
+                  className={`min-h-[36px] px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                    deckMode === 'major'
+                      ? 'bg-[#777B61] text-[#FFFCF6]'
+                      : 'text-[#827B72] hover:text-[#34312D]'
+                  }`}
+                >
+                  메이저 22장
+                </button>
+              </div>
+
               <p className="text-[15px] leading-relaxed text-[#34312D]/85">
                 마음이 머무는 순간, 카드를 통해 나를 바라보세요.
               </p>
@@ -172,7 +307,9 @@ export function TodayView({
 
           <div className="mt-6 text-center space-y-1.5">
             <p className="text-xs tracking-[0.12em] text-[#827B72]">
-              메이저 아르카나 {selectedCard.arcanaNumber} · 정방향
+              {selectedCard.arcana === 'minor'
+                ? `마이너 아르카나 · ${selectedCard.arcanaNumber} · 정방향`
+                : `메이저 아르카나 ${selectedCard.arcanaNumber} · 정방향`}
             </p>
             <h1 className="font-serif text-2xl sm:text-[28px] font-medium text-[#34312D]">
               {selectedCard.nameKo}
@@ -180,7 +317,10 @@ export function TodayView({
                 ({selectedCard.nameEn})
               </span>
             </h1>
-            <p className="text-xs text-[#777B61] pt-1">
+            {selectedCard.suitTheme && (
+              <p className="text-xs text-[#827B72]">{selectedCard.suitTheme}</p>
+            )}
+            <p className="text-xs text-[#777B61] pt-0.5">
               {selectedCard.keywords.join(' · ')}
             </p>
           </div>
@@ -227,11 +367,9 @@ export function TodayView({
 
           {/* 4. Optional Gentle Action */}
           <div className="border-t border-[#E7E0D5] pt-6 px-1 space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-xs font-medium tracking-wide text-[#827B72]">
-                선택 가능한 작은 시도 (선택사항)
-              </h2>
-            </div>
+            <h2 className="text-xs font-medium tracking-wide text-[#827B72]">
+              선택 가능한 작은 시도 (선택사항)
+            </h2>
             <label className="flex items-start gap-3 p-4 rounded-xl bg-[#FFFCF6]/75 border border-[#E7E0D5] cursor-pointer hover:border-[#777B61]/50 transition-colors">
               <input
                 type="checkbox"
@@ -245,19 +383,33 @@ export function TodayView({
             </label>
           </div>
 
-          {/* Insight Note Form */}
+          {/* Insight Note Form with Auto-Draft */}
           <form
             onSubmit={handleSubmit}
             className="border-t border-[#E7E0D5] pt-6 space-y-4"
             noValidate
           >
             <div className="space-y-2">
-              <label
-                htmlFor="reflection-note"
-                className="block text-sm font-medium text-[#34312D]"
-              >
-                인사이트 노트에 남기기
-              </label>
+              <div className="flex items-center justify-between gap-2">
+                <label
+                  htmlFor="reflection-note"
+                  className="block text-sm font-medium text-[#34312D]"
+                >
+                  인사이트 노트에 남기기
+                </label>
+                {note.trim().length > 0 && (
+                  <div className="flex items-center gap-2 text-xs text-[#827B72]">
+                    <span>자동 임시 저장됨</span>
+                    <button
+                      type="button"
+                      onClick={() => setNote('')}
+                      className="underline underline-offset-2 hover:text-[#34312D] cursor-pointer"
+                    >
+                      비우기
+                    </button>
+                  </div>
+                )}
+              </div>
               <textarea
                 id="reflection-note"
                 name="reflectionNote"
