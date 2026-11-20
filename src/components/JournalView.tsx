@@ -20,6 +20,8 @@ import {
   X,
 } from 'lucide-react';
 import { ReflectionRecord } from '../types/reflection';
+import { getCardById } from '../data/cards';
+import { TarotCardArtwork } from './TarotCardArtwork';
 import {
   formatKoreanDate,
   formatKoreanTime,
@@ -806,23 +808,37 @@ export function JournalView({
                 </div>
 
                 {/* Detail Header */}
-                <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#E7E0D5] pb-5">
-                  <div className="space-y-1">
-                    <p className="text-xs text-[#827B72] tabular-nums">
-                      {formatKoreanDate(selectedRecord.date)} ·{' '}
-                      {formatKoreanTime(selectedRecord.createdAt)} ·{' '}
-                      {selectedRecord.cardId === 'freeform'
-                        ? '자유 기록'
-                        : '카드 성찰'}
-                    </p>
-                    <h2 className="font-serif text-2xl font-medium text-[#34312D]">
-                      {selectedRecord.cardName}
-                      {selectedRecord.cardNameEn && (
-                        <span className="ml-2 text-base font-normal text-[#827B72]">
-                          ({selectedRecord.cardNameEn})
-                        </span>
-                      )}
-                    </h2>
+                <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#E5DED1] pb-5">
+                  <div className="flex items-start gap-4">
+                    {(() => {
+                      const matchedCard =
+                        selectedRecord.cardId !== 'freeform'
+                          ? getCardById(selectedRecord.cardId)
+                          : undefined;
+                      if (!matchedCard) return null;
+                      return (
+                        <div className="w-14 sm:w-16 aspect-[3/4] rounded-[10px] overflow-hidden border border-[#E5DED1] bg-[#F7F3EA] shrink-0">
+                          <TarotCardArtwork card={matchedCard} size="thumbnail" />
+                        </div>
+                      );
+                    })()}
+                    <div className="space-y-1">
+                      <p className="text-xs text-[#827B72] tabular-nums">
+                        {formatKoreanDate(selectedRecord.date)} ·{' '}
+                        {formatKoreanTime(selectedRecord.createdAt)} ·{' '}
+                        {selectedRecord.cardId === 'freeform'
+                          ? '자유 기록'
+                          : '카드 성찰'}
+                      </p>
+                      <h2 className="font-serif text-2xl font-medium text-[#34312D]">
+                        {selectedRecord.cardName}
+                        {selectedRecord.cardNameEn && (
+                          <span className="ml-2 text-base font-normal text-[#827B72]">
+                            ({selectedRecord.cardNameEn})
+                          </span>
+                        )}
+                      </h2>
+                    </div>
                   </div>
 
                   {!isEditing && !confirmingDelete && (

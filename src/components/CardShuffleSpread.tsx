@@ -1,6 +1,8 @@
+import { useEffect } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { TarotCard } from '../types/reflection';
 import { TAROT_CARD_BACK_IMAGE } from '../data/cards';
+import { preloadCardImages } from '../utils/cardImagePreloader';
 
 export type DrawPhase = 'idle' | 'shuffling' | 'selecting' | 'revealed';
 
@@ -22,6 +24,10 @@ export function CardShuffleSpread({
 }: CardShuffleSpreadProps) {
   const prefersReducedMotion = useReducedMotion();
   const cardsToRender = spreadCards.slice(0, FAN_COUNT);
+
+  useEffect(() => {
+    preloadCardImages(cardsToRender, TAROT_CARD_BACK_IMAGE);
+  }, [spreadCards]);
 
   return (
     <div className="relative w-full max-w-[540px] h-[270px] sm:h-[310px] mx-auto flex items-center justify-center select-none">
@@ -115,7 +121,7 @@ export function CardShuffleSpread({
               zIndex: index + 1,
               transformOrigin: 'center bottom',
             }}
-            className={`absolute w-[142px] sm:w-[164px] aspect-[3/4] rounded-[14px] overflow-hidden bg-[#FFFCF6] border border-[#E7E0D5] shadow-[0_12px_28px_-14px_rgba(52,49,45,0.28)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] ${
+            className={`absolute w-[142px] sm:w-[164px] aspect-[3/4] rounded-[14px] overflow-hidden bg-[#FFFCF6] border border-[#E5DED1] shadow-[0_12px_28px_-14px_rgba(52,49,45,0.28)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] ${
               isSelecting || isIdle ? 'cursor-pointer' : 'cursor-default'
             }`}
           >
@@ -123,7 +129,8 @@ export function CardShuffleSpread({
               src={TAROT_CARD_BACK_IMAGE}
               alt=""
               referrerPolicy="no-referrer"
-              className="w-full h-full object-cover pointer-events-none"
+              decoding="async"
+              className="w-full h-full object-cover scale-[1.32] pointer-events-none"
             />
           </motion.button>
         );

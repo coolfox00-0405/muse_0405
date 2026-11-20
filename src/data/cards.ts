@@ -2,7 +2,7 @@ import { TarotCard } from '../types/reflection';
 import { MINOR_ARCANA_DECK } from './minorArcana';
 
 export const TAROT_CARD_BACK_IMAGE =
-  '/src/assets/images/tarot_card_back_1795152683054.jpg';
+  '/src/assets/images/lucida_card_back_1795172686051.jpg';
 
 export const TAROT_DECK: TarotCard[] = [
   {
@@ -348,6 +348,14 @@ export const FULL_TAROT_DECK: TarotCard[] = [
   ...MAJOR_ARCANA_DECK,
   ...MINOR_ARCANA_DECK,
 ];
+
+const CARD_BY_ID_MAP = new Map<string, TarotCard>(
+  FULL_TAROT_DECK.map((card) => [card.id, card])
+);
+
+export function getCardById(cardId: string): TarotCard | undefined {
+  return CARD_BY_ID_MAP.get(cardId);
+}
 
 export { MINOR_ARCANA_DECK };
 
