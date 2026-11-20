@@ -1,0 +1,192 @@
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { Sparkles, BookOpen, Compass, Info } from 'lucide-react';
+import { ActiveTab, TarotCard } from './types/reflection';
+import { TAROT_DECK, shuffleDeck } from './data/cards';
+import { useReflections } from './hooks/useReflections';
+import { TodayView } from './components/TodayView';
+import { JournalView } from './components/JournalView';
+import { ReadMyselfView } from './components/ReadMyselfView';
+import { AboutView } from './components/AboutView';
+import { DrawPhase } from './components/CardShuffleSpread';
+
+const NAV_ITEMS: { id: ActiveTab; label: string }[] = [
+  { id: 'today', label: '지금, 나에게' },
+  { id: 'journal', label: '인사이트 노트' },
+  { id: 'read', label: '나를 읽다' },
+  { id: 'about', label: '앱 소개' },
+];
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState<ActiveTab>('today');
+  const [drawPhase, setDrawPhase] = useState<DrawPhase>('idle');
+  const [spreadCards, setSpreadCards] = useState<TarotCard[]>(() =>
+    shuffleDeck(TAROT_DECK)
+  );
+  const [selectedCard, setSelectedCard] = useState<TarotCard | null>(null);
+  const shuffleTimerRef = useRef<number | null>(null);
+
+  const {
+    records,
+    storageError,
+    addReflection,
+    addFreeformReflection,
+    updateReflection,
+    deleteReflection,
+  } = useReflections();
+
+  useEffect(() => {
+    return () => {
+      if (shuffleTimerRef.current !== null) {
+        window.clearTimeout(shuffleTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleStartShuffle = useCallback(() => {
+    if (shuffleTimerRef.current !== null) {
+      window.clearTimeout(shuffleTimerRef.current);
+    }
+    setSelectedCard(null);
+    setSpreadCards(shuffleDeck(TAROT_DECK));
+    setDrawPhase('shuffling');
+
+    shuffleTimerRef.current = window.setTimeout(() => {
+      setDrawPhase('selecting');
+      shuffleTimerRef.current = null;
+    }, 900);
+  }, []);
+
+  const handleSelectCard = useCallback((card: TarotCard) => {
+    setSelectedCard(card);
+    setDrawPhase('revealed');
+  }, []);
+
+  const renderTabIcon = (id: ActiveTab, isActive: boolean) => {
+    const className = `w-5 h-5 ${
+      isActive ? 'text-[#777B61]' : 'text-[#827B72]'
+    }`;
+    if (id === 'today') return <Sparkles className={className} aria-hidden="true" />;
+    if (id === 'journal') return <BookOpen className={className} aria-hidden="true" />;
+    if (id === 'read') return <Compass className={className} aria-hidden="true" />;
+    return <Info className={className} aria-hidden="true" />;
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col bg-[#F7F3EA] text-[#34312D]">
+      {/* Desktop Top Navigation */}
+      <header className="hidden md:block sticky top-0 z-30 bg-[#F7F3EA]/90 backdrop-blur-md border-b border-[#E7E0D5]">
+        <div className="max-w-5xl mx-auto px-8 h-16 flex items-center justify-between gap-8">
+          <button
+            type="button"
+            onClick={() => setActiveTab('today')}
+            className="font-serif text-xl font-medium tracking-[0.16em] text-[#34312D] whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#777B61]"
+          >
+            LUCIDA
+          </button>
+
+          <nav aria-label="주요 메뉴" className="flex items-center gap-8">
+            {NAV_ITEMS.map((item) => {
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setActiveTab(item.id)}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`relative py-1 text-sm font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#777B61] ${
+                    isActive
+                      ? 'text-[#34312D]'
+                      : 'text-[#827B72] hover:text-[#34312D]'
+                  }`}
+                >
+                  {item.label}
+                  {isActive && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-x-0 -bottom-[21px] h-[2px] bg-[#777B61]"
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      </header>
+
+      {/* Storage Error Banner if localStorage fails */}
+      {storageError && (
+        <div
+          role="alert"
+          className="bg-[#A65D4E]/10 border-b border-[#A65D4E]/25 px-5 py-2.5 text-center text-xs text-[#7A3B2E]"
+        >
+          {storageError}
+        </div>
+      )}
+
+      {/* Main Content */}
+      <main className="flex-1 pb-24 md:pb-12">
+        {activeTab === 'today' && (
+          <TodayView
+            phase={drawPhase}
+            spreadCards={spreadCards}
+            selectedCard={selectedCard}
+            onStartShuffle={handleStartShuffle}
+            onSelectCard={handleSelectCard}
+            onSaveReflection={addReflection}
+            onGoToJournal={() => setActiveTab('journal')}
+          />
+        )}
+
+        {activeTab === 'journal' && (
+          <JournalView
+            records={records}
+            onAddFreeform={addFreeformReflection}
+            onUpdate={updateReflection}
+            onDelete={deleteReflection}
+            onGoToToday={() => setActiveTab('today')}
+          />
+        )}
+
+        {activeTab === 'read' && (
+          <ReadMyselfView
+            records={records}
+            onGoToToday={() => setActiveTab('today')}
+            onGoToJournal={() => setActiveTab('journal')}
+          />
+        )}
+
+        {activeTab === 'about' && <AboutView />}
+      </main>
+
+      {/* Mobile Fixed Bottom Navigation */}
+      <nav
+        aria-label="하단 메뉴"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#FFFCF6]/95 backdrop-blur-md border-t border-[#E7E0D5]"
+      >
+        <div className="grid grid-cols-4 h-16 max-w-lg mx-auto">
+          {NAV_ITEMS.map((item) => {
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setActiveTab(item.id)}
+                aria-current={isActive ? 'page' : undefined}
+                className="flex flex-col items-center justify-center gap-1 min-h-[48px] focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#777B61] cursor-pointer"
+              >
+                {renderTabIcon(item.id, isActive)}
+                <span
+                  className={`text-[11px] font-medium whitespace-nowrap ${
+                    isActive ? 'text-[#34312D]' : 'text-[#827B72]'
+                  }`}
+                >
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+    </div>
+  );
+}

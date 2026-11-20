@@ -1,0 +1,6 @@
+{
+  "name": "AM — A Moment of Insight",
+  "description": "미래를 맞히기보다, 오늘을 다르게 살아갈 가능성을 발견하는 타로 기반 자기성찰 웹앱",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
