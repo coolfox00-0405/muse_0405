@@ -53,6 +53,26 @@ function normalizeToken(raw: string): string {
   return stripped.length >= 2 ? stripped : cleaned;
 }
 
+function getCombinedRecordText(rec: ReflectionRecord): string {
+  const parts = [
+    rec.userNote,
+    rec.actionMemo ?? '',
+    ...(rec.followUpNotes?.map((f) => f.note) ?? []),
+  ]
+    .map((p) => p.trim())
+    .filter(Boolean);
+  return parts.join(' ');
+}
+
+function getRecordPreviewText(rec: ReflectionRecord): string {
+  return (
+    getCombinedRecordText(rec) ||
+    rec.selectedAction ||
+    rec.reflectionQuestion ||
+    rec.cardName
+  );
+}
+
 function makeExcerpt(note: string, maxLen = 68): string {
   const cleanText = note.replace(/\s+/g, ' ').trim();
   return cleanText.length > maxLen
@@ -106,7 +126,8 @@ export function analyzeReflections(
   >();
 
   for (const rec of chronological) {
-    const tokens = rec.userNote.split(/\s+/);
+    const combinedText = getCombinedRecordText(rec);
+    const tokens = combinedText.split(/\s+/);
     const seenInThisRecord = new Set<string>();
 
     for (const token of tokens) {
@@ -128,7 +149,7 @@ export function analyzeReflections(
           id: rec.id,
           dateLabel: formatKoreanDate(rec.date),
           cardName: rec.cardName,
-          excerpt: makeExcerpt(rec.userNote, 58),
+          excerpt: makeExcerpt(getRecordPreviewText(rec), 58),
         });
       }
     }
@@ -188,7 +209,7 @@ export function analyzeReflections(
       id: rec.id,
       dateLabel: formatKoreanDate(rec.date),
       cardName: rec.cardName,
-      excerpt: makeExcerpt(rec.userNote, 68),
+      excerpt: makeExcerpt(getRecordPreviewText(rec), 68),
     };
   });
 
@@ -201,7 +222,7 @@ export function analyzeReflections(
   const userQuestions: { question: string; sourceRecordId: string; dateLabel: string }[] = [];
   const seenQ = new Set<string>();
   for (const rec of chronological) {
-    const matches = rec.userNote.match(/[^.!?\n]+\?/g);
+    const matches = getCombinedRecordText(rec).match(/[^.!?\n]+\?/g);
     if (matches) {
       for (const q of matches) {
         const trimmed = q.trim();
@@ -239,12 +260,14 @@ export function analyzeReflections(
       : cardQuestions.slice(0, 2);
 
   // 4. Observational new perspective
-  const actionsChosen = chronological.filter((r) => Boolean(r.selectedAction));
+  const actionsChosen = chronological.filter(
+    (r) => Boolean(r.selectedAction) || Boolean(r.selectedActions?.length)
+  );
   let newPerspective: string;
   if (topCards.length > 0 && topCards[0].count >= 2) {
     newPerspective = `선택한 범위에서 ‘${topCards[0].cardName}’ 카드와 연결된 기록이 ${topCards[0].count}건 확인됩니다. 같은 카드 앞에서 서로 다른 시점에 어떤 생각을 남겼는지 비교해 볼 수 있습니다.`;
   } else if (actionsChosen.length > 0) {
-    newPerspective = `기록 중 ${actionsChosen.length}건에서 작은 시도를 함께 선택하셨습니다. 생각만 남긴 기록과 작은 시도를 곁들인 기록을 나란히 읽어 보며 어떤 차이가 있었는지 돌아볼 수 있습니다.`;
+    newPerspective = `기록 중 ${actionsChosen.length}건에서 마음에 남은 시도를 함께 표시하셨습니다. 메모만 남긴 기록과 시도를 선택한 기록을 나란히 읽어 보며 당시의 시선을 돌아볼 수 있습니다.`;
   } else if (hasClearPattern) {
     newPerspective = `서로 다른 기록에서도 ‘${multiRecordKeywords[0].word}’라는 표현이 다시 나타났습니다. 겉으로는 다른 상황처럼 보여도 비슷한 관심사가 이어지고 있었을 가능성이 있습니다.`;
   } else {

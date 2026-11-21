@@ -40,6 +40,13 @@ const FREEFORM_PROMPTS = [
   '다음에 비슷한 상황이 오면 다르게 해보고 싶은 점이 있나요?',
 ];
 
+const FOLLOW_UP_PROMPTS = [
+  '지금 다시 읽어보니 어떤 생각이 드나요?',
+  '그때와 비교해 달라진 생각이 있나요?',
+  '여전히 마음에 남아 있는 부분이 있나요?',
+  '새롭게 발견한 점이 있나요?',
+];
+
 type RecordTypeFilter = 'all' | 'card' | 'freeform' | 'action';
 
 interface JournalViewProps {
@@ -50,7 +57,16 @@ interface JournalViewProps {
     note: string,
     customQuestion?: string
   ) => { ok: boolean; error?: string; record?: ReflectionRecord };
-  onUpdate: (id: string, note: string) => { ok: boolean; error?: string };
+  onUpdate: (
+    id: string,
+    note: string,
+    updatedActionMemo?: string
+  ) => { ok: boolean; error?: string };
+  onAddFollowUp: (
+    recordId: string,
+    note: string,
+    prompt?: string
+  ) => { ok: boolean; error?: string };
   onDelete: (id: string) => { ok: boolean; error?: string };
   onImport: (
     incoming: ReflectionRecord[],
@@ -65,6 +81,7 @@ export function JournalView({
   onClearFocusedRecord,
   onAddFreeform,
   onUpdate,
+  onAddFollowUp,
   onDelete,
   onImport,
   onGoToToday,
@@ -111,11 +128,20 @@ export function JournalView({
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Edit / Delete
+  // Edit / Delete / Follow-up
   const [isEditing, setIsEditing] = useState(false);
   const [editDraft, setEditDraft] = useState('');
+  const [editActionMemoDraft, setEditActionMemoDraft] = useState('');
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
+
+  const [isAddingFollowUp, setIsAddingFollowUp] = useState(false);
+  const [followUpPrompt, setFollowUpPrompt] = useState('');
+  const [followUpDraft, setFollowUpDraft] = useState('');
+  const [followUpFeedback, setFollowUpFeedback] = useState<{
     type: 'success' | 'error';
     text: string;
   } | null>(null);
@@ -142,6 +168,8 @@ export function JournalView({
       setIsComposing(false);
       setIsEditing(false);
       setConfirmingDelete(false);
+      setIsAddingFollowUp(false);
+      setFollowUpFeedback(null);
       onClearFocusedRecord?.();
     }
   }, [focusedRecordId, records, onClearFocusedRecord]);
@@ -149,13 +177,34 @@ export function JournalView({
   const filteredRecords = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return records.filter((rec) => {
+      const hasAttemptData = Boolean(
+        (rec.selectedActions && rec.selectedActions.length > 0) ||
+          rec.selectedAction ||
+          rec.actionMemo?.trim()
+      );
       if (typeFilter === 'card' && rec.cardId === 'freeform') return false;
       if (typeFilter === 'freeform' && rec.cardId !== 'freeform') return false;
-      if (typeFilter === 'action' && !rec.selectedAction) return false;
+      if (typeFilter === 'action' && !hasAttemptData) return false;
 
       if (!q) return true;
       return (
         rec.userNote.toLowerCase().includes(q) ||
+        Boolean(rec.actionMemo?.toLowerCase().includes(q)) ||
+        Boolean(rec.selectedAction?.toLowerCase().includes(q)) ||
+        Boolean(
+          rec.selectedActions?.some(
+            (a) =>
+              a.actionText.toLowerCase().includes(q) ||
+              a.cardName.toLowerCase().includes(q)
+          )
+        ) ||
+        Boolean(
+          rec.followUpNotes?.some(
+            (f) =>
+              f.note.toLowerCase().includes(q) ||
+              Boolean(f.prompt?.toLowerCase().includes(q))
+          )
+        ) ||
         rec.cardName.toLowerCase().includes(q) ||
         rec.cardNameEn.toLowerCase().includes(q) ||
         Boolean(
@@ -189,6 +238,10 @@ export function JournalView({
 
   useEffect(() => {
     setInspectedSpreadIndex(0);
+    setIsAddingFollowUp(false);
+    setFollowUpPrompt('');
+    setFollowUpDraft('');
+    setFollowUpFeedback(null);
   }, [selectedRecord?.id]);
 
   const handleSelectRecord = (record: ReflectionRecord) => {
@@ -198,6 +251,10 @@ export function JournalView({
     setIsEditing(false);
     setConfirmingDelete(false);
     setStatusMessage(null);
+    setIsAddingFollowUp(false);
+    setFollowUpPrompt('');
+    setFollowUpDraft('');
+    setFollowUpFeedback(null);
   };
 
   const handleCreateFreeform = (e: FormEvent) => {
@@ -315,6 +372,7 @@ export function JournalView({
   const handleStartEdit = () => {
     if (!selectedRecord) return;
     setEditDraft(selectedRecord.userNote);
+    setEditActionMemoDraft(selectedRecord.actionMemo || '');
     setIsEditing(true);
     setConfirmingDelete(false);
     setStatusMessage(null);
@@ -322,7 +380,11 @@ export function JournalView({
 
   const handleSaveEdit = () => {
     if (!selectedRecord) return;
-    const result = onUpdate(selectedRecord.id, editDraft);
+    const result = onUpdate(
+      selectedRecord.id,
+      editDraft,
+      selectedRecord.cardId !== 'freeform' ? editActionMemoDraft : undefined
+    );
     if (result.ok) {
       setIsEditing(false);
       setStatusMessage({ type: 'success', text: '기록이 수정되었습니다.' });
@@ -330,6 +392,30 @@ export function JournalView({
       setStatusMessage({
         type: 'error',
         text: result.error || '수정에 실패했습니다.',
+      });
+    }
+  };
+
+  const handleCreateFollowUp = (e: FormEvent) => {
+    e.preventDefault();
+    if (!selectedRecord) return;
+    const result = onAddFollowUp(
+      selectedRecord.id,
+      followUpDraft,
+      followUpPrompt || undefined
+    );
+    if (result.ok) {
+      setFollowUpDraft('');
+      setFollowUpPrompt('');
+      setIsAddingFollowUp(false);
+      setFollowUpFeedback({
+        type: 'success',
+        text: '다시 돌아본 생각이 기록에 이어졌습니다.',
+      });
+    } else {
+      setFollowUpFeedback({
+        type: 'error',
+        text: result.error || '생각을 저장하지 못했습니다.',
       });
     }
   };
@@ -688,7 +774,7 @@ export function JournalView({
                 { id: 'all', label: '전체' },
                 { id: 'card', label: '카드 성찰' },
                 { id: 'freeform', label: '자유 기록' },
-                { id: 'action', label: '작은 실천' },
+                { id: 'action', label: '남긴 시도' },
               ] as const
             ).map((opt) => {
               const active = typeFilter === opt.id;
@@ -759,6 +845,17 @@ export function JournalView({
                 const isSelected = selectedRecord?.id === record.id;
                 const typeLabel =
                   record.cardId === 'freeform' ? '자유 기록' : '카드 성찰';
+                const attemptCount =
+                  record.selectedActions?.length ??
+                  (record.selectedAction ? 1 : 0);
+                const followUpCount = record.followUpNotes?.length ?? 0;
+                const previewText =
+                  record.userNote.trim() ||
+                  record.actionMemo?.trim() ||
+                  record.selectedActions?.map((a) => a.actionText).join(' · ') ||
+                  record.selectedAction ||
+                  '';
+
                 return (
                   <li key={record.id}>
                     <button
@@ -797,9 +894,25 @@ export function JournalView({
                           </>
                         )}
                       </p>
-                      <p className="text-sm leading-relaxed text-[#34312D]/80 line-clamp-2">
-                        {record.userNote}
-                      </p>
+                      {previewText && (
+                        <p className="text-sm leading-relaxed text-[#34312D]/80 line-clamp-2">
+                          {previewText}
+                        </p>
+                      )}
+                      {(attemptCount > 0 || followUpCount > 0) && (
+                        <p className="mt-2 text-[11px] text-[#777B61] tabular-nums">
+                          {[
+                            attemptCount > 0
+                              ? `선택한 시도 ${attemptCount}개`
+                              : null,
+                            followUpCount > 0
+                              ? `돌아본 기록 ${followUpCount}건`
+                              : null,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </p>
+                      )}
                     </button>
                   </li>
                 );
@@ -968,6 +1081,45 @@ export function JournalView({
                     </div>
                   )}
 
+                {/* Single-Card Interpretation Reference */}
+                {selectedRecord.cardId !== 'freeform' &&
+                  (!selectedRecord.spreadCards ||
+                    selectedRecord.spreadCards.length <= 1) &&
+                  (() => {
+                    const matchedCard = getCardById(selectedRecord.cardId);
+                    if (!matchedCard) return null;
+                    return (
+                      <div className="rounded-xl bg-[#F7F3EA]/70 border border-[#E5DED1] p-4 space-y-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-xs font-medium text-[#777B61]">
+                            카드 해석
+                          </p>
+                          <p className="text-[11px] text-[#827B72]">
+                            {matchedCard.keywords.join(' · ')}
+                          </p>
+                        </div>
+                        <p className="font-serif text-[15px] leading-relaxed text-[#34312D]">
+                          “{matchedCard.insight}”
+                        </p>
+                        <p className="text-xs sm:text-[13px] leading-relaxed text-[#34312D]/85">
+                          {matchedCard.meaningGuide}
+                        </p>
+                      </div>
+                    );
+                  })()}
+
+                {/* Overall Synthesis Message */}
+                {selectedRecord.overallMessage && (
+                  <div className="rounded-xl bg-[#F7F3EA]/55 border border-[#E5DED1] p-4 space-y-1.5">
+                    <p className="text-xs font-medium text-[#777B61]">
+                      종합 메시지
+                    </p>
+                    <p className="text-xs sm:text-[13.5px] leading-relaxed text-[#34312D]/85">
+                      {selectedRecord.overallMessage}
+                    </p>
+                  </div>
+                )}
+
                 {/* Reflection Question Reference */}
                 {selectedRecord.reflectionQuestion && (
                   <div className="space-y-1.5">
@@ -980,15 +1132,51 @@ export function JournalView({
                   </div>
                 )}
 
-                {/* Optional Selected Action */}
-                {selectedRecord.selectedAction && (
-                  <div className="space-y-1.5">
-                    <p className="text-xs font-medium text-[#827B72]">
-                      선택한 작은 시도
+                {/* Optional Selected Attempts (multi-select or legacy single) */}
+                {((selectedRecord.selectedActions &&
+                  selectedRecord.selectedActions.length > 0) ||
+                  selectedRecord.selectedAction) && (
+                  <div className="space-y-2 rounded-xl bg-[#F7F3EA]/70 border border-[#E5DED1] p-4">
+                    <p className="text-xs font-medium text-[#777B61]">
+                      마음에 남은 시도
                     </p>
-                    <p className="text-sm leading-relaxed text-[#34312D]/85">
-                      {selectedRecord.selectedAction}
-                    </p>
+                    {selectedRecord.selectedActions &&
+                    selectedRecord.selectedActions.length > 0 ? (
+                      <ul className="space-y-2" role="list">
+                        {selectedRecord.selectedActions.map((item, idx) => (
+                          <li
+                            key={item.attemptId || `${item.cardId}-${idx}`}
+                            className="flex items-start gap-2.5 text-sm leading-relaxed text-[#34312D]/90"
+                          >
+                            <Check
+                              className="w-4 h-4 text-[#777B61] shrink-0 mt-1"
+                              aria-hidden="true"
+                            />
+                            <div className="space-y-0.5">
+                              {(item.categoryLabel ||
+                                item.positionLabel ||
+                                item.cardName) && (
+                                <p className="text-[11px] text-[#777B61]">
+                                  {[
+                                    item.categoryLabel,
+                                    item.positionLabel
+                                      ? `${item.positionLabel} · ${item.cardName}`
+                                      : item.cardName,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(' · ')}
+                                </p>
+                              )}
+                              <p>{item.actionText}</p>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm leading-relaxed text-[#34312D]/85">
+                        {selectedRecord.selectedAction}
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -1047,22 +1235,44 @@ export function JournalView({
                   </div>
                 )}
 
-                {/* Note Content or Edit Form */}
+                {/* User Memos (actionMemo + userNote) or Edit Form */}
                 {isEditing ? (
-                  <div className="space-y-4">
-                    <label
-                      htmlFor="edit-reflection-note"
-                      className="block text-xs font-medium text-[#827B72]"
-                    >
-                      기록 수정
-                    </label>
-                    <textarea
-                      id="edit-reflection-note"
-                      rows={6}
-                      value={editDraft}
-                      onChange={(e) => setEditDraft(e.target.value)}
-                      className="w-full rounded-xl bg-[#F7F3EA]/50 border border-[#E7E0D5] px-4 py-3.5 text-[15px] leading-relaxed text-[#34312D] focus:outline-none focus:border-[#777B61] focus:ring-2 focus:ring-[#777B61]/15 resize-y"
-                    />
+                  <div className="space-y-4 border-t border-[#E7E0D5] pt-5">
+                    {selectedRecord.cardId !== 'freeform' && (
+                      <div className="space-y-1.5">
+                        <label
+                          htmlFor="edit-action-memo"
+                          className="block text-xs font-medium text-[#827B72]"
+                        >
+                          시도에 남긴 짧은 메모 (선택사항)
+                        </label>
+                        <textarea
+                          id="edit-action-memo"
+                          rows={2}
+                          value={editActionMemoDraft}
+                          onChange={(e) => setEditActionMemoDraft(e.target.value)}
+                          placeholder="짧은 생각이나 단어만 남겨도 괜찮습니다."
+                          className="w-full rounded-xl bg-[#F7F3EA]/50 border border-[#E7E0D5] px-4 py-2.5 text-sm leading-relaxed text-[#34312D] focus:outline-none focus:border-[#777B61] focus:ring-2 focus:ring-[#777B61]/15 resize-y"
+                        />
+                      </div>
+                    )}
+
+                    <div className="space-y-1.5">
+                      <label
+                        htmlFor="edit-reflection-note"
+                        className="block text-xs font-medium text-[#827B72]"
+                      >
+                        나의 생각
+                      </label>
+                      <textarea
+                        id="edit-reflection-note"
+                        rows={5}
+                        value={editDraft}
+                        onChange={(e) => setEditDraft(e.target.value)}
+                        placeholder="지금 떠오르는 생각을 자유롭게 수정해 보세요."
+                        className="w-full rounded-xl bg-[#F7F3EA]/50 border border-[#E7E0D5] px-4 py-3.5 text-[15px] leading-relaxed text-[#34312D] focus:outline-none focus:border-[#777B61] focus:ring-2 focus:ring-[#777B61]/15 resize-y"
+                      />
+                    </div>
                     <div className="flex items-center justify-end gap-2">
                       <button
                         type="button"
@@ -1084,15 +1294,186 @@ export function JournalView({
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-2 border-t border-[#E7E0D5] pt-5">
-                    <p className="text-xs font-medium text-[#827B72]">
-                      나의 생각
-                    </p>
-                    <p className="text-[15px] sm:text-base leading-[1.8] text-[#34312D] whitespace-pre-wrap">
-                      {selectedRecord.userNote}
-                    </p>
+                  <div className="space-y-4 border-t border-[#E7E0D5] pt-5">
+                    {selectedRecord.actionMemo?.trim() && (
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-medium text-[#827B72]">
+                          시도에 남긴 짧은 메모
+                        </p>
+                        <p className="text-[15px] leading-relaxed text-[#34312D]/90 whitespace-pre-wrap">
+                          {selectedRecord.actionMemo}
+                        </p>
+                      </div>
+                    )}
+
+                    {selectedRecord.userNote.trim() ? (
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-medium text-[#827B72]">
+                          나의 생각
+                        </p>
+                        <p className="text-[15px] sm:text-base leading-[1.8] text-[#34312D] whitespace-pre-wrap">
+                          {selectedRecord.userNote}
+                        </p>
+                      </div>
+                    ) : (
+                      !selectedRecord.actionMemo?.trim() && (
+                        <p className="text-xs leading-relaxed text-[#827B72]">
+                          별도의 긴 메모 없이 선택한 시도만 가볍게 남겨둔 기록입니다. 원할 때 ‘수정’을 눌러 생각을 덧붙일 수 있습니다.
+                        </p>
+                      )
+                    )}
                   </div>
                 )}
+
+                {/* Later Reflection / Follow-up Notes Section */}
+                <div
+                  aria-label="시간이 지난 뒤 다시 돌아보기"
+                  className="border-t border-[#E7E0D5] pt-5 space-y-4"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-medium text-[#777B61]">
+                        시간이 지난 뒤 다시 돌아보기
+                      </p>
+                      <p className="text-xs text-[#827B72]">
+                        그때와 지금의 생각을 가볍게 비교하거나 새롭게 떠오른 점을 덧붙여 보세요.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddingFollowUp((prev) => !prev);
+                        setFollowUpFeedback(null);
+                      }}
+                      className="inline-flex items-center gap-1.5 min-h-[38px] px-3.5 py-1.5 rounded-lg border border-[#E7E0D5] bg-[#F7F3EA]/70 hover:bg-[#E7E0D5]/55 text-xs font-medium text-[#34312D] transition-colors whitespace-nowrap cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-[#777B61]" aria-hidden="true" />
+                      <span>{isAddingFollowUp ? '작성 닫기' : '돌아본 생각 남기기'}</span>
+                    </button>
+                  </div>
+
+                  {followUpFeedback && (
+                    <div
+                      role="status"
+                      aria-live="polite"
+                      className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs border ${
+                        followUpFeedback.type === 'success'
+                          ? 'bg-[#777B61]/10 border-[#777B61]/25 text-[#34312D]'
+                          : 'bg-[#A65D4E]/10 border-[#A65D4E]/25 text-[#7A3B2E]'
+                      }`}
+                    >
+                      {followUpFeedback.type === 'success' ? (
+                        <Check
+                          className="w-3.5 h-3.5 text-[#777B61] shrink-0"
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <AlertCircle
+                          className="w-3.5 h-3.5 text-[#A65D4E] shrink-0"
+                          aria-hidden="true"
+                        />
+                      )}
+                      <span>{followUpFeedback.text}</span>
+                    </div>
+                  )}
+
+                  {selectedRecord.followUpNotes &&
+                    selectedRecord.followUpNotes.length > 0 && (
+                      <ul className="space-y-2.5" role="list">
+                        {selectedRecord.followUpNotes.map((entry) => (
+                          <li
+                            key={entry.id}
+                            className="rounded-xl bg-[#F7F3EA]/70 border border-[#E5DED1] p-4 space-y-1.5"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#827B72] tabular-nums">
+                              <span>
+                                {formatKoreanDate(
+                                  getLocalDateString(new Date(entry.createdAt))
+                                )}{' '}
+                                · {formatKoreanTime(entry.createdAt)}
+                              </span>
+                            </div>
+                            {entry.prompt && (
+                              <p className="text-xs font-medium text-[#777B61]">
+                                {entry.prompt}
+                              </p>
+                            )}
+                            <p className="text-sm leading-relaxed text-[#34312D] whitespace-pre-wrap">
+                              {entry.note}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                  {isAddingFollowUp && (
+                    <form
+                      onSubmit={handleCreateFollowUp}
+                      className="rounded-xl bg-[#F7F3EA]/65 border border-[#E7E0D5] p-4 space-y-3"
+                    >
+                      <div className="space-y-1.5">
+                        <p className="text-xs text-[#827B72]">
+                          질문 선택 (선택사항)
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {FOLLOW_UP_PROMPTS.map((promptText) => {
+                            const active = followUpPrompt === promptText;
+                            return (
+                              <button
+                                key={promptText}
+                                type="button"
+                                onClick={() =>
+                                  setFollowUpPrompt((prev) =>
+                                    prev === promptText ? '' : promptText
+                                  )
+                                }
+                                aria-pressed={active}
+                                className={`text-left text-xs px-3 py-1.5 rounded-lg border transition-colors cursor-pointer ${
+                                  active
+                                    ? 'bg-[#777B61] border-[#777B61] text-[#FFFCF6]'
+                                    : 'bg-[#FFFCF6] border-[#E7E0D5] text-[#34312D]/85 hover:border-[#777B61]/60'
+                                }`}
+                              >
+                                {promptText}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <textarea
+                        rows={3}
+                        value={followUpDraft}
+                        onChange={(e) => setFollowUpDraft(e.target.value)}
+                        placeholder={
+                          followUpPrompt ||
+                          '지금 다시 돌아보며 떠오른 생각을 편하게 적어보세요. 짧은 단어 하나만 남겨도 괜찮습니다.'
+                        }
+                        aria-label="시간이 지난 뒤 다시 돌아본 생각 입력"
+                        className="w-full rounded-lg bg-[#FFFCF6] border border-[#E7E0D5] px-3.5 py-2.5 text-sm leading-relaxed text-[#34312D] placeholder:text-[#827B72]/75 focus:outline-none focus:border-[#777B61] focus:ring-2 focus:ring-[#777B61]/15 resize-y"
+                      />
+
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsAddingFollowUp(false);
+                            setFollowUpFeedback(null);
+                          }}
+                          className="min-h-[38px] px-3.5 py-1.5 rounded-lg border border-[#E7E0D5] bg-[#FFFCF6] text-xs text-[#827B72] hover:text-[#34312D] cursor-pointer"
+                        >
+                          닫기
+                        </button>
+                        <button
+                          type="submit"
+                          className="min-h-[38px] px-4 py-1.5 rounded-lg bg-[#777B61] hover:bg-[#646850] text-[#FFFCF6] text-xs font-medium cursor-pointer"
+                        >
+                          이어서 남기기
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
               </div>
             </div>
           )}

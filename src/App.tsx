@@ -20,12 +20,22 @@ const NAV_ITEMS: { id: ActiveTab; label: string }[] = [
 
 export type ReadingDrawCount = 1 | 3;
 
+function createReadingSessionId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `reading_${crypto.randomUUID()}`;
+  }
+  return `reading_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('today');
   const [deckMode, setDeckMode] = useState<DeckMode>('full');
   const [drawCount, setDrawCount] = useState<ReadingDrawCount>(1);
   const [allowReversed, setAllowReversed] = useState<boolean>(false);
   const [drawPhase, setDrawPhase] = useState<DrawPhase>('idle');
+  const [readingSessionId, setReadingSessionId] = useState<string>(() =>
+    createReadingSessionId()
+  );
 
   const drawnHistoryRef = useRef<Record<DeckMode, Set<string>>>({
     full: new Set<string>(),
@@ -54,9 +64,11 @@ export default function App() {
   const {
     records,
     storageError,
+    syncReadingAttempts,
     addReflection,
     addFreeformReflection,
     updateReflection,
+    addFollowUpNote,
     deleteReflection,
     importReflections,
   } = useReflections();
@@ -102,6 +114,7 @@ export default function App() {
       selectedOrientationsRef.current = [];
       setSelectedCards([]);
       setSelectedOrientations([]);
+      setReadingSessionId(createReadingSessionId());
       performUniqueShuffle(nextMode);
     },
     [performUniqueShuffle]
@@ -113,6 +126,7 @@ export default function App() {
     selectedOrientationsRef.current = [];
     setSelectedCards([]);
     setSelectedOrientations([]);
+    setReadingSessionId(createReadingSessionId());
   }, []);
 
   const handleStartShuffle = useCallback(() => {
@@ -124,6 +138,7 @@ export default function App() {
     selectedOrientationsRef.current = [];
     setSelectedCards([]);
     setSelectedOrientations([]);
+    setReadingSessionId(createReadingSessionId());
     performUniqueShuffle(deckMode);
 
     const prefersReducedMotion =
@@ -204,6 +219,7 @@ export default function App() {
     selectedOrientationsRef.current = [];
     setSelectedCards([]);
     setSelectedOrientations([]);
+    setReadingSessionId(createReadingSessionId());
     performUniqueShuffle(deckMode);
     setDrawPhase('idle');
     setActiveTab('today');
@@ -296,6 +312,8 @@ export default function App() {
         {activeTab === 'today' && (
           <TodayView
             phase={drawPhase}
+            readingSessionId={readingSessionId}
+            records={records}
             deckMode={deckMode}
             onChangeDeckMode={handleChangeDeckMode}
             drawCount={drawCount}
@@ -307,11 +325,22 @@ export default function App() {
             selectedOrientations={selectedOrientations}
             onStartShuffle={handleStartShuffle}
             onSelectCard={handleSelectCard}
+            onSyncAttempts={syncReadingAttempts}
             onSaveReflection={addReflection}
             onStartNewReading={handleStartNewReading}
             onGoHome={handleGoHome}
             savedRecordCount={records.length}
-            onGoToJournal={() => setActiveTab('journal')}
+            onGoToJournal={(targetRecordId?: string) => {
+              if (targetRecordId) {
+                setFocusedRecordId(targetRecordId);
+              } else {
+                const matched = records.find(
+                  (r) => r.readingSessionId === readingSessionId
+                );
+                if (matched) setFocusedRecordId(matched.id);
+              }
+              setActiveTab('journal');
+            }}
             onOpenEncyclopedia={handleOpenEncyclopedia}
           />
         )}
@@ -323,6 +352,7 @@ export default function App() {
             onClearFocusedRecord={() => setFocusedRecordId(null)}
             onAddFreeform={addFreeformReflection}
             onUpdate={updateReflection}
+            onAddFollowUp={addFollowUpNote}
             onDelete={deleteReflection}
             onImport={importReflections}
             onGoToToday={() => setActiveTab('today')}

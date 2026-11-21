@@ -27,7 +27,7 @@ export function TarotCardFlip({
 
   return (
     <div
-      className={`card-perspective w-[188px] sm:w-[236px] lg:w-[252px] mx-auto select-none ${
+      className={`card-perspective w-[136px] sm:w-[216px] lg:w-[244px] mx-auto select-none ${
         isClickable ? 'cursor-pointer group' : ''
       }`}
       style={{ aspectRatio: '3 / 4.70' }}
@@ -88,19 +88,19 @@ export function TarotCardFlip({
             />
           </div>
 
-          <div className="flex-1 flex flex-col items-center justify-center px-2.5 py-1 bg-[#FFFCF6] border-t border-[#E5DED1] text-center min-h-[42px]">
-            <div className="flex items-center justify-center gap-1.5 leading-tight max-w-full">
-              <span className="font-display text-[10.5px] sm:text-[11px] tracking-[0.12em] text-[#777B61] font-medium shrink-0">
+          <div className="flex-1 flex flex-col items-center justify-center px-1.5 sm:px-2.5 py-0.5 sm:py-1 bg-[#FFFCF6] border-t border-[#E5DED1] text-center min-h-0">
+            <div className="flex items-center justify-center gap-1 sm:gap-1.5 leading-tight max-w-full">
+              <span className="font-display text-[9.5px] sm:text-[11px] tracking-[0.1em] text-[#777B61] font-medium shrink-0">
                 {card.arcanaNumber}
               </span>
               <span className="text-[#E5DED1] shrink-0" aria-hidden="true">
                 ·
               </span>
-              <span className="font-serif text-[12.5px] sm:text-[13.5px] font-medium text-[#34312D] truncate">
+              <span className="font-serif text-[11px] sm:text-[13.5px] font-medium text-[#34312D] truncate">
                 {card.nameKo}
               </span>
             </div>
-            <p className="font-display text-[10.5px] sm:text-[11px] tracking-[0.06em] text-[#827B72] leading-tight mt-0.5 max-w-full truncate">
+            <p className="font-display text-[9px] sm:text-[11px] tracking-[0.04em] text-[#827B72] leading-tight mt-0.5 max-w-full truncate">
               {card.nameEn}
             </p>
           </div>

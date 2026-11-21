@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
+  FollowUpEntry,
   ReflectionRecord,
+  SelectedAttemptItem,
   SpreadCardSnapshot,
   TarotCard,
 } from '../types/reflection';
@@ -43,6 +45,23 @@ function createRecordId(): string {
   return `rec_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+function formatSelectedActionsSummary(
+  items?: SelectedAttemptItem[]
+): string | undefined {
+  if (!items || items.length === 0) return undefined;
+  return items.map((item) => item.actionText).join(' / ');
+}
+
+export interface ReadingSyncPayload {
+  readingSessionId: string;
+  card: TarotCard;
+  orientation: 'upright' | 'reversed';
+  spreadCards?: SpreadCardSnapshot[];
+  overallMessage?: string;
+  selectedActions: SelectedAttemptItem[];
+  actionMemo?: string;
+}
+
 export function useReflections() {
   const [records, setRecords] = useState<ReflectionRecord[]>(() => {
     try {
@@ -59,18 +78,127 @@ export function useReflections() {
     }
   });
 
+  const recordsRef = useRef<ReflectionRecord[]>(records);
   const [storageError, setStorageError] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-      setStorageError(null);
-    } catch {
-      setStorageError(
-        '브라우저 저장 공간에 접근할 수 없어 기록을 저장하지 못했습니다.'
-      );
-    }
+    recordsRef.current = records;
   }, [records]);
+
+  const persistRecords = useCallback(
+    (next: ReflectionRecord[]): boolean => {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        recordsRef.current = next;
+        setRecords(next);
+        setStorageError(null);
+        return true;
+      } catch {
+        setStorageError(
+          '기록을 저장하는 중 문제가 발생했습니다. 브라우저 저장 설정을 확인해 주세요.'
+        );
+        return false;
+      }
+    },
+    []
+  );
+
+  // Sync checked "선택 가능한 시도" items & optional attempt memo with one reading record
+  const syncReadingAttempts = useCallback(
+    ({
+      readingSessionId,
+      card,
+      orientation,
+      spreadCards,
+      overallMessage,
+      selectedActions,
+      actionMemo,
+    }: ReadingSyncPayload): { ok: boolean; recordId?: string; error?: string } => {
+      const prev = recordsRef.current;
+      const cleanMemo = actionMemo?.trim() || undefined;
+      const cleanOverall = overallMessage?.trim() || undefined;
+      const summaryAction = formatSelectedActionsSummary(selectedActions);
+      const nowIso = new Date().toISOString();
+      const hasMultiSpread = Boolean(spreadCards && spreadCards.length > 1);
+
+      const existingIndex = prev.findIndex(
+        (r) => r.readingSessionId === readingSessionId
+      );
+
+      if (existingIndex === -1) {
+        // Do not create an empty record if nothing is checked and no memo was written
+        if (selectedActions.length === 0 && !cleanMemo) {
+          return { ok: true };
+        }
+
+        const now = new Date();
+        const newId = createRecordId();
+        const newRecord: ReflectionRecord = {
+          id: newId,
+          readingSessionId,
+          date: getLocalDateString(now),
+          cardId: card.id,
+          cardName: card.nameKo,
+          cardNameEn: card.nameEn,
+          orientation,
+          readingType: hasMultiSpread ? 'three' : 'single',
+          spreadCards: hasMultiSpread ? spreadCards : undefined,
+          overallMessage: cleanOverall,
+          reflectionQuestion: card.reflectionQuestion,
+          selectedAction: summaryAction,
+          selectedActions: selectedActions.length > 0 ? selectedActions : undefined,
+          actionMemo: cleanMemo,
+          userNote: '',
+          createdAt: now.toISOString(),
+          updatedAt: now.toISOString(),
+        };
+        const next = [newRecord, ...prev];
+        const ok = persistRecords(next);
+        return ok
+          ? { ok: true, recordId: newId }
+          : { ok: false, error: '기록을 저장하는 중 문제가 발생했습니다.' };
+      }
+
+      const existing = prev[existingIndex];
+      const hasMainNote = Boolean(existing.userNote.trim());
+      const hasFollowUps = Boolean(
+        existing.followUpNotes && existing.followUpNotes.length > 0
+      );
+      const preservedMemo =
+        actionMemo !== undefined ? cleanMemo : existing.actionMemo;
+
+      // If everything on this auto-synced record is empty, remove cleanly
+      if (
+        selectedActions.length === 0 &&
+        !preservedMemo &&
+        !hasMainNote &&
+        !hasFollowUps
+      ) {
+        const next = prev.filter((_, idx) => idx !== existingIndex);
+        const ok = persistRecords(next);
+        return ok
+          ? { ok: true }
+          : { ok: false, error: '기록을 정리하는 중 문제가 발생했습니다.' };
+      }
+
+      const updated: ReflectionRecord = {
+        ...existing,
+        overallMessage: cleanOverall ?? existing.overallMessage,
+        selectedAction: summaryAction,
+        selectedActions: selectedActions.length > 0 ? selectedActions : undefined,
+        actionMemo: preservedMemo,
+        updatedAt: nowIso,
+      };
+      const next = prev.map((item, idx) =>
+        idx === existingIndex ? updated : item
+      );
+      const ok = persistRecords(next);
+      return ok
+        ? { ok: true, recordId: existing.id }
+        : { ok: false, error: '기록을 저장하는 중 문제가 발생했습니다.' };
+    },
+    [persistRecords]
+  );
 
   const addReflection = useCallback(
     (
@@ -78,46 +206,115 @@ export function useReflections() {
       note: string,
       selectedAction?: string,
       orientation: 'upright' | 'reversed' = 'upright',
-      spreadCards?: SpreadCardSnapshot[]
+      spreadCards?: SpreadCardSnapshot[],
+      options?: {
+        readingSessionId?: string;
+        overallMessage?: string;
+        selectedActions?: SelectedAttemptItem[];
+        actionMemo?: string;
+      }
     ): { ok: boolean; error?: string; record?: ReflectionRecord } => {
       const trimmed = note.trim();
-      if (!trimmed) {
-        return { ok: false, error: '저장할 내용을 먼저 입력해 주세요.' };
+      const readingSessionId = options?.readingSessionId;
+      const selectedActions = options?.selectedActions;
+      const cleanMemo =
+        options?.actionMemo !== undefined
+          ? options.actionMemo.trim() || undefined
+          : undefined;
+      const cleanOverall = options?.overallMessage?.trim() || undefined;
+      const hasAttempts = Boolean(
+        (selectedActions && selectedActions.length > 0) || selectedAction
+      );
+
+      if (!trimmed && !cleanMemo && !hasAttempts) {
+        return { ok: false, error: '저장할 내용을 먼저 입력하거나 시도를 선택해 주세요.' };
       }
 
+      const prev = recordsRef.current;
+      const summaryAction =
+        formatSelectedActionsSummary(selectedActions) || selectedAction || undefined;
+      const hasMultiSpread = Boolean(spreadCards && spreadCards.length > 1);
       const now = new Date();
       const iso = now.toISOString();
-      const hasMultiSpread = Boolean(spreadCards && spreadCards.length > 1);
-      const newRecord: ReflectionRecord = {
-        id: createRecordId(),
-        date: getLocalDateString(now),
-        cardId: card.id,
-        cardName: card.nameKo,
-        cardNameEn: card.nameEn,
-        orientation,
-        readingType: hasMultiSpread ? 'three' : 'single',
-        spreadCards: hasMultiSpread ? spreadCards : undefined,
-        reflectionQuestion: card.reflectionQuestion,
-        selectedAction: selectedAction || undefined,
-        userNote: trimmed,
-        createdAt: iso,
-        updatedAt: iso,
-      };
 
-      try {
-        const next = [newRecord, ...records];
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        setRecords(next);
-        setStorageError(null);
-        return { ok: true, record: newRecord };
-      } catch {
-        const message =
-          '기록을 저장하는 중 문제가 발생했습니다. 브라우저 저장 설정을 확인해 주세요.';
-        setStorageError(message);
-        return { ok: false, error: message };
+      const existingIndex = readingSessionId
+        ? prev.findIndex((r) => r.readingSessionId === readingSessionId)
+        : -1;
+
+      let savedRecord: ReflectionRecord;
+      let next: ReflectionRecord[];
+
+      if (existingIndex !== -1) {
+        const existing = prev[existingIndex];
+        const mergedNote = trimmed
+          ? existing.userNote.trim()
+            ? `${existing.userNote.trim()}\n\n${trimmed}`
+            : trimmed
+          : existing.userNote;
+        const resolvedActions =
+          selectedActions !== undefined
+            ? selectedActions.length > 0
+              ? selectedActions
+              : undefined
+            : existing.selectedActions;
+        const resolvedActionSummary =
+          selectedActions !== undefined
+            ? formatSelectedActionsSummary(selectedActions)
+            : summaryAction ?? existing.selectedAction;
+        const resolvedMemo =
+          options?.actionMemo !== undefined ? cleanMemo : existing.actionMemo;
+
+        const updated: ReflectionRecord = {
+          ...existing,
+          overallMessage: cleanOverall ?? existing.overallMessage,
+          selectedAction: resolvedActionSummary,
+          selectedActions: resolvedActions,
+          actionMemo: resolvedMemo,
+          userNote: mergedNote,
+          updatedAt: iso,
+        };
+        savedRecord = updated;
+        next = prev.map((item, idx) =>
+          idx === existingIndex ? updated : item
+        );
+      } else {
+        const newRecord: ReflectionRecord = {
+          id: createRecordId(),
+          readingSessionId,
+          date: getLocalDateString(now),
+          cardId: card.id,
+          cardName: card.nameKo,
+          cardNameEn: card.nameEn,
+          orientation,
+          readingType: hasMultiSpread ? 'three' : 'single',
+          spreadCards: hasMultiSpread ? spreadCards : undefined,
+          overallMessage: cleanOverall,
+          reflectionQuestion: card.reflectionQuestion,
+          selectedAction: summaryAction,
+          selectedActions:
+            selectedActions && selectedActions.length > 0
+              ? selectedActions
+              : undefined,
+          actionMemo: cleanMemo,
+          userNote: trimmed,
+          createdAt: iso,
+          updatedAt: iso,
+        };
+        savedRecord = newRecord;
+        next = [newRecord, ...prev];
       }
+
+      const ok = persistRecords(next);
+      if (!ok) {
+        return {
+          ok: false,
+          error:
+            '기록을 저장하는 중 문제가 발생했습니다. 브라우저 저장 설정을 확인해 주세요.',
+        };
+      }
+      return { ok: true, record: savedRecord };
     },
-    [records]
+    [persistRecords]
   );
 
   const addFreeformReflection = useCallback(
@@ -146,65 +343,121 @@ export function useReflections() {
         updatedAt: iso,
       };
 
-      try {
-        const next = [newRecord, ...records];
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        setRecords(next);
-        setStorageError(null);
-        return { ok: true, record: newRecord };
-      } catch {
-        const message =
-          '기록을 저장하는 중 문제가 발생했습니다. 브라우저 저장 설정을 확인해 주세요.';
-        setStorageError(message);
-        return { ok: false, error: message };
+      const ok = persistRecords([newRecord, ...recordsRef.current]);
+      if (!ok) {
+        return {
+          ok: false,
+          error:
+            '기록을 저장하는 중 문제가 발생했습니다. 브라우저 저장 설정을 확인해 주세요.',
+        };
       }
+      return { ok: true, record: newRecord };
     },
-    [records]
+    [persistRecords]
   );
 
   const updateReflection = useCallback(
-    (id: string, updatedNote: string): { ok: boolean; error?: string } => {
-      const trimmed = updatedNote.trim();
-      if (!trimmed) {
+    (
+      id: string,
+      updatedNote: string,
+      updatedActionMemo?: string
+    ): { ok: boolean; error?: string } => {
+      const prev = recordsRef.current;
+      const trimmedNote = updatedNote.trim();
+      const trimmedActionMemo =
+        updatedActionMemo !== undefined ? updatedActionMemo.trim() : undefined;
+
+      const target = prev.find((item) => item.id === id);
+      if (!target) {
+        return { ok: false, error: '수정할 기록을 찾을 수 없습니다.' };
+      }
+
+      const hasActions = Boolean(
+        (target.selectedActions && target.selectedActions.length > 0) ||
+          target.selectedAction
+      );
+      const effectiveMemo =
+        trimmedActionMemo !== undefined
+          ? trimmedActionMemo
+          : target.actionMemo || '';
+      if (!trimmedNote && !effectiveMemo && !hasActions) {
         return { ok: false, error: '내용을 비워둘 수 없습니다.' };
       }
 
       const nowIso = new Date().toISOString();
-      const next = records.map((item) =>
+      const next = prev.map((item) =>
         item.id === id
-          ? { ...item, userNote: trimmed, updatedAt: nowIso }
+          ? {
+              ...item,
+              userNote: trimmedNote,
+              actionMemo:
+                trimmedActionMemo !== undefined
+                  ? trimmedActionMemo || undefined
+                  : item.actionMemo,
+              updatedAt: nowIso,
+            }
           : item
       );
 
-      try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        setRecords(next);
-        setStorageError(null);
-        return { ok: true };
-      } catch {
-        const message = '기록을 수정하는 중 문제가 발생했습니다.';
-        setStorageError(message);
-        return { ok: false, error: message };
-      }
+      const ok = persistRecords(next);
+      return ok
+        ? { ok: true }
+        : { ok: false, error: '기록을 수정하는 중 문제가 발생했습니다.' };
     },
-    [records]
+    [persistRecords]
+  );
+
+  const addFollowUpNote = useCallback(
+    (
+      recordId: string,
+      note: string,
+      prompt?: string
+    ): { ok: boolean; error?: string } => {
+      const trimmed = note.trim();
+      if (!trimmed) {
+        return { ok: false, error: '추가할 생각을 먼저 입력해 주세요.' };
+      }
+
+      const prev = recordsRef.current;
+      if (!prev.some((item) => item.id === recordId)) {
+        return { ok: false, error: '연결할 기록을 찾을 수 없습니다.' };
+      }
+
+      const nowIso = new Date().toISOString();
+      const newEntry: FollowUpEntry = {
+        id: createRecordId(),
+        createdAt: nowIso,
+        prompt: prompt?.trim() || undefined,
+        note: trimmed,
+      };
+
+      const next = prev.map((item) =>
+        item.id === recordId
+          ? {
+              ...item,
+              followUpNotes: [...(item.followUpNotes ?? []), newEntry],
+              updatedAt: nowIso,
+            }
+          : item
+      );
+
+      const ok = persistRecords(next);
+      return ok
+        ? { ok: true }
+        : { ok: false, error: '돌아본 기록을 저장하는 중 문제가 발생했습니다.' };
+    },
+    [persistRecords]
   );
 
   const deleteReflection = useCallback(
     (id: string): { ok: boolean; error?: string } => {
-      const next = records.filter((item) => item.id !== id);
-      try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        setRecords(next);
-        setStorageError(null);
-        return { ok: true };
-      } catch {
-        const message = '기록을 삭제하는 중 문제가 발생했습니다.';
-        setStorageError(message);
-        return { ok: false, error: message };
-      }
+      const next = recordsRef.current.filter((item) => item.id !== id);
+      const ok = persistRecords(next);
+      return ok
+        ? { ok: true }
+        : { ok: false, error: '기록을 삭제하는 중 문제가 발생했습니다.' };
     },
-    [records]
+    [persistRecords]
   );
 
   const importReflections = useCallback(
@@ -212,6 +465,7 @@ export function useReflections() {
       incoming: ReflectionRecord[],
       mode: 'merge' | 'replace'
     ): { ok: boolean; addedCount: number; totalCount: number; error?: string } => {
+      const prev = recordsRef.current;
       try {
         let next: ReflectionRecord[];
         let addedCount = 0;
@@ -226,7 +480,7 @@ export function useReflections() {
           next = Array.from(uniqueMap.values());
           addedCount = next.length;
         } else {
-          const existingIds = new Set(records.map((r) => r.id));
+          const existingIds = new Set(prev.map((r) => r.id));
           const toAdd: ReflectionRecord[] = [];
           for (const item of incoming) {
             if (!existingIds.has(item.id)) {
@@ -234,7 +488,7 @@ export function useReflections() {
               toAdd.push(item);
             }
           }
-          next = [...toAdd, ...records];
+          next = [...toAdd, ...prev];
           addedCount = toAdd.length;
         }
 
@@ -244,24 +498,27 @@ export function useReflections() {
         );
 
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        recordsRef.current = next;
         setRecords(next);
         setStorageError(null);
         return { ok: true, addedCount, totalCount: next.length };
       } catch {
         const message = '백업 데이터를 복원하는 중 저장 오류가 발생했습니다.';
         setStorageError(message);
-        return { ok: false, addedCount: 0, totalCount: records.length, error: message };
+        return { ok: false, addedCount: 0, totalCount: prev.length, error: message };
       }
     },
-    [records]
+    []
   );
 
   return {
     records,
     storageError,
+    syncReadingAttempts,
     addReflection,
     addFreeformReflection,
     updateReflection,
+    addFollowUpNote,
     deleteReflection,
     importReflections,
   };
@@ -368,8 +625,54 @@ export function validateBackupJson(rawText: string): BackupValidationResult {
           }))
       : undefined;
 
+    const rawSelectedActions = Array.isArray(r.selectedActions)
+      ? (r.selectedActions as unknown[])
+          .filter(
+            (a): a is Record<string, unknown> =>
+              Boolean(a) &&
+              typeof a === 'object' &&
+              typeof (a as Record<string, unknown>).cardId === 'string' &&
+              typeof (a as Record<string, unknown>).actionText === 'string'
+          )
+          .map((a) => ({
+            attemptId:
+              typeof a.attemptId === 'string' ? a.attemptId : undefined,
+            categoryLabel:
+              typeof a.categoryLabel === 'string'
+                ? a.categoryLabel
+                : undefined,
+            cardId: a.cardId as string,
+            cardName: typeof a.cardName === 'string' ? a.cardName : '',
+            actionText: a.actionText as string,
+            positionLabel:
+              typeof a.positionLabel === 'string'
+                ? a.positionLabel
+                : undefined,
+          }))
+      : undefined;
+
+    const rawFollowUps = Array.isArray(r.followUpNotes)
+      ? (r.followUpNotes as unknown[])
+          .filter(
+            (f): f is Record<string, unknown> =>
+              Boolean(f) &&
+              typeof f === 'object' &&
+              typeof (f as Record<string, unknown>).id === 'string' &&
+              typeof (f as Record<string, unknown>).note === 'string' &&
+              typeof (f as Record<string, unknown>).createdAt === 'string'
+          )
+          .map((f) => ({
+            id: f.id as string,
+            createdAt: f.createdAt as string,
+            prompt: typeof f.prompt === 'string' ? f.prompt : undefined,
+            note: f.note as string,
+          }))
+      : undefined;
+
     validRecords.push({
       id: r.id,
+      readingSessionId:
+        typeof r.readingSessionId === 'string' ? r.readingSessionId : undefined,
       date: r.date,
       cardId: typeof r.cardId === 'string' ? r.cardId : 'unknown',
       cardName: r.cardName,
@@ -381,11 +684,20 @@ export function validateBackupJson(rawText: string): BackupValidationResult {
           ? 'three'
           : 'single',
       spreadCards: rawSpread && rawSpread.length > 1 ? rawSpread : undefined,
+      overallMessage:
+        typeof r.overallMessage === 'string' ? r.overallMessage : undefined,
       reflectionQuestion:
         typeof r.reflectionQuestion === 'string' ? r.reflectionQuestion : '',
       selectedAction:
         typeof r.selectedAction === 'string' ? r.selectedAction : undefined,
+      selectedActions:
+        rawSelectedActions && rawSelectedActions.length > 0
+          ? rawSelectedActions
+          : undefined,
+      actionMemo: typeof r.actionMemo === 'string' ? r.actionMemo : undefined,
       userNote: r.userNote,
+      followUpNotes:
+        rawFollowUps && rawFollowUps.length > 0 ? rawFollowUps : undefined,
       createdAt: r.createdAt,
       updatedAt:
         typeof r.updatedAt === 'string' ? r.updatedAt : r.createdAt,

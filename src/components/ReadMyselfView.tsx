@@ -213,7 +213,13 @@ export function ReadMyselfView({
               </span>
             </p>
             <p className="text-sm leading-relaxed text-[#34312D]/90">
-              {filteredRecords[0].userNote}
+              {filteredRecords[0].userNote.trim() ||
+                filteredRecords[0].actionMemo?.trim() ||
+                filteredRecords[0].selectedActions
+                  ?.map((a) => a.actionText)
+                  .join(' · ') ||
+                filteredRecords[0].selectedAction ||
+                ''}
             </p>
           </button>
         </div>
