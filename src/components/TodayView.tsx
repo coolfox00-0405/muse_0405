@@ -260,13 +260,16 @@ export function TodayView({
     )}’의 시선을 조용히 비추고 있습니다. 모든 문장을 다 기억하려 하기보다, 지금 가장 마음에 남는 질문 하나만 가볍게 간직해 보세요.`;
   };
 
+  const overallSynthesisSnapshot = computeOverallMessage();
+
   const personalizedAttempts = useMemo(
     () =>
       generatePersonalizedAttempts(
         selectedCards,
-        selectedOrientations
+        selectedOrientations,
+        overallSynthesisSnapshot
       ),
-    [selectedCards, selectedOrientations]
+    [selectedCards, selectedOrientations, overallSynthesisSnapshot]
   );
 
   const syncCurrentAttempts = (
@@ -846,13 +849,13 @@ export function TodayView({
                   />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] sm:text-[11px] font-medium text-[#777B61] truncate">
+                  <p className="text-[10px] sm:text-[11px] font-medium text-[#777B61] leading-tight">
                     0{idx + 1}. {positionLabel}
                   </p>
-                  <p className="font-serif text-xs sm:text-sm font-medium text-[#34312D] truncate mt-0.5">
+                  <p className="font-serif text-xs sm:text-sm font-medium text-[#34312D] leading-snug break-keep mt-0.5">
                     {card.nameKo}
                   </p>
-                  <p className="hidden sm:block font-display text-[11px] text-[#827B72] truncate">
+                  <p className="hidden sm:block font-display text-[11px] text-[#827B72] leading-tight break-words mt-0.5">
                     {card.nameEn}
                   </p>
                 </div>
@@ -865,7 +868,7 @@ export function TodayView({
       {/* 1. Main Reading Result: Card Artwork + Interpretation + Overall Synthesis */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-7 lg:gap-9 items-start">
         {/* 1-1. Selected Card & Card Title (side-by-side w/ insight on mobile for compact first screen) */}
-        <div className="lg:col-span-5 flex flex-row sm:flex-col items-center gap-3.5 sm:gap-0 w-full">
+        <div className="lg:col-span-5 flex flex-row sm:flex-col items-start sm:items-center gap-3.5 sm:gap-0 w-full">
           <div className="shrink-0">
             <TarotCardFlip
               card={activeCard}
@@ -965,22 +968,22 @@ export function TodayView({
       {/* 2. Primary CTA ('새 리딩 시작') & Compact Secondary Pair ('다시 섞기' / '처음 화면으로') */}
       <div
         aria-label="리딩 다음 행동"
-        className="mt-4 sm:mt-6 flex flex-col items-center space-y-2.5"
+        className="mt-4 sm:mt-6 flex flex-col items-center space-y-2"
       >
         <button
           type="button"
           onClick={handleStartNewReadingClick}
-          className="w-[78%] sm:w-full max-w-[340px] mx-auto min-h-[42px] sm:min-h-[44px] inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#777B61] hover:bg-[#646850] active:scale-[0.995] text-[#FFFCF6] text-[15px] sm:text-base font-medium shadow-xs transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
+          className="w-[72%] sm:w-full sm:max-w-[280px] mx-auto min-h-[40px] sm:min-h-[42px] inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-[#777B61] hover:bg-[#646850] active:scale-[0.995] text-[#FFFCF6] text-[14.5px] sm:text-[15px] font-medium shadow-xs transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
         >
           <Sparkles className="w-4 h-4 shrink-0" aria-hidden="true" />
           <span>새 리딩 시작</span>
         </button>
 
-        <div className="w-[86%] sm:w-full max-w-[340px] mx-auto grid grid-cols-2 gap-2.5">
+        <div className="w-[80%] sm:w-full sm:max-w-[280px] mx-auto grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={handleReshuffle}
-            className="min-w-0 min-h-[38px] sm:min-h-[40px] inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#E5DED1] bg-[#FFFCF6]/75 hover:bg-[#E5DED1]/40 text-xs sm:text-[13px] font-medium text-[#6B645C] hover:text-[#34312D] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
+            className="min-w-0 min-h-[36px] sm:min-h-[38px] inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#E5DED1] bg-[#FFFCF6]/75 hover:bg-[#E5DED1]/40 text-xs font-medium text-[#6B645C] hover:text-[#34312D] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
           >
             <Shuffle className="w-3.5 h-3.5 text-[#777B61] shrink-0" aria-hidden="true" />
             <span>다시 섞기</span>
@@ -989,21 +992,21 @@ export function TodayView({
           <button
             type="button"
             onClick={handleGoHomeClick}
-            className="min-w-0 min-h-[38px] sm:min-h-[40px] inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#E5DED1] bg-[#FFFCF6]/75 hover:bg-[#E5DED1]/40 text-xs sm:text-[13px] font-medium text-[#6B645C] hover:text-[#34312D] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
+            className="min-w-0 min-h-[36px] sm:min-h-[38px] inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#E5DED1] bg-[#FFFCF6]/75 hover:bg-[#E5DED1]/40 text-xs font-medium text-[#6B645C] hover:text-[#34312D] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
           >
             <Home className="w-3.5 h-3.5 text-[#777B61] shrink-0" aria-hidden="true" />
             <span>처음 화면으로</span>
           </button>
         </div>
 
-        <p className="text-[11px] sm:text-xs leading-relaxed text-[#827B72] text-center">
+        <p className="text-[11px] sm:text-xs leading-relaxed text-[#827B72] text-center pt-0.5">
           새로운 리딩을 시작해도 저장된 인사이트 노트는 그대로 보존됩니다.
         </p>
       </div>
 
       {/* 3. Optional Reflection Attempts & Insight Note Form */}
       <div className="mt-7 sm:mt-9 pt-6 border-t border-[#E5DED1] grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
-        {/* 3-1. Personalized Selectable Attempts (5-7 items) & Auto-Sync Memo */}
+        {/* 3-1. Personalized Selectable Attempts (4 items) & Auto-Sync Memo */}
         <div
           aria-label="선택 가능한 시도"
           className="lg:col-span-6 space-y-3.5"

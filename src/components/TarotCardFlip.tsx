@@ -27,10 +27,9 @@ export function TarotCardFlip({
 
   return (
     <div
-      className={`card-perspective w-[136px] sm:w-[216px] lg:w-[244px] mx-auto select-none ${
+      className={`card-perspective w-[144px] sm:w-[212px] lg:w-[236px] mx-auto select-none ${
         isClickable ? 'cursor-pointer group' : ''
       }`}
-      style={{ aspectRatio: '3 / 4.70' }}
       onClick={isClickable ? onCardClick : undefined}
       role={isClickable ? 'button' : undefined}
       tabIndex={isClickable ? 0 : undefined}
@@ -53,7 +52,7 @@ export function TarotCardFlip({
       >
         {/* Card Back — Bespoke LUCIDA Botanical Engraving */}
         <div
-          className={`card-face rounded-[18px] overflow-hidden bg-[#FFFCF6] border border-[#E5DED1] shadow-[0_14px_34px_-16px_rgba(52,49,45,0.22)] transition-transform duration-200 ${
+          className={`card-face card-face-back rounded-[18px] overflow-hidden bg-[#FFFCF6] border border-[#E5DED1] shadow-[0_14px_34px_-16px_rgba(52,49,45,0.22)] transition-transform duration-200 ${
             isClickable ? 'group-hover:-translate-y-1' : ''
           }`}
         >
@@ -77,7 +76,7 @@ export function TarotCardFlip({
           )}
         </div>
 
-        {/* Card Front — Unobstructed Artwork (896:1200) + Compact Bottom Title Plate */}
+        {/* Card Front — Unobstructed Artwork (896:1200) + Natural-Height Bottom Title Plate */}
         <div className="card-face card-face-front rounded-[18px] overflow-hidden bg-[#FFFCF6] border border-[#E5DED1] shadow-[0_14px_34px_-16px_rgba(52,49,45,0.22)] flex flex-col">
           <div className="relative w-full aspect-[896/1200] overflow-hidden bg-[#FFFCF6] shrink-0">
             <TarotCardArtwork
@@ -88,19 +87,14 @@ export function TarotCardFlip({
             />
           </div>
 
-          <div className="flex-1 flex flex-col items-center justify-center px-1.5 sm:px-2.5 py-0.5 sm:py-1 bg-[#FFFCF6] border-t border-[#E5DED1] text-center min-h-0">
-            <div className="flex items-center justify-center gap-1 sm:gap-1.5 leading-tight max-w-full">
-              <span className="font-display text-[9.5px] sm:text-[11px] tracking-[0.1em] text-[#777B61] font-medium shrink-0">
+          <div className="flex flex-col items-center justify-center px-2 sm:px-3 py-2 sm:py-2.5 bg-[#FFFCF6] border-t border-[#E5DED1] text-center">
+            <p className="font-serif text-[12px] sm:text-[14px] font-medium text-[#34312D] leading-snug break-keep">
+              <span className="font-display text-[10px] sm:text-[11.5px] tracking-[0.08em] text-[#777B61] font-medium mr-1">
                 {card.arcanaNumber}
               </span>
-              <span className="text-[#E5DED1] shrink-0" aria-hidden="true">
-                ·
-              </span>
-              <span className="font-serif text-[11px] sm:text-[13.5px] font-medium text-[#34312D] truncate">
-                {card.nameKo}
-              </span>
-            </div>
-            <p className="font-display text-[9px] sm:text-[11px] tracking-[0.04em] text-[#827B72] leading-tight mt-0.5 max-w-full truncate">
+              <span>{card.nameKo}</span>
+            </p>
+            <p className="font-display text-[10px] sm:text-[11.5px] tracking-[0.03em] text-[#827B72] leading-snug mt-0.5 break-words max-w-full">
               {card.nameEn}
             </p>
           </div>

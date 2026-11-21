@@ -441,7 +441,7 @@ export function DeckEncyclopediaModal({
                               </span>
                               {card.nameKo}
                             </p>
-                            <p className="font-display text-[11px] text-[#827B72] leading-tight truncate mt-0.5">
+                            <p className="font-display text-[11px] text-[#827B72] leading-tight break-words mt-0.5">
                               {card.nameEn}
                             </p>
                           </div>
