@@ -176,6 +176,49 @@ export default function App() {
     [drawPhase, drawCount, deckMode, allowReversed]
   );
 
+  const scrollTarget = useCallback((elementId?: string) => {
+    if (typeof window === 'undefined') return;
+    const prefersReducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+    const behavior: ScrollBehavior = prefersReducedMotion ? 'auto' : 'smooth';
+
+    window.requestAnimationFrame(() => {
+      if (elementId) {
+        const el = document.getElementById(elementId);
+        if (el) {
+          el.scrollIntoView({ behavior, block: 'center' });
+          return;
+        }
+      }
+      window.scrollTo({ top: 0, behavior });
+    });
+  }, []);
+
+  const resetActiveReadingState = useCallback(() => {
+    if (shuffleTimerRef.current !== null) {
+      window.clearTimeout(shuffleTimerRef.current);
+      shuffleTimerRef.current = null;
+    }
+    selectedCardsRef.current = [];
+    selectedOrientationsRef.current = [];
+    setSelectedCards([]);
+    setSelectedOrientations([]);
+    performUniqueShuffle(deckMode);
+    setDrawPhase('idle');
+    setActiveTab('today');
+  }, [deckMode, performUniqueShuffle]);
+
+  const handleStartNewReading = useCallback(() => {
+    resetActiveReadingState();
+    scrollTarget('reading-setup-controls');
+  }, [resetActiveReadingState, scrollTarget]);
+
+  const handleGoHome = useCallback(() => {
+    resetActiveReadingState();
+    scrollTarget();
+  }, [resetActiveReadingState, scrollTarget]);
+
   const handleOpenEncyclopedia = useCallback((cardId?: string) => {
     setEncyclopediaCardId(cardId ?? null);
     setEncyclopediaOpen(true);
@@ -265,6 +308,9 @@ export default function App() {
             onStartShuffle={handleStartShuffle}
             onSelectCard={handleSelectCard}
             onSaveReflection={addReflection}
+            onStartNewReading={handleStartNewReading}
+            onGoHome={handleGoHome}
+            savedRecordCount={records.length}
             onGoToJournal={() => setActiveTab('journal')}
             onOpenEncyclopedia={handleOpenEncyclopedia}
           />

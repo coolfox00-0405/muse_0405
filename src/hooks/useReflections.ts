@@ -1,5 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ReflectionRecord, TarotCard } from '../types/reflection';
+import {
+  ReflectionRecord,
+  SpreadCardSnapshot,
+  TarotCard,
+} from '../types/reflection';
 
 const STORAGE_KEY = 'am_tarot_reflections_v1';
 
@@ -73,7 +77,8 @@ export function useReflections() {
       card: TarotCard,
       note: string,
       selectedAction?: string,
-      orientation: 'upright' | 'reversed' = 'upright'
+      orientation: 'upright' | 'reversed' = 'upright',
+      spreadCards?: SpreadCardSnapshot[]
     ): { ok: boolean; error?: string; record?: ReflectionRecord } => {
       const trimmed = note.trim();
       if (!trimmed) {
@@ -82,6 +87,7 @@ export function useReflections() {
 
       const now = new Date();
       const iso = now.toISOString();
+      const hasMultiSpread = Boolean(spreadCards && spreadCards.length > 1);
       const newRecord: ReflectionRecord = {
         id: createRecordId(),
         date: getLocalDateString(now),
@@ -89,6 +95,8 @@ export function useReflections() {
         cardName: card.nameKo,
         cardNameEn: card.nameEn,
         orientation,
+        readingType: hasMultiSpread ? 'three' : 'single',
+        spreadCards: hasMultiSpread ? spreadCards : undefined,
         reflectionQuestion: card.reflectionQuestion,
         selectedAction: selectedAction || undefined,
         userNote: trimmed,
@@ -336,6 +344,30 @@ export function validateBackupJson(rawText: string): BackupValidationResult {
       };
     }
 
+    const rawSpread = Array.isArray(r.spreadCards)
+      ? (r.spreadCards as unknown[])
+          .filter(
+            (s): s is Record<string, unknown> =>
+              Boolean(s) &&
+              typeof s === 'object' &&
+              typeof (s as Record<string, unknown>).cardId === 'string' &&
+              typeof (s as Record<string, unknown>).cardName === 'string'
+          )
+          .map((s) => ({
+            cardId: s.cardId as string,
+            cardName: s.cardName as string,
+            cardNameEn:
+              typeof s.cardNameEn === 'string' ? s.cardNameEn : '',
+            orientation: (s.orientation === 'reversed'
+              ? 'reversed'
+              : 'upright') as 'upright' | 'reversed',
+            positionLabel:
+              typeof s.positionLabel === 'string'
+                ? s.positionLabel
+                : undefined,
+          }))
+      : undefined;
+
     validRecords.push({
       id: r.id,
       date: r.date,
@@ -344,6 +376,11 @@ export function validateBackupJson(rawText: string): BackupValidationResult {
       cardNameEn: typeof r.cardNameEn === 'string' ? r.cardNameEn : '',
       orientation:
         r.orientation === 'reversed' ? 'reversed' : 'upright',
+      readingType:
+        r.readingType === 'three' || (rawSpread && rawSpread.length > 1)
+          ? 'three'
+          : 'single',
+      spreadCards: rawSpread && rawSpread.length > 1 ? rawSpread : undefined,
       reflectionQuestion:
         typeof r.reflectionQuestion === 'string' ? r.reflectionQuestion : '',
       selectedAction:

@@ -158,6 +158,13 @@ export function JournalView({
         rec.userNote.toLowerCase().includes(q) ||
         rec.cardName.toLowerCase().includes(q) ||
         rec.cardNameEn.toLowerCase().includes(q) ||
+        Boolean(
+          rec.spreadCards?.some(
+            (s) =>
+              s.cardName.toLowerCase().includes(q) ||
+              s.cardNameEn.toLowerCase().includes(q)
+          )
+        ) ||
         rec.reflectionQuestion.toLowerCase().includes(q) ||
         rec.date.includes(q)
       );
@@ -177,6 +184,12 @@ export function JournalView({
       setSelectedId(filteredRecords[0].id);
     }
   }, [filteredRecords, selectedId]);
+
+  const [inspectedSpreadIndex, setInspectedSpreadIndex] = useState(0);
+
+  useEffect(() => {
+    setInspectedSpreadIndex(0);
+  }, [selectedRecord?.id]);
 
   const handleSelectRecord = (record: ReflectionRecord) => {
     setSelectedId(record.id);
@@ -759,18 +772,29 @@ export function JournalView({
                     >
                       <div className="flex items-center justify-between gap-2 text-xs text-[#827B72] mb-2">
                         <span className="tabular-nums">
-                          {formatKoreanDate(record.date)} · {typeLabel}
+                          {formatKoreanDate(record.date)} ·{' '}
+                          {record.spreadCards && record.spreadCards.length > 1
+                            ? `${typeLabel} (3장)`
+                            : typeLabel}
                         </span>
                         <span className="tabular-nums">
                           {formatKoreanTime(record.createdAt)}
                         </span>
                       </div>
                       <p className="font-serif text-base font-medium text-[#34312D] mb-1.5">
-                        {record.cardName}
-                        {record.cardNameEn && (
-                          <span className="ml-1.5 text-xs font-normal text-[#827B72]">
-                            {record.cardNameEn}
+                        {record.spreadCards && record.spreadCards.length > 1 ? (
+                          <span>
+                            {record.spreadCards.map((s) => s.cardName).join(' · ')}
                           </span>
+                        ) : (
+                          <>
+                            {record.cardName}
+                            {record.cardNameEn && (
+                              <span className="ml-1.5 text-xs font-normal text-[#827B72]">
+                                {record.cardNameEn}
+                              </span>
+                            )}
+                          </>
                         )}
                       </p>
                       <p className="text-sm leading-relaxed text-[#34312D]/80 line-clamp-2">
@@ -873,6 +897,76 @@ export function JournalView({
                     </div>
                   )}
                 </div>
+
+                {/* Preserved 3-Card Spread Snapshot if this reading used 3 cards */}
+                {selectedRecord.spreadCards &&
+                  selectedRecord.spreadCards.length > 1 && (
+                    <div className="rounded-xl bg-[#F7F3EA]/70 border border-[#E5DED1] p-4 space-y-3">
+                      <p className="text-xs font-medium text-[#777B61]">
+                        이 리딩에서 뽑은 카드 배열 ({selectedRecord.spreadCards.length}장)
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        {selectedRecord.spreadCards.map((snap, idx) => {
+                          const snapCard = getCardById(snap.cardId);
+                          const active = inspectedSpreadIndex === idx;
+                          return (
+                            <button
+                              key={`${snap.cardId}-${idx}`}
+                              type="button"
+                              onClick={() => setInspectedSpreadIndex(idx)}
+                              aria-pressed={active}
+                              className={`flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-colors cursor-pointer ${
+                                active
+                                  ? 'bg-[#FFFCF6] border-[#777B61]'
+                                  : 'bg-[#FFFCF6]/65 border-[#E5DED1] hover:border-[#777B61]/60'
+                              }`}
+                            >
+                              {snapCard && (
+                                <div className="w-9 aspect-[896/1200] rounded-md overflow-hidden border border-[#E5DED1] bg-[#FFFCF6] shrink-0">
+                                  <TarotCardArtwork
+                                    card={snapCard}
+                                    size="thumbnail"
+                                    isReversed={snap.orientation === 'reversed'}
+                                  />
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <p className="text-[11px] text-[#777B61] font-medium">
+                                  0{idx + 1}. {snap.positionLabel || `${idx + 1}번째`}
+                                </p>
+                                <p className="font-serif text-xs font-medium text-[#34312D] truncate">
+                                  {snap.cardName}
+                                </p>
+                                <p className="text-[10px] text-[#827B72]">
+                                  {snap.orientation === 'reversed' ? '역방향' : '정방향'}
+                                </p>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {(() => {
+                        const activeSnap =
+                          selectedRecord.spreadCards?.[inspectedSpreadIndex];
+                        const activeSnapCard = activeSnap
+                          ? getCardById(activeSnap.cardId)
+                          : undefined;
+                        if (!activeSnap || !activeSnapCard) return null;
+                        return (
+                          <div className="pt-2 border-t border-[#E5DED1] text-xs leading-relaxed text-[#34312D]/85 space-y-1">
+                            <p className="font-medium text-[#34312D]">
+                              {activeSnap.positionLabel} · {activeSnapCard.nameKo} ({activeSnapCard.nameEn})
+                            </p>
+                            <p>{activeSnapCard.meaningGuide}</p>
+                            <p className="text-[#777B61]">
+                              질문: {activeSnapCard.reflectionQuestion}
+                            </p>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
 
                 {/* Reflection Question Reference */}
                 {selectedRecord.reflectionQuestion && (

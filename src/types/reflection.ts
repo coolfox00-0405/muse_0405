@@ -20,6 +20,14 @@ export interface TarotCard {
   backImageUrl: string;
 }
 
+export interface SpreadCardSnapshot {
+  cardId: string;
+  cardName: string;
+  cardNameEn: string;
+  orientation: 'upright' | 'reversed';
+  positionLabel?: string;
+}
+
 export interface ReflectionRecord {
   id: string;
   date: string; // YYYY-MM-DD in user's local timezone
@@ -27,6 +35,8 @@ export interface ReflectionRecord {
   cardName: string;
   cardNameEn: string;
   orientation?: 'upright' | 'reversed';
+  readingType?: 'single' | 'three';
+  spreadCards?: SpreadCardSnapshot[];
   reflectionQuestion: string;
   selectedAction?: string;
   userNote: string;

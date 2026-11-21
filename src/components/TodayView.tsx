@@ -8,8 +8,13 @@ import {
   ChevronDown,
   ChevronUp,
   BookOpen,
+  Home,
 } from 'lucide-react';
-import { DeckMode, TarotCard } from '../types/reflection';
+import {
+  DeckMode,
+  SpreadCardSnapshot,
+  TarotCard,
+} from '../types/reflection';
 import { TarotCardFlip } from './TarotCardFlip';
 import { TarotCardArtwork } from './TarotCardArtwork';
 import { CardShuffleSpread, DrawPhase } from './CardShuffleSpread';
@@ -36,8 +41,12 @@ interface TodayViewProps {
     card: TarotCard,
     note: string,
     selectedAction?: string,
-    orientation?: 'upright' | 'reversed'
+    orientation?: 'upright' | 'reversed',
+    spreadCards?: SpreadCardSnapshot[]
   ) => { ok: boolean; error?: string };
+  onStartNewReading: () => void;
+  onGoHome: () => void;
+  savedRecordCount?: number;
   onGoToJournal: () => void;
   onOpenEncyclopedia?: (cardId?: string) => void;
 }
@@ -56,6 +65,9 @@ export function TodayView({
   onStartShuffle,
   onSelectCard,
   onSaveReflection,
+  onStartNewReading,
+  onGoHome,
+  savedRecordCount = 0,
   onGoToJournal,
   onOpenEncyclopedia,
 }: TodayViewProps) {
@@ -131,11 +143,23 @@ export function TodayView({
     e.preventDefault();
     if (!activeCard) return;
 
+    const spreadSnapshot: SpreadCardSnapshot[] | undefined =
+      selectedCards.length > 1
+        ? selectedCards.map((c, idx) => ({
+            cardId: c.id,
+            cardName: c.nameKo,
+            cardNameEn: c.nameEn,
+            orientation: selectedOrientations[idx] ?? 'upright',
+            positionLabel: THREE_CARD_POSITIONS[idx],
+          }))
+        : undefined;
+
     const result = onSaveReflection(
       activeCard,
       note,
       includeAction ? activeCard.gentleAction : undefined,
-      activeOrientation
+      activeOrientation,
+      spreadSnapshot
     );
     if (result.ok) {
       setNote('');
@@ -157,11 +181,26 @@ export function TodayView({
     }
   };
 
-  const handleReshuffle = () => {
+  const resetReadingTransientState = () => {
     setFeedback(null);
     setIncludeAction(false);
     setActiveRevealIndex(0);
+    setCardFlipped(false);
+  };
+
+  const handleReshuffle = () => {
+    resetReadingTransientState();
     onStartShuffle();
+  };
+
+  const handleStartNewReadingClick = () => {
+    resetReadingTransientState();
+    onStartNewReading();
+  };
+
+  const handleGoHomeClick = () => {
+    resetReadingTransientState();
+    onGoHome();
   };
 
   if (phase !== 'revealed' || !activeCard) {
@@ -241,7 +280,10 @@ export function TodayView({
           />
         </div>
 
-        <div className="mt-4 sm:mt-6 space-y-3 w-full max-w-md">
+        <div
+          id="reading-setup-controls"
+          className="mt-4 sm:mt-6 space-y-3 w-full max-w-md scroll-mt-24"
+        >
           {phase === 'idle' && (
             <>
               <div className="flex flex-wrap items-center justify-center gap-2">
@@ -353,6 +395,20 @@ export function TodayView({
               <p className="text-xs leading-relaxed text-[#827B72]">
                 정답을 찾기보다 지금 떠오르는 생각에 귀 기울여 보세요.
               </p>
+              {savedRecordCount > 0 && (
+                <p className="text-xs text-[#777B61] pt-1">
+                  <button
+                    type="button"
+                    onClick={onGoToJournal}
+                    className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-[#34312D] transition-colors cursor-pointer"
+                  >
+                    <span>
+                      저장된 인사이트 노트 {savedRecordCount}건 보존 중 · 기록 보기
+                    </span>
+                    <ArrowRight className="w-3 h-3" aria-hidden="true" />
+                  </button>
+                </p>
+              )}
             </>
           )}
 
@@ -760,6 +816,36 @@ export function TodayView({
               </button>
             </div>
           </form>
+
+          {/* Bottom Reading Navigation Bar: New Reading vs Return Home */}
+          <div
+            aria-label="리딩 완료 후 이동"
+            className="border-t border-[#E5DED1] pt-6 mt-2 space-y-3"
+          >
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <button
+                type="button"
+                onClick={handleStartNewReadingClick}
+                className="flex-1 min-h-[48px] inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#777B61] hover:bg-[#646850] active:scale-[0.99] text-[#FFFCF6] text-[15px] font-medium transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
+              >
+                <Shuffle className="w-4 h-4" aria-hidden="true" />
+                <span>새 리딩 시작</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleGoHomeClick}
+                className="flex-1 sm:flex-initial min-h-[48px] inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-[#E5DED1] bg-[#FFFCF6] hover:bg-[#E5DED1]/45 text-[#34312D] text-[15px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
+              >
+                <Home className="w-4 h-4 text-[#777B61]" aria-hidden="true" />
+                <span>처음 화면으로</span>
+              </button>
+            </div>
+
+            <p className="text-xs leading-relaxed text-[#827B72]">
+              새로운 리딩을 시작하거나 처음 화면으로 돌아가도 인사이트 노트에 저장된 이전 기록은 그대로 보존됩니다.
+            </p>
+          </div>
         </div>
       </div>
     </section>
