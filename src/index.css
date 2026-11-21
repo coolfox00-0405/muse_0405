@@ -23,6 +23,8 @@
     color: var(--color-ink);
     -webkit-tap-highlight-color: transparent;
     word-break: keep-all;
+    scroll-padding-top: 5rem;
+    scroll-padding-bottom: 6rem;
   }
 
   h1, h2, h3 {

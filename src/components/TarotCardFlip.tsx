@@ -25,10 +25,10 @@ export function TarotCardFlip({
 
   return (
     <div
-      className={`card-perspective w-[240px] sm:w-[272px] mx-auto select-none ${
+      className={`card-perspective w-[204px] sm:w-[236px] lg:w-[252px] mx-auto select-none ${
         isClickable ? 'cursor-pointer group' : ''
       }`}
-      style={{ aspectRatio: '3 / 4.55' }}
+      style={{ aspectRatio: '3 / 4.70' }}
       onClick={isClickable ? onCardClick : undefined}
       role={isClickable ? 'button' : undefined}
       tabIndex={isClickable ? 0 : undefined}
@@ -75,25 +75,25 @@ export function TarotCardFlip({
           )}
         </div>
 
-        {/* Card Front — Unobstructed 3:4 Artwork + Unified Bottom Title Plate */}
+        {/* Card Front — Unobstructed Artwork (896:1200) + Compact Bottom Title Plate */}
         <div className="card-face card-face-front rounded-[18px] overflow-hidden bg-[#FFFCF6] border border-[#E5DED1] shadow-[0_14px_34px_-16px_rgba(52,49,45,0.22)] flex flex-col">
-          <div className="relative w-full aspect-[3/4] overflow-hidden bg-[#F7F3EA] shrink-0">
+          <div className="relative w-full aspect-[896/1200] overflow-hidden bg-[#FFFCF6] shrink-0">
             <TarotCardArtwork card={card} size="full" priority />
           </div>
 
-          <div className="flex-1 flex flex-col items-center justify-center px-3 py-2.5 bg-[#FFFCF6] border-t border-[#E5DED1] text-center">
-            <div className="flex items-center justify-center gap-1.5 leading-tight">
-              <span className="font-display text-[11px] tracking-[0.16em] text-[#777B61] font-medium">
+          <div className="flex-1 flex flex-col items-center justify-center px-2.5 py-1 bg-[#FFFCF6] border-t border-[#E5DED1] text-center min-h-[42px]">
+            <div className="flex items-center justify-center gap-1.5 leading-tight max-w-full">
+              <span className="font-display text-[10.5px] sm:text-[11px] tracking-[0.12em] text-[#777B61] font-medium shrink-0">
                 {card.arcanaNumber}
               </span>
-              <span className="text-[#E5DED1]" aria-hidden="true">
+              <span className="text-[#E5DED1] shrink-0" aria-hidden="true">
                 ·
               </span>
-              <span className="font-serif text-[14px] font-medium text-[#34312D] truncate max-w-[175px]">
+              <span className="font-serif text-[12.5px] sm:text-[13.5px] font-medium text-[#34312D] truncate">
                 {card.nameKo}
               </span>
             </div>
-            <p className="font-display text-[11px] tracking-[0.1em] text-[#827B72] mt-0.5 truncate max-w-full">
+            <p className="font-display text-[10.5px] sm:text-[11px] tracking-[0.06em] text-[#827B72] leading-tight mt-0.5 max-w-full truncate">
               {card.nameEn}
             </p>
           </div>

@@ -1,4 +1,10 @@
-export function AboutView() {
+import { BookOpen } from 'lucide-react';
+
+interface AboutViewProps {
+  onOpenEncyclopedia?: () => void;
+}
+
+export function AboutView({ onOpenEncyclopedia }: AboutViewProps) {
   return (
     <section
       aria-label="앱 소개"
@@ -24,6 +30,27 @@ export function AboutView() {
           섞고 뽑아 볼 수 있습니다.
         </p>
       </div>
+
+      {onOpenEncyclopedia && (
+        <div className="bg-[#FFFCF6] border border-[#E7E0D5] rounded-2xl p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h2 className="font-serif text-lg font-medium text-[#34312D]">
+              78장 타로 도감 · 이미지 확인
+            </h2>
+            <p className="text-xs sm:text-sm leading-relaxed text-[#827B72]">
+              메이저 22장과 마이너 56장 각각의 고유한 일러스트와 상징, 내가 남긴 카드별 기록을 한눈에 살펴볼 수 있습니다.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onOpenEncyclopedia}
+            className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 rounded-xl bg-[#777B61] hover:bg-[#646850] text-[#FFFCF6] text-sm font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+          >
+            <BookOpen className="w-4 h-4" aria-hidden="true" />
+            <span>78장 도감 열기</span>
+          </button>
+        </div>
+      )}
 
       <div className="space-y-5 px-1">
         <h2 className="font-serif text-xl font-medium text-[#34312D]">

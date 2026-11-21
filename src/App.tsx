@@ -1,13 +1,15 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Sparkles, BookOpen, Compass, Info } from 'lucide-react';
 import { ActiveTab, DeckMode, TarotCard } from './types/reflection';
-import { FULL_TAROT_DECK, MAJOR_ARCANA_DECK, shuffleDeck } from './data/cards';
+import { FULL_TAROT_DECK, MAJOR_ARCANA_DECK } from './data/cards';
+import { shuffleUniqueSpread } from './utils/deckShuffle';
 import { useReflections } from './hooks/useReflections';
 import { TodayView } from './components/TodayView';
 import { JournalView } from './components/JournalView';
 import { ReadMyselfView } from './components/ReadMyselfView';
 import { AboutView } from './components/AboutView';
 import { DrawPhase } from './components/CardShuffleSpread';
+import { DeckEncyclopediaModal } from './components/DeckEncyclopediaModal';
 
 const NAV_ITEMS: { id: ActiveTab; label: string }[] = [
   { id: 'today', label: '지금, 나에게' },
@@ -16,15 +18,32 @@ const NAV_ITEMS: { id: ActiveTab; label: string }[] = [
   { id: 'about', label: '앱 소개' },
 ];
 
+export type ReadingDrawCount = 1 | 3;
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('today');
   const [deckMode, setDeckMode] = useState<DeckMode>('full');
+  const [drawCount, setDrawCount] = useState<ReadingDrawCount>(1);
   const [drawPhase, setDrawPhase] = useState<DrawPhase>('idle');
-  const [spreadCards, setSpreadCards] = useState<TarotCard[]>(() =>
-    shuffleDeck(FULL_TAROT_DECK)
-  );
-  const [selectedCard, setSelectedCard] = useState<TarotCard | null>(null);
+
+  const drawnHistoryRef = useRef<Record<DeckMode, Set<string>>>({
+    full: new Set<string>(),
+    major: new Set<string>(),
+  });
+  const previousSpreadIdsRef = useRef<string[]>([]);
+
+  const [spreadCards, setSpreadCards] = useState<TarotCard[]>(() => {
+    const { shuffledDeck } = shuffleUniqueSpread({ deck: FULL_TAROT_DECK });
+    previousSpreadIdsRef.current = shuffledDeck.slice(0, 7).map((c) => c.id);
+    return shuffledDeck;
+  });
+
+  const [selectedCards, setSelectedCards] = useState<TarotCard[]>([]);
+  const selectedCardsRef = useRef<TarotCard[]>([]);
+
   const [focusedRecordId, setFocusedRecordId] = useState<string | null>(null);
+  const [encyclopediaOpen, setEncyclopediaOpen] = useState(false);
+  const [encyclopediaCardId, setEncyclopediaCardId] = useState<string | null>(null);
   const shuffleTimerRef = useRef<number | null>(null);
 
   const {
@@ -51,20 +70,51 @@ export default function App() {
     [deckMode]
   );
 
-  const handleChangeDeckMode = useCallback(
-    (nextMode: DeckMode) => {
-      setDeckMode(nextMode);
-      setSpreadCards(shuffleDeck(getActiveDeck(nextMode)));
+  const performUniqueShuffle = useCallback(
+    (mode: DeckMode) => {
+      const historySet = drawnHistoryRef.current[mode];
+      const { shuffledDeck, didResetCycle } = shuffleUniqueSpread({
+        deck: getActiveDeck(mode),
+        excludedIds: historySet,
+        previousSpreadIds: previousSpreadIdsRef.current,
+        minSpreadCount: 7,
+      });
+
+      if (didResetCycle) {
+        drawnHistoryRef.current[mode] = new Set<string>();
+      }
+
+      previousSpreadIdsRef.current = shuffledDeck.slice(0, 7).map((c) => c.id);
+      setSpreadCards(shuffledDeck);
     },
     [getActiveDeck]
   );
+
+  const handleChangeDeckMode = useCallback(
+    (nextMode: DeckMode) => {
+      setDeckMode(nextMode);
+      selectedCardsRef.current = [];
+      setSelectedCards([]);
+      performUniqueShuffle(nextMode);
+    },
+    [performUniqueShuffle]
+  );
+
+  const handleChangeDrawCount = useCallback((nextCount: ReadingDrawCount) => {
+    setDrawCount(nextCount);
+    selectedCardsRef.current = [];
+    setSelectedCards([]);
+  }, []);
 
   const handleStartShuffle = useCallback(() => {
     if (shuffleTimerRef.current !== null) {
       window.clearTimeout(shuffleTimerRef.current);
     }
-    setSelectedCard(null);
-    setSpreadCards(shuffleDeck(getActiveDeck()));
+
+    selectedCardsRef.current = [];
+    setSelectedCards([]);
+    performUniqueShuffle(deckMode);
+
     const prefersReducedMotion =
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -80,11 +130,40 @@ export default function App() {
       setDrawPhase('selecting');
       shuffleTimerRef.current = null;
     }, 900);
-  }, [getActiveDeck]);
+  }, [deckMode, performUniqueShuffle]);
 
-  const handleSelectCard = useCallback((card: TarotCard) => {
-    setSelectedCard(card);
-    setDrawPhase('revealed');
+  const handleSelectCard = useCallback(
+    (card: TarotCard) => {
+      if (drawPhase !== 'selecting') return;
+
+      // Strict duplicate prevention within a single reading
+      if (selectedCardsRef.current.some((c) => c.id === card.id)) {
+        return;
+      }
+      if (selectedCardsRef.current.length >= drawCount) {
+        return;
+      }
+
+      const next = [...selectedCardsRef.current, card];
+      selectedCardsRef.current = next;
+      setSelectedCards(next);
+      drawnHistoryRef.current[deckMode].add(card.id);
+
+      if (next.length >= drawCount) {
+        setDrawPhase('revealed');
+      }
+    },
+    [drawPhase, drawCount, deckMode]
+  );
+
+  const handleOpenEncyclopedia = useCallback((cardId?: string) => {
+    setEncyclopediaCardId(cardId ?? null);
+    setEncyclopediaOpen(true);
+  }, []);
+
+  const handleCloseEncyclopedia = useCallback(() => {
+    setEncyclopediaOpen(false);
+    setEncyclopediaCardId(null);
   }, []);
 
   const renderTabIcon = (id: ActiveTab, isActive: boolean) => {
@@ -150,18 +229,21 @@ export default function App() {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 pb-24 md:pb-12">
+      <main className="flex-1 pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:pb-12">
         {activeTab === 'today' && (
           <TodayView
             phase={drawPhase}
             deckMode={deckMode}
             onChangeDeckMode={handleChangeDeckMode}
+            drawCount={drawCount}
+            onChangeDrawCount={handleChangeDrawCount}
             spreadCards={spreadCards}
-            selectedCard={selectedCard}
+            selectedCards={selectedCards}
             onStartShuffle={handleStartShuffle}
             onSelectCard={handleSelectCard}
             onSaveReflection={addReflection}
             onGoToJournal={() => setActiveTab('journal')}
+            onOpenEncyclopedia={handleOpenEncyclopedia}
           />
         )}
 
@@ -190,13 +272,15 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'about' && <AboutView />}
+        {activeTab === 'about' && (
+          <AboutView onOpenEncyclopedia={() => handleOpenEncyclopedia()} />
+        )}
       </main>
 
       {/* Mobile Fixed Bottom Navigation */}
       <nav
         aria-label="하단 메뉴"
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#FFFCF6]/95 backdrop-blur-md border-t border-[#E5DED1]"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#FFFCF6] border-t border-[#E5DED1] shadow-[0_-6px_20px_-10px_rgba(52,49,45,0.12)] pb-[env(safe-area-inset-bottom)]"
       >
         <div className="grid grid-cols-4 h-16 max-w-lg mx-auto">
           {NAV_ITEMS.map((item) => {
@@ -222,6 +306,13 @@ export default function App() {
           })}
         </div>
       </nav>
+
+      <DeckEncyclopediaModal
+        isOpen={encyclopediaOpen}
+        onClose={handleCloseEncyclopedia}
+        records={records}
+        initialCardId={encyclopediaCardId}
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { TarotCard } from '../types/reflection';
 import { MINOR_ARCANA_DECK } from './minorArcana';
+import { dedupeDeck, fisherYatesShuffle } from '../utils/deckShuffle';
 
 export const TAROT_CARD_BACK_IMAGE =
   '/src/assets/images/lucida_card_back_1795172686051.jpg';
@@ -360,10 +361,5 @@ export function getCardById(cardId: string): TarotCard | undefined {
 export { MINOR_ARCANA_DECK };
 
 export function shuffleDeck(deck: TarotCard[] = FULL_TAROT_DECK): TarotCard[] {
-  const copy = [...deck];
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
+  return fisherYatesShuffle(dedupeDeck(deck));
 }

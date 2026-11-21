@@ -817,7 +817,7 @@ export function JournalView({
                           : undefined;
                       if (!matchedCard) return null;
                       return (
-                        <div className="w-14 sm:w-16 aspect-[3/4] rounded-[10px] overflow-hidden border border-[#E5DED1] bg-[#F7F3EA] shrink-0">
+                        <div className="w-14 sm:w-16 aspect-[896/1200] rounded-[10px] overflow-hidden border border-[#E5DED1] bg-[#FFFCF6] shrink-0">
                           <TarotCardArtwork card={matchedCard} size="thumbnail" />
                         </div>
                       );
