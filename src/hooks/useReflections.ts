@@ -72,7 +72,8 @@ export function useReflections() {
     (
       card: TarotCard,
       note: string,
-      selectedAction?: string
+      selectedAction?: string,
+      orientation: 'upright' | 'reversed' = 'upright'
     ): { ok: boolean; error?: string; record?: ReflectionRecord } => {
       const trimmed = note.trim();
       if (!trimmed) {
@@ -87,7 +88,7 @@ export function useReflections() {
         cardId: card.id,
         cardName: card.nameKo,
         cardNameEn: card.nameEn,
-        orientation: 'upright',
+        orientation,
         reflectionQuestion: card.reflectionQuestion,
         selectedAction: selectedAction || undefined,
         userNote: trimmed,

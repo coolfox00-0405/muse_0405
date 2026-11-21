@@ -818,7 +818,11 @@ export function JournalView({
                       if (!matchedCard) return null;
                       return (
                         <div className="w-14 sm:w-16 aspect-[896/1200] rounded-[10px] overflow-hidden border border-[#E5DED1] bg-[#FFFCF6] shrink-0">
-                          <TarotCardArtwork card={matchedCard} size="thumbnail" />
+                          <TarotCardArtwork
+                            card={matchedCard}
+                            size="thumbnail"
+                            isReversed={selectedRecord.orientation === 'reversed'}
+                          />
                         </div>
                       );
                     })()}
@@ -828,6 +832,8 @@ export function JournalView({
                         {formatKoreanTime(selectedRecord.createdAt)} ·{' '}
                         {selectedRecord.cardId === 'freeform'
                           ? '자유 기록'
+                          : selectedRecord.orientation === 'reversed'
+                          ? '카드 성찰 (역방향)'
                           : '카드 성찰'}
                       </p>
                       <h2 className="font-serif text-2xl font-medium text-[#34312D]">

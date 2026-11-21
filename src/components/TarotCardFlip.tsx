@@ -6,12 +6,14 @@ import { TAROT_CARD_BACK_IMAGE } from '../data/cards';
 interface TarotCardFlipProps {
   card: TarotCard;
   isRevealed: boolean;
+  isReversed?: boolean;
   onCardClick?: () => void;
 }
 
 export function TarotCardFlip({
   card,
   isRevealed,
+  isReversed = false,
   onCardClick,
 }: TarotCardFlipProps) {
   const [backError, setBackError] = useState(false);
@@ -78,7 +80,12 @@ export function TarotCardFlip({
         {/* Card Front — Unobstructed Artwork (896:1200) + Compact Bottom Title Plate */}
         <div className="card-face card-face-front rounded-[18px] overflow-hidden bg-[#FFFCF6] border border-[#E5DED1] shadow-[0_14px_34px_-16px_rgba(52,49,45,0.22)] flex flex-col">
           <div className="relative w-full aspect-[896/1200] overflow-hidden bg-[#FFFCF6] shrink-0">
-            <TarotCardArtwork card={card} size="full" priority />
+            <TarotCardArtwork
+              card={card}
+              size="full"
+              priority
+              isReversed={isReversed}
+            />
           </div>
 
           <div className="flex-1 flex flex-col items-center justify-center px-2.5 py-1 bg-[#FFFCF6] border-t border-[#E5DED1] text-center min-h-[42px]">

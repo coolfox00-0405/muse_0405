@@ -5,6 +5,7 @@ interface TarotCardArtworkProps {
   card: TarotCard;
   size?: 'full' | 'thumbnail';
   priority?: boolean;
+  isReversed?: boolean;
   onStatusChange?: (cardId: string, loaded: boolean) => void;
 }
 
@@ -12,6 +13,7 @@ export function TarotCardArtwork({
   card,
   size = 'full',
   priority = false,
+  isReversed = false,
   onStatusChange,
 }: TarotCardArtworkProps) {
   const [imgError, setImgError] = useState(false);
@@ -27,7 +29,7 @@ export function TarotCardArtwork({
     return (
       <img
         src={card.frontImageUrl}
-        alt={`${card.nameKo} (${card.nameEn}) 타로 카드 일러스트`}
+        alt={`${card.nameKo} (${card.nameEn})${isReversed ? ' 역방향' : ''} 타로 카드 일러스트`}
         referrerPolicy="no-referrer"
         loading={priority ? 'eager' : 'lazy'}
         decoding="async"
@@ -36,7 +38,9 @@ export function TarotCardArtwork({
           setImgError(true);
           onStatusChange?.(card.id, false);
         }}
-        className="w-full h-full object-contain bg-[#FFFCF6]"
+        className={`w-full h-full object-contain bg-[#FFFCF6] ${
+          isReversed ? 'rotate-180' : ''
+        }`}
       />
     );
   }

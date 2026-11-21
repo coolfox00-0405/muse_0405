@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Sparkles, BookOpen, Compass, Info } from 'lucide-react';
 import { ActiveTab, DeckMode, TarotCard } from './types/reflection';
 import { FULL_TAROT_DECK, MAJOR_ARCANA_DECK } from './data/cards';
-import { shuffleUniqueSpread } from './utils/deckShuffle';
+import { getUnbiasedRandomInt, shuffleUniqueSpread } from './utils/deckShuffle';
 import { useReflections } from './hooks/useReflections';
 import { TodayView } from './components/TodayView';
 import { JournalView } from './components/JournalView';
@@ -24,6 +24,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('today');
   const [deckMode, setDeckMode] = useState<DeckMode>('full');
   const [drawCount, setDrawCount] = useState<ReadingDrawCount>(1);
+  const [allowReversed, setAllowReversed] = useState<boolean>(false);
   const [drawPhase, setDrawPhase] = useState<DrawPhase>('idle');
 
   const drawnHistoryRef = useRef<Record<DeckMode, Set<string>>>({
@@ -40,6 +41,10 @@ export default function App() {
 
   const [selectedCards, setSelectedCards] = useState<TarotCard[]>([]);
   const selectedCardsRef = useRef<TarotCard[]>([]);
+  const [selectedOrientations, setSelectedOrientations] = useState<
+    ('upright' | 'reversed')[]
+  >([]);
+  const selectedOrientationsRef = useRef<('upright' | 'reversed')[]>([]);
 
   const [focusedRecordId, setFocusedRecordId] = useState<string | null>(null);
   const [encyclopediaOpen, setEncyclopediaOpen] = useState(false);
@@ -94,7 +99,9 @@ export default function App() {
     (nextMode: DeckMode) => {
       setDeckMode(nextMode);
       selectedCardsRef.current = [];
+      selectedOrientationsRef.current = [];
       setSelectedCards([]);
+      setSelectedOrientations([]);
       performUniqueShuffle(nextMode);
     },
     [performUniqueShuffle]
@@ -103,7 +110,9 @@ export default function App() {
   const handleChangeDrawCount = useCallback((nextCount: ReadingDrawCount) => {
     setDrawCount(nextCount);
     selectedCardsRef.current = [];
+    selectedOrientationsRef.current = [];
     setSelectedCards([]);
+    setSelectedOrientations([]);
   }, []);
 
   const handleStartShuffle = useCallback(() => {
@@ -112,7 +121,9 @@ export default function App() {
     }
 
     selectedCardsRef.current = [];
+    selectedOrientationsRef.current = [];
     setSelectedCards([]);
+    setSelectedOrientations([]);
     performUniqueShuffle(deckMode);
 
     const prefersReducedMotion =
@@ -145,15 +156,24 @@ export default function App() {
       }
 
       const next = [...selectedCardsRef.current, card];
+      const nextOrientation: 'upright' | 'reversed' =
+        allowReversed && getUnbiasedRandomInt(2) === 1 ? 'reversed' : 'upright';
+      const nextOrientations = [
+        ...selectedOrientationsRef.current,
+        nextOrientation,
+      ];
+
       selectedCardsRef.current = next;
+      selectedOrientationsRef.current = nextOrientations;
       setSelectedCards(next);
+      setSelectedOrientations(nextOrientations);
       drawnHistoryRef.current[deckMode].add(card.id);
 
       if (next.length >= drawCount) {
         setDrawPhase('revealed');
       }
     },
-    [drawPhase, drawCount, deckMode]
+    [drawPhase, drawCount, deckMode, allowReversed]
   );
 
   const handleOpenEncyclopedia = useCallback((cardId?: string) => {
@@ -237,8 +257,11 @@ export default function App() {
             onChangeDeckMode={handleChangeDeckMode}
             drawCount={drawCount}
             onChangeDrawCount={handleChangeDrawCount}
+            allowReversed={allowReversed}
+            onChangeAllowReversed={setAllowReversed}
             spreadCards={spreadCards}
             selectedCards={selectedCards}
+            selectedOrientations={selectedOrientations}
             onStartShuffle={handleStartShuffle}
             onSelectCard={handleSelectCard}
             onSaveReflection={addReflection}

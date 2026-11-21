@@ -3,7 +3,7 @@ import { MINOR_ARCANA_DECK } from './minorArcana';
 import { dedupeDeck, fisherYatesShuffle } from '../utils/deckShuffle';
 
 export const TAROT_CARD_BACK_IMAGE =
-  '/src/assets/images/lucida_card_back_1795172686051.jpg';
+  '/src/assets/images/lucida_card_back.webp';
 
 export const TAROT_DECK: TarotCard[] = [
   {
@@ -18,7 +18,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '바보는 익숙한 계산을 잠시 내려놓고 처음의 호기심으로 세상을 바라보는 상징입니다. 무모함이 아니라 열린 마음으로 출발하는 태도를 돌아보게 합니다.',
     symbolKey: 'fool',
-    frontImageUrl: '/src/assets/images/tarot_00_fool_1795153982651.jpg',
+    frontImageUrl: '/src/assets/images/major_00_fool.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
   {
@@ -33,7 +33,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '마법사는 생각을 현실의 작은 행동으로 옮기는 집중력과 주도성을 상징합니다. 부족한 것을 세기보다 이미 가진 것에 시선을 두는 관점을 제안합니다.',
     symbolKey: 'magician',
-    frontImageUrl: '/src/assets/images/tarot_01_magician_1795153983047.jpg',
+    frontImageUrl: '/src/assets/images/major_01_magician.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
   {
@@ -48,7 +48,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '여사제는 겉으로 드러난 정보 너머의 직관과 고요한 관찰을 상징합니다. 당장 행동하기 전에 한 박자 쉬며 내면의 결을 살피는 시간과 닿아 있습니다.',
     symbolKey: 'high-priestess',
-    frontImageUrl: '/src/assets/images/tarot_02_priestess_1795153983979.jpg',
+    frontImageUrl: '/src/assets/images/major_02_high_priestess.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
   {
@@ -63,7 +63,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '여황제는 감각의 풍요로움, 돌봄, 그리고 자연스러운 성장을 상징합니다. 효율과 성과에서 잠시 벗어나 몸과 마음의 편안함을 챙기는 관점을 건넵니다.',
     symbolKey: 'empress',
-    frontImageUrl: '/src/assets/images/tarot_03_empress_1795153984248.jpg',
+    frontImageUrl: '/src/assets/images/major_03_empress.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
   {
@@ -78,7 +78,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '황제는 안정적인 질서와 책임감, 스스로 세운 구조를 상징합니다. 외부의 흔들림 속에서 중심을 잡기 위해 무엇을 정리하면 좋을지 생각해 보게 합니다.',
     symbolKey: 'emperor',
-    frontImageUrl: '/src/assets/images/tarot_04_emperor_1795153983526.jpg',
+    frontImageUrl: '/src/assets/images/major_04_emperor.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
   {
@@ -93,7 +93,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '교황은 배움, 전통, 그리고 신뢰할 수 있는 조언을 상징합니다. 혼자 모든 답을 만들기보다 그동안 쌓아온 경험과 신뢰의 바탕을 돌아보게 합니다.',
     symbolKey: 'hierophant',
-    frontImageUrl: '/src/assets/images/tarot_05_hierophant_1795153982155.jpg',
+    frontImageUrl: '/src/assets/images/major_05_hierophant.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
   {
@@ -108,7 +108,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '연인은 관계의 조화뿐만 아니라 자신의 가치와 일치하는 선택을 상징합니다. 억지 타협보다 솔직한 마음의 정렬을 살펴보는 관점을 제시합니다.',
     symbolKey: 'lovers',
-    frontImageUrl: '/src/assets/images/tarot_06_lovers_1795153983324.jpg',
+    frontImageUrl: '/src/assets/images/major_06_lovers.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
   {
@@ -123,7 +123,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '전차는 상반된 감정이나 조건을 조율하며 스스로 고삐를 쥐고 나아가는 추진력을 상징합니다. 속도보다 방향을 의식하는 태도를 돌아보게 합니다.',
     symbolKey: 'chariot',
-    frontImageUrl: '/src/assets/images/tarot_07_chariot_1795153983896.jpg',
+    frontImageUrl: '/src/assets/images/major_07_chariot.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
   {
@@ -138,7 +138,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '힘 카드는 거친 통제 대신 인내와 온화함으로 내면의 불안을 다루는 용기를 상징합니다. 스스로에게 조금 더 너그러운 시선을 건네도록 돕습니다.',
     symbolKey: 'strength',
-    frontImageUrl: '/src/assets/images/tarot_08_strength_1795153983044.jpg',
+    frontImageUrl: '/src/assets/images/major_08_strength.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
   {
@@ -155,7 +155,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '은둔자는 잠시 멈추어 자신에게 집중하고, 외부의 소음에서 벗어나 내면의 생각을 살펴보는 상징입니다. 혼자만의 시간이 필요한 것은 회피가 아니라 자신에게 집중하는 과정일 수도 있습니다.',
     symbolKey: 'hermit',
-    frontImageUrl: '/src/assets/images/tarot_hermit_front_1795152683169.jpg',
+    frontImageUrl: '/src/assets/images/major_09_hermit.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
   {
@@ -170,7 +170,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '운명의 수레바퀴는 삶의 순환과 예상치 못한 전환점을 상징합니다. 상황을 억지로 고정하려 하기보다 변화의 리듬을 유연하게 바라보게 합니다.',
     symbolKey: 'wheel',
-    frontImageUrl: '/src/assets/images/tarot_10_wheel_1795153983309.jpg',
+    frontImageUrl: '/src/assets/images/major_10_wheel_of_fortune.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
   {
@@ -185,7 +185,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '정의는 균형과 정직한 판단, 그리고 자신의 선택에 대한 투명한 시선을 상징합니다. 스스로를 과하게 탓하거나 합리화하지 않고 담담히 살피게 합니다.',
     symbolKey: 'justice',
-    frontImageUrl: '/src/assets/images/tarot_11_justice_1795153982798.jpg',
+    frontImageUrl: '/src/assets/images/major_11_justice.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
   {
@@ -200,7 +200,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '매달린 사람은 의도적인 멈춤과 관점의 전환을 상징합니다. 아무것도 하지 않는 시간이 낭비가 아니라 새로운 이해를 위한 여백이 될 수 있음을 보여줍니다.',
     symbolKey: 'hanged-man',
-    frontImageUrl: '/src/assets/images/tarot_12_hanged_1795154014628.jpg',
+    frontImageUrl: '/src/assets/images/major_12_hanged_man.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
   {
@@ -215,7 +215,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '죽음 카드는 불길한 예언이 아니라 한 시기의 자연스러운 마무리와 전환을 상징합니다. 끝맺음을 인정하고 새로운 여백을 준비하는 성찰을 돕습니다.',
     symbolKey: 'death',
-    frontImageUrl: '/src/assets/images/tarot_13_death_1795154013691.jpg',
+    frontImageUrl: '/src/assets/images/major_13_death.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
   {
@@ -230,7 +230,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '절제는 서로 다른 요소가 부드럽게 섞이며 균형을 이루는 상태를 상징합니다. 극단적인 변화보다 차분한 조율의 가치를 떠올리게 합니다.',
     symbolKey: 'temperance',
-    frontImageUrl: '/src/assets/images/tarot_14_temperance_1795154014645.jpg',
+    frontImageUrl: '/src/assets/images/major_14_temperance.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
   {
@@ -245,7 +245,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '악마 카드는 우리를 사로잡는 욕구, 불안, 혹은 익숙한 굴레를 정직하게 비추는 상징입니다. 스스로를 비난하기보다 그 패턴을 알아차리는 첫걸음을 제안합니다.',
     symbolKey: 'devil',
-    frontImageUrl: '/src/assets/images/tarot_15_devil_1795154015271.jpg',
+    frontImageUrl: '/src/assets/images/major_15_devil.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
   {
@@ -260,7 +260,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '탑은 낡은 틀이 깨지며 진실이 드러나는 순간을 상징합니다. 흔들림을 두려워하기보다 그 이후에 남는 단단한 본질을 살펴보는 관점을 건넵니다.',
     symbolKey: 'tower',
-    frontImageUrl: '/src/assets/images/tarot_16_tower_1795154014957.jpg',
+    frontImageUrl: '/src/assets/images/major_16_tower.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
   {
@@ -275,7 +275,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '별은 소란이 지나간 뒤 찾아오는 맑은 회복과 고요한 희망을 상징합니다. 서두르지 않고 본래의 나다움을 천천히 되찾는 시간을 떠올리게 합니다.',
     symbolKey: 'star',
-    frontImageUrl: '/src/assets/images/tarot_17_star_1795154015552.jpg',
+    frontImageUrl: '/src/assets/images/major_17_star.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
   {
@@ -290,7 +290,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '달은 모호함과 깊은 무의식, 그리고 불확실한 감정의 결을 상징합니다. 안개가 걷힐 때까지 성급히 단정하지 않는 태도를 살펴보게 합니다.',
     symbolKey: 'moon',
-    frontImageUrl: '/src/assets/images/tarot_18_moon_1795154014615.jpg',
+    frontImageUrl: '/src/assets/images/major_18_moon.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
   {
@@ -305,7 +305,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '태양은 명료함, 따뜻함, 그리고 꾸밈없는 생동감을 상징합니다. 부족한 점을 분석하기보다 지금 빛나고 있는 순간을 온전히 누리는 관점을 제안합니다.',
     symbolKey: 'sun',
-    frontImageUrl: '/src/assets/images/tarot_19_sun_1795154015754.jpg',
+    frontImageUrl: '/src/assets/images/major_19_sun.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
   {
@@ -320,7 +320,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '심판은 지나온 선택을 돌아보고 한 단계 깨어나는 자각의 순간을 상징합니다. 스스로를 심판하기보다 경험을 통합해 다음 장으로 나아가는 시선을 돕습니다.',
     symbolKey: 'judgement',
-    frontImageUrl: '/src/assets/images/tarot_20_judgement_1795154014995.jpg',
+    frontImageUrl: '/src/assets/images/major_20_judgement.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
   {
@@ -335,7 +335,7 @@ export const TAROT_DECK: TarotCard[] = [
     meaningGuide:
       '세계는 하나의 여정이 맺는 조화로운 매듭과 충만함을 상징합니다. 다음 목표를 서두르기 전에 지금 이룬 걸음을 충분히 인정해 주는 시간을 제안합니다.',
     symbolKey: 'world',
-    frontImageUrl: '/src/assets/images/tarot_21_world_1795154014332.jpg',
+    frontImageUrl: '/src/assets/images/major_21_world.webp',
     backImageUrl: TAROT_CARD_BACK_IMAGE,
   },
 ];

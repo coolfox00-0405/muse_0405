@@ -25,14 +25,18 @@ interface TodayViewProps {
   onChangeDeckMode: (mode: DeckMode) => void;
   drawCount: ReadingDrawCount;
   onChangeDrawCount: (count: ReadingDrawCount) => void;
+  allowReversed: boolean;
+  onChangeAllowReversed: (allow: boolean) => void;
   spreadCards: TarotCard[];
   selectedCards: TarotCard[];
+  selectedOrientations: ('upright' | 'reversed')[];
   onStartShuffle: () => void;
   onSelectCard: (card: TarotCard) => void;
   onSaveReflection: (
     card: TarotCard,
     note: string,
-    selectedAction?: string
+    selectedAction?: string,
+    orientation?: 'upright' | 'reversed'
   ) => { ok: boolean; error?: string };
   onGoToJournal: () => void;
   onOpenEncyclopedia?: (cardId?: string) => void;
@@ -44,8 +48,11 @@ export function TodayView({
   onChangeDeckMode,
   drawCount,
   onChangeDrawCount,
+  allowReversed,
+  onChangeAllowReversed,
   spreadCards,
   selectedCards,
+  selectedOrientations,
   onStartShuffle,
   onSelectCard,
   onSaveReflection,
@@ -78,6 +85,8 @@ export function TodayView({
 
   const activeCard =
     selectedCards[activeRevealIndex] ?? selectedCards[0] ?? null;
+  const activeOrientation: 'upright' | 'reversed' =
+    selectedOrientations[activeRevealIndex] ?? selectedOrientations[0] ?? 'upright';
 
   // Auto-save card reflection draft
   useEffect(() => {
@@ -125,7 +134,8 @@ export function TodayView({
     const result = onSaveReflection(
       activeCard,
       note,
-      includeAction ? activeCard.gentleAction : undefined
+      includeAction ? activeCard.gentleAction : undefined,
+      activeOrientation
     );
     if (result.ok) {
       setNote('');
@@ -294,6 +304,37 @@ export function TodayView({
                     }`}
                   >
                     세 장 흐름
+                  </button>
+                </div>
+
+                <div
+                  role="group"
+                  aria-label="카드 방향 설정"
+                  className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#FFFCF6] border border-[#E7E0D5]"
+                >
+                  <button
+                    type="button"
+                    onClick={() => onChangeAllowReversed(false)}
+                    aria-pressed={!allowReversed}
+                    className={`min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                      !allowReversed
+                        ? 'bg-[#777B61] text-[#FFFCF6]'
+                        : 'text-[#827B72] hover:text-[#34312D]'
+                    }`}
+                  >
+                    정방향
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onChangeAllowReversed(true)}
+                    aria-pressed={allowReversed}
+                    className={`min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                      allowReversed
+                        ? 'bg-[#777B61] text-[#FFFCF6]'
+                        : 'text-[#827B72] hover:text-[#34312D]'
+                    }`}
+                  >
+                    정·역방향
                   </button>
                 </div>
               </div>
@@ -482,7 +523,11 @@ export function TodayView({
                 }`}
               >
                 <div className="w-10 sm:w-12 aspect-[896/1200] rounded-lg overflow-hidden border border-[#E5DED1] bg-[#FFFCF6] shrink-0">
-                  <TarotCardArtwork card={card} size="thumbnail" />
+                  <TarotCardArtwork
+                    card={card}
+                    size="thumbnail"
+                    isReversed={selectedOrientations[idx] === 'reversed'}
+                  />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[11px] font-medium text-[#777B61]">
@@ -504,7 +549,11 @@ export function TodayView({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-7 lg:gap-10 items-start">
         {/* Left Column: Revealed Card & Compact Metadata + Scroll Cue */}
         <div className="lg:col-span-5 flex flex-col items-center lg:sticky lg:top-20">
-          <TarotCardFlip card={activeCard} isRevealed={cardFlipped} />
+          <TarotCardFlip
+            card={activeCard}
+            isRevealed={cardFlipped}
+            isReversed={activeOrientation === 'reversed'}
+          />
 
           <div className="mt-3 sm:mt-5 text-center space-y-1">
             <p className="text-[11px] sm:text-xs tracking-[0.1em] text-[#827B72]">
@@ -512,8 +561,12 @@ export function TodayView({
                 ? `${THREE_CARD_POSITIONS[activeRevealIndex]} · `
                 : ''}
               {activeCard.arcana === 'minor'
-                ? `마이너 아르카나 · ${activeCard.arcanaNumber} · 정방향`
-                : `메이저 아르카나 ${activeCard.arcanaNumber} · 정방향`}
+                ? `마이너 아르카나 · ${activeCard.arcanaNumber} · ${
+                    activeOrientation === 'reversed' ? '역방향' : '정방향'
+                  }`
+                : `메이저 아르카나 ${activeCard.arcanaNumber} · ${
+                    activeOrientation === 'reversed' ? '역방향' : '정방향'
+                  }`}
               {activeCard.suitTheme ? ` · ${activeCard.suitTheme}` : ''}
             </p>
             <h1 className="font-serif text-xl sm:text-[26px] font-medium text-[#34312D] leading-snug">
