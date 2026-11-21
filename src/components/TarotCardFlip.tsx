@@ -27,7 +27,7 @@ export function TarotCardFlip({
 
   return (
     <div
-      className={`card-perspective w-[204px] sm:w-[236px] lg:w-[252px] mx-auto select-none ${
+      className={`card-perspective w-[188px] sm:w-[236px] lg:w-[252px] mx-auto select-none ${
         isClickable ? 'cursor-pointer group' : ''
       }`}
       style={{ aspectRatio: '3 / 4.70' }}

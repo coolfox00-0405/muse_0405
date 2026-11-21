@@ -9,6 +9,7 @@ import {
   ChevronUp,
   BookOpen,
   Home,
+  Sparkles,
 } from 'lucide-react';
 import {
   DeckMode,
@@ -636,41 +637,67 @@ export function TodayView({
             </p>
           </div>
 
-          <div className="mt-3 sm:mt-4 flex flex-wrap items-center justify-center gap-2.5">
-            <button
-              type="button"
-              onClick={handleReshuffle}
-              className="inline-flex items-center gap-2 min-h-[40px] sm:min-h-[44px] px-4 py-2 rounded-xl border border-[#E5DED1] bg-[#FFFCF6] text-xs sm:text-sm text-[#34312D] hover:bg-[#E5DED1]/45 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
-            >
-              <Shuffle
-                className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#777B61]"
-                aria-hidden="true"
-              />
-              <span>다시 카드 섞기</span>
-            </button>
-
-            {onOpenEncyclopedia && (
+          {/* Primary Next-Step Actions: Prominent & Always Visible Without Scrolling */}
+          <div
+            aria-label="리딩 다음 행동"
+            className="mt-4 w-full max-w-[320px] sm:max-w-[340px] space-y-2.5"
+          >
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => onOpenEncyclopedia(activeCard.id)}
-                className="inline-flex items-center gap-1.5 min-h-[40px] sm:min-h-[44px] px-3.5 py-2 rounded-xl border border-[#E5DED1] bg-[#FFFCF6] text-xs sm:text-sm text-[#827B72] hover:text-[#34312D] hover:bg-[#E5DED1]/45 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
+                onClick={handleStartNewReadingClick}
+                className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#777B61] hover:bg-[#646850] active:scale-[0.99] text-[#FFFCF6] text-xs sm:text-sm font-medium shadow-xs transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
               >
-                <BookOpen
-                  className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#777B61]"
+                <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" aria-hidden="true" />
+                <span>새 리딩 시작</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleGoHomeClick}
+                className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#E5DED1] bg-[#FFFCF6] hover:bg-[#E5DED1]/45 text-[#34312D] text-xs sm:text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
+              >
+                <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#777B61] shrink-0" aria-hidden="true" />
+                <span>처음 화면으로</span>
+              </button>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={handleReshuffle}
+                className="inline-flex items-center gap-1.5 min-h-[38px] px-3 py-1.5 rounded-lg border border-[#E5DED1]/90 bg-[#FFFCF6]/80 text-xs text-[#827B72] hover:text-[#34312D] hover:bg-[#E5DED1]/35 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
+              >
+                <Shuffle
+                  className="w-3.5 h-3.5 text-[#777B61]"
                   aria-hidden="true"
                 />
-                <span>카드 도감</span>
+                <span>다시 섞기</span>
               </button>
-            )}
 
-            <button
-              type="button"
-              onClick={handleScrollToMessage}
-              className="lg:hidden inline-flex items-center gap-1.5 min-h-[40px] px-4 py-2 rounded-xl bg-[#777B61]/12 border border-[#777B61]/25 text-xs font-medium text-[#34312D] hover:bg-[#777B61]/20 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
-            >
-              <span>메시지와 질문 보기</span>
-              <ArrowDown className="w-3.5 h-3.5 text-[#777B61]" aria-hidden="true" />
-            </button>
+              {onOpenEncyclopedia && (
+                <button
+                  type="button"
+                  onClick={() => onOpenEncyclopedia(activeCard.id)}
+                  className="inline-flex items-center gap-1.5 min-h-[38px] px-3 py-1.5 rounded-lg border border-[#E5DED1]/90 bg-[#FFFCF6]/80 text-xs text-[#827B72] hover:text-[#34312D] hover:bg-[#E5DED1]/35 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
+                >
+                  <BookOpen
+                    className="w-3.5 h-3.5 text-[#777B61]"
+                    aria-hidden="true"
+                  />
+                  <span>카드 도감</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleScrollToMessage}
+                className="lg:hidden inline-flex items-center gap-1 min-h-[38px] px-3 py-1.5 rounded-lg bg-[#777B61]/10 border border-[#777B61]/25 text-xs font-medium text-[#34312D] hover:bg-[#777B61]/18 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
+              >
+                <span>메시지 보기</span>
+                <ArrowDown className="w-3.5 h-3.5 text-[#777B61]" aria-hidden="true" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -704,6 +731,34 @@ export function TodayView({
             </h2>
             <p className="text-[17px] sm:text-lg font-medium leading-relaxed text-[#34312D]">
               {activeCard.reflectionQuestion}
+            </p>
+          </div>
+
+          {/* Mobile mid-view action bar directly below message & question so user doesn't scroll to the bottom */}
+          <div
+            aria-label="리딩 계속하기 또는 돌아가기"
+            className="lg:hidden rounded-2xl bg-[#FFFCF6] border border-[#E5DED1] p-4 space-y-2.5"
+          >
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={handleStartNewReadingClick}
+                className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#777B61] hover:bg-[#646850] text-[#FFFCF6] text-sm font-medium transition-colors whitespace-nowrap cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>새 리딩 시작</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleGoHomeClick}
+                className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#E5DED1] bg-[#F7F3EA]/70 hover:bg-[#E5DED1]/45 text-[#34312D] text-sm font-medium transition-colors whitespace-nowrap cursor-pointer"
+              >
+                <Home className="w-4 h-4 text-[#777B61] shrink-0" aria-hidden="true" />
+                <span>처음 화면으로</span>
+              </button>
+            </div>
+            <p className="text-[11px] leading-relaxed text-[#827B72] text-center">
+              새로운 리딩을 시작해도 저장된 인사이트 노트는 그대로 보존됩니다.
             </p>
           </div>
 
@@ -816,36 +871,6 @@ export function TodayView({
               </button>
             </div>
           </form>
-
-          {/* Bottom Reading Navigation Bar: New Reading vs Return Home */}
-          <div
-            aria-label="리딩 완료 후 이동"
-            className="border-t border-[#E5DED1] pt-6 mt-2 space-y-3"
-          >
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <button
-                type="button"
-                onClick={handleStartNewReadingClick}
-                className="flex-1 min-h-[48px] inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#777B61] hover:bg-[#646850] active:scale-[0.99] text-[#FFFCF6] text-[15px] font-medium transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
-              >
-                <Shuffle className="w-4 h-4" aria-hidden="true" />
-                <span>새 리딩 시작</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleGoHomeClick}
-                className="flex-1 sm:flex-initial min-h-[48px] inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-[#E5DED1] bg-[#FFFCF6] hover:bg-[#E5DED1]/45 text-[#34312D] text-[15px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
-              >
-                <Home className="w-4 h-4 text-[#777B61]" aria-hidden="true" />
-                <span>처음 화면으로</span>
-              </button>
-            </div>
-
-            <p className="text-xs leading-relaxed text-[#827B72]">
-              새로운 리딩을 시작하거나 처음 화면으로 돌아가도 인사이트 노트에 저장된 이전 기록은 그대로 보존됩니다.
-            </p>
-          </div>
         </div>
       </div>
     </section>
