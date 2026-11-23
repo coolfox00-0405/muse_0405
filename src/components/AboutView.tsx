@@ -1,6 +1,5 @@
 import { BookOpen } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
-import { LucidaBrandMark } from './LucidaBrandMark';
 import { useLanguage } from '../i18n/LanguageContext';
 
 interface AboutViewProps {
@@ -15,8 +14,14 @@ export function AboutView({ onOpenEncyclopedia }: AboutViewProps) {
       aria-label={t.about.sectionAria}
       className="w-full max-w-2xl mx-auto px-5 sm:px-8 pt-2 sm:pt-6 pb-12 space-y-10"
     >
-      <div>
-        <LucidaBrandMark variant="compact" className="mb-3 sm:mb-4" />
+      <div className="space-y-4 sm:space-y-5">
+        <div className="flex justify-center pt-1 sm:pt-2">
+          <img
+            src="/brand/lucida-logo-main.png"
+            alt={t.nav.logoAlt}
+            className="w-[184px] sm:w-[228px] h-auto object-contain mix-blend-multiply select-none pointer-events-none"
+          />
+        </div>
         <header className="space-y-2 border-b border-[#E7E0D5] pb-6">
           <h1 className="font-serif text-3xl sm:text-4xl font-medium text-[#34312D]">
             {t.about.title}

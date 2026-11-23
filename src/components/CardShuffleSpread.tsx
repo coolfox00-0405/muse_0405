@@ -17,7 +17,6 @@ interface CardShuffleSpreadProps {
 }
 
 const FAN_COUNT = 7;
-const CENTER_INDEX = Math.floor(FAN_COUNT / 2);
 
 export function CardShuffleSpread({
   phase,
@@ -53,7 +52,7 @@ export function CardShuffleSpread({
           type="button"
           onClick={onStartShuffle}
           aria-label={t.shuffleSpread.idleAria}
-          className="relative w-[130px] sm:w-[162px] aspect-[2/3] rounded-[10px] overflow-hidden bg-[#FAF6EC] shadow-[0_10px_24px_-14px_rgba(52,49,45,0.18)] transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#777B61] cursor-pointer"
+          className="relative w-[130px] sm:w-[162px] aspect-[2/3] rounded-[10px] overflow-hidden transition-opacity duration-200 hover:opacity-95 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#777B61] cursor-pointer"
         >
           <img
             src={TAROT_CARD_BACK_IMAGE}
@@ -68,38 +67,28 @@ export function CardShuffleSpread({
   }
 
   return (
-    <div className="relative w-full max-w-[540px] h-[216px] sm:h-[254px] mx-auto flex items-center justify-center select-none">
+    <div className="w-full max-w-[340px] sm:max-w-[500px] mx-auto py-1 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3.5 select-none">
       {cardsToRender.map((card, index) => {
-        const offset = index - CENTER_INDEX; // -3 .. +3
-        const fanAngle = offset * 7.5; // -22.5deg .. +22.5deg
-        const fanX = offset * 30;
-        const fanY = Math.abs(offset) * Math.abs(offset) * 2.2 - 6;
-
         const isEven = index % 2 === 0;
         const selectedOrder = selectedOrderMap.get(card.id);
         const isAlreadySelected = selectedOrder !== undefined;
 
-        let animateProps;
-        if (phase === 'shuffling') {
-          animateProps = prefersReducedMotion
-            ? { x: 0, y: 0, rotate: 0, scale: 0.98, opacity: [1, 0.7, 1] }
+        const animateProps =
+          phase === 'shuffling'
+            ? prefersReducedMotion
+              ? { x: 0, y: 0, rotate: 0, opacity: [1, 0.72, 1] }
+              : {
+                  x: isEven ? [0, -18, 18, -8, 0] : [0, 18, -18, 8, 0],
+                  y: 0,
+                  rotate: 0,
+                  opacity: [1, 0.85, 1, 0.9, 1],
+                }
             : {
-                x: isEven ? [0, -68, 12, -40, 0] : [0, 68, -12, 40, 0],
-                y: isEven ? [0, -10, 6, -6, 0] : [0, 10, -6, 6, 0],
-                rotate: isEven ? [0, -11, 3, -6, 0] : [0, 11, -3, 6, 0],
-                scale: [1, 0.98, 1, 0.99, 1],
-                opacity: 1,
+                x: 0,
+                y: 0,
+                rotate: 0,
+                opacity: isAlreadySelected ? 0.65 : 1,
               };
-        } else {
-          // selecting (fan spread)
-          animateProps = {
-            x: fanX,
-            y: isAlreadySelected ? fanY - 18 : fanY,
-            rotate: fanAngle,
-            scale: isAlreadySelected ? 0.96 : 1,
-            opacity: isAlreadySelected ? 0.65 : 1,
-          };
-        }
 
         const isSelecting = phase === 'selecting';
         const isDisabled =
@@ -124,19 +113,6 @@ export function CardShuffleSpread({
             }
             initial={false}
             animate={animateProps}
-            whileHover={
-              isSelecting && !isAlreadySelected && !prefersReducedMotion
-                ? {
-                    y: fanY - 22,
-                    scale: 1.05,
-                    zIndex: 30,
-                    transition: { duration: 0.18, ease: 'easeOut' },
-                  }
-                : undefined
-            }
-            whileTap={
-              isSelecting && !isAlreadySelected ? { scale: 0.98 } : undefined
-            }
             transition={
               phase === 'shuffling'
                 ? {
@@ -145,20 +121,15 @@ export function CardShuffleSpread({
                     delay: prefersReducedMotion ? 0 : index * 0.025,
                   }
                 : {
-                    type: 'spring',
-                    stiffness: 260,
-                    damping: 26,
+                    duration: 0.28,
+                    ease: [0.22, 1, 0.36, 1],
                   }
             }
-            style={{
-              zIndex: isAlreadySelected ? 20 + selectedOrder : index + 1,
-              transformOrigin: 'center bottom',
-            }}
-            className={`absolute w-[116px] sm:w-[140px] aspect-[2/3] rounded-[10px] overflow-hidden bg-[#FAF6EC] shadow-[0_12px_28px_-14px_rgba(52,49,45,0.2)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] ${
+            className={`relative w-[74px] sm:w-[106px] aspect-[2/3] rounded-[8px] sm:rounded-[10px] overflow-hidden shrink-0 transition-[box-shadow,opacity] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] ${
               isAlreadySelected
-                ? 'ring-2 ring-[#777B61]/50 cursor-not-allowed'
+                ? 'ring-2 ring-[#777B61]/60 cursor-not-allowed'
                 : isSelecting
-                ? 'cursor-pointer'
+                ? 'cursor-pointer hover:ring-2 hover:ring-[#777B61]/55'
                 : 'cursor-default'
             }`}
           >
@@ -174,7 +145,7 @@ export function CardShuffleSpread({
                 aria-hidden="true"
                 className="absolute inset-0 bg-[#34312D]/25 flex items-center justify-center"
               >
-                <span className="w-8 h-8 rounded-full bg-[#FFFCF6] border border-[#777B61] text-[#34312D] font-display text-sm font-medium flex items-center justify-center shadow-sm">
+                <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#FFFCF6] border border-[#777B61] text-[#34312D] font-display text-xs sm:text-sm font-medium flex items-center justify-center">
                   {selectedOrder}
                 </span>
               </span>

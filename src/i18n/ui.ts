@@ -17,9 +17,7 @@ export interface UIMessages {
     about: string;
     primaryNavAria: string;
     mobileNavAria: string;
-    logoZoomAria: string;
-    logoModalAria: string;
-    logoModalCloseAria: string;
+    logoHomeAria: string;
     logoAlt: string;
   };
   errors: {
@@ -396,10 +394,8 @@ export const UI_TRANSLATIONS: Record<Language, UIMessages> = {
       about: '앱 소개',
       primaryNavAria: '주요 메뉴',
       mobileNavAria: '하단 메뉴',
-      logoZoomAria: 'LUCIDA 로고 확대 보기',
-      logoModalAria: 'LUCIDA 로고 확대',
-      logoModalCloseAria: '확대 창 닫기',
-      logoAlt: 'LUCIDA 심볼 로고',
+      logoHomeAria: 'LUCIDA 첫 화면으로 이동',
+      logoAlt: 'LUCIDA 심볼과 영문 로고',
     },
     errors: {
       storagePersist:
@@ -860,10 +856,8 @@ export const UI_TRANSLATIONS: Record<Language, UIMessages> = {
       about: 'About',
       primaryNavAria: 'Main navigation',
       mobileNavAria: 'Bottom navigation',
-      logoZoomAria: 'Enlarge LUCIDA logo',
-      logoModalAria: 'Enlarged LUCIDA logo',
-      logoModalCloseAria: 'Close enlarged logo',
-      logoAlt: 'LUCIDA emblem logo',
+      logoHomeAria: 'Go to LUCIDA home screen',
+      logoAlt: 'LUCIDA emblem and wordmark logo',
     },
     errors: {
       storagePersist:
@@ -1328,10 +1322,8 @@ export const UI_TRANSLATIONS: Record<Language, UIMessages> = {
       about: 'アプリについて',
       primaryNavAria: 'メインメニュー',
       mobileNavAria: '下部メニュー',
-      logoZoomAria: 'LUCIDAロゴを拡大表示',
-      logoModalAria: 'LUCIDAロゴの拡大',
-      logoModalCloseAria: '拡大表示を閉じる',
-      logoAlt: 'LUCIDAシンボルロゴ',
+      logoHomeAria: 'LUCIDAのホーム画面へ移動',
+      logoAlt: 'LUCIDAシンボルとロゴ',
     },
     errors: {
       storagePersist:

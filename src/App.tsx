@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Sparkles, BookOpen, Compass, Info, X } from 'lucide-react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { Sparkles, BookOpen, Compass, Info } from 'lucide-react';
 import { ActiveTab, DeckMode, TarotCard } from './types/reflection';
 import { FULL_TAROT_DECK, MAJOR_ARCANA_DECK } from './data/cards';
 import { getUnbiasedRandomInt, shuffleUniqueSpread } from './utils/deckShuffle';
@@ -64,8 +63,6 @@ export default function App() {
   const [focusedRecordId, setFocusedRecordId] = useState<string | null>(null);
   const [encyclopediaOpen, setEncyclopediaOpen] = useState(false);
   const [encyclopediaCardId, setEncyclopediaCardId] = useState<string | null>(null);
-  const [logoModalOpen, setLogoModalOpen] = useState(false);
-  const prefersReducedMotion = useReducedMotion();
   const shuffleTimerRef = useRef<number | null>(null);
 
   const {
@@ -87,25 +84,6 @@ export default function App() {
       }
     };
   }, []);
-
-  useEffect(() => {
-    if (!logoModalOpen) return undefined;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setLogoModalOpen(false);
-      }
-    };
-
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [logoModalOpen]);
 
   const getActiveDeck = useCallback(
     (mode: DeckMode = deckMode) =>
@@ -266,6 +244,16 @@ export default function App() {
     scrollTarget();
   }, [resetActiveReadingState, scrollTarget]);
 
+  const handleLogoClick = useCallback(() => {
+    if (activeTab === 'today' && drawPhase === 'idle') {
+      if (typeof window !== 'undefined' && window.scrollY > 24) {
+        scrollTarget();
+      }
+      return;
+    }
+    handleGoHome();
+  }, [activeTab, drawPhase, handleGoHome, scrollTarget]);
+
   const handleOpenEncyclopedia = useCallback((cardId?: string) => {
     setEncyclopediaCardId(cardId ?? null);
     setEncyclopediaOpen(true);
@@ -293,9 +281,8 @@ export default function App() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-8 h-12 md:h-16 flex items-center justify-between gap-4 md:gap-6">
           <button
             type="button"
-            onClick={() => setLogoModalOpen(true)}
-            aria-label={t.nav.logoZoomAria}
-            aria-haspopup="dialog"
+            onClick={handleLogoClick}
+            aria-label={t.nav.logoHomeAria}
             className="inline-flex items-center gap-2 font-display text-lg font-medium tracking-[0.2em] text-[#34312D] whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#777B61]"
           >
             <img
@@ -464,52 +451,6 @@ export default function App() {
         }}
         onAddCardReflection={(card, note) => addReflection(card, note)}
       />
-
-      <AnimatePresence>
-        {logoModalOpen && (
-          <motion.div
-            role="dialog"
-            aria-modal="true"
-            aria-label={t.nav.logoModalAria}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{
-              duration: prefersReducedMotion ? 0.08 : 0.24,
-              ease: 'easeInOut',
-            }}
-            onClick={() => setLogoModalOpen(false)}
-            className="fixed inset-0 z-50 flex items-center justify-center p-5 sm:p-8 bg-[#1E1C19]/68 backdrop-blur-[2px] cursor-pointer"
-          >
-            <motion.div
-              initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
-              animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
-              exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
-              transition={{
-                duration: prefersReducedMotion ? 0.08 : 0.24,
-                ease: 'easeInOut',
-              }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-[min(88vw,460px)] max-h-[84dvh] rounded-2xl bg-[#FBF7EE] border border-[#E5DED1] p-5 sm:p-7 shadow-[0_24px_64px_-14px_rgba(18,16,14,0.52)] flex items-center justify-center cursor-default"
-            >
-              <button
-                type="button"
-                onClick={() => setLogoModalOpen(false)}
-                aria-label={t.nav.logoModalCloseAria}
-                className="absolute top-3 right-3 sm:top-3.5 sm:right-3.5 z-10 w-9 h-9 rounded-full bg-[#F7F3EA]/92 hover:bg-[#E5DED1]/75 border border-[#E5DED1] text-[#34312D] flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61]"
-              >
-                <X className="w-4 h-4" aria-hidden="true" />
-              </button>
-
-              <img
-                src="/brand/lucida-logo-main.png"
-                alt={t.nav.logoAlt}
-                className="w-full h-auto max-h-[70dvh] object-contain mix-blend-multiply select-none pointer-events-none"
-              />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

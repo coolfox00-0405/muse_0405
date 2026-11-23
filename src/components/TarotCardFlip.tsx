@@ -55,11 +55,7 @@ export function TarotCardFlip({
         }`}
       >
         {/* Card Back — LUCIDA Botanical Crescent & Star */}
-        <div
-          className={`card-face card-face-back rounded-[14px] overflow-hidden bg-[#FAF6EC] border border-[#E5DED1] shadow-[0_14px_34px_-16px_rgba(52,49,45,0.2)] transition-transform duration-200 ${
-            isClickable ? 'group-hover:-translate-y-1' : ''
-          }`}
-        >
+        <div className="card-face card-face-back rounded-[14px] overflow-hidden">
           {!backError ? (
             <img
               src={backSrc}
