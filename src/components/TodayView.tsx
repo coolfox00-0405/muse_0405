@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { FormEvent, useState, useEffect, useRef, useMemo } from 'react';
 import {
   Shuffle,
   Check,
@@ -46,6 +46,19 @@ interface TodayViewProps {
   onSyncAttempts: (
     payload: ReadingSyncPayload
   ) => { ok: boolean; recordId?: string; error?: string };
+  onSaveReflection: (
+    card: TarotCard,
+    note: string,
+    selectedAction?: string,
+    orientation?: 'upright' | 'reversed',
+    spreadCards?: SpreadCardSnapshot[],
+    options?: {
+      readingSessionId?: string;
+      overallMessage?: string;
+      selectedActions?: SelectedAttemptItem[];
+      actionMemo?: string;
+    }
+  ) => { ok: boolean; error?: string; record?: ReflectionRecord };
   onStartNewReading: () => void;
   onGoHome: () => void;
   savedRecordCount?: number;
@@ -68,6 +81,7 @@ export function TodayView({
   onStartShuffle,
   onSelectCard,
   onSyncAttempts,
+  onSaveReflection,
   onStartNewReading,
   onGoHome,
   savedRecordCount = 0,
@@ -95,6 +109,12 @@ export function TodayView({
     records.find((r) => r.readingSessionId === readingSessionId)?.id
   );
 
+  const [noteDraft, setNoteDraft] = useState('');
+  const [noteFeedback, setNoteFeedback] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
+
   const [cardFlipped, setCardFlipped] = useState(false);
   const [activeRevealIndex, setActiveRevealIndex] = useState(0);
 
@@ -102,6 +122,11 @@ export function TodayView({
     selectedCards[activeRevealIndex] ?? selectedCards[0] ?? null;
   const activeOrientation: 'upright' | 'reversed' =
     selectedOrientations[activeRevealIndex] ?? selectedOrientations[0] ?? 'upright';
+
+  const currentSessionRecord = useMemo(
+    () => records.find((r) => r.readingSessionId === readingSessionId) ?? null,
+    [records, readingSessionId]
+  );
 
   // Restore attempt checkboxes only when switching to a different readingSessionId
   useEffect(() => {
@@ -112,6 +137,8 @@ export function TodayView({
     lastSyncedRecordIdRef.current = existing?.id;
     setSelectedAttempts(nextAttempts);
     setAttemptSyncNotice(null);
+    setNoteDraft('');
+    setNoteFeedback(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [readingSessionId]);
 
@@ -237,10 +264,57 @@ export function TodayView({
     }
   };
 
+  const handleSaveInsightNote = (e: FormEvent) => {
+    e.preventDefault();
+    const trimmed = noteDraft.trim();
+    if (!trimmed) {
+      setNoteFeedback({
+        type: 'error',
+        text: '인사이트 노트에 남길 생각을 먼저 입력해 주세요.',
+      });
+      return;
+    }
+
+    const rootCard = selectedCards[0] ?? activeCard;
+    if (!rootCard) return;
+    const rootOrientation = selectedOrientations[0] ?? activeOrientation;
+
+    const result = onSaveReflection(
+      rootCard,
+      trimmed,
+      undefined,
+      rootOrientation,
+      buildSpreadSnapshot(),
+      {
+        readingSessionId,
+        overallMessage: computeOverallMessage(),
+        selectedActions: selectedAttempts,
+      }
+    );
+
+    if (result.ok) {
+      if (result.record?.id) {
+        lastSyncedRecordIdRef.current = result.record.id;
+      }
+      setNoteDraft('');
+      setNoteFeedback({
+        type: 'success',
+        text: '인사이트 노트에 저장되었습니다.',
+      });
+    } else {
+      setNoteFeedback({
+        type: 'error',
+        text: result.error || '기록을 저장하는 중 문제가 발생했습니다.',
+      });
+    }
+  };
+
   const resetReadingTransientState = () => {
     lastSyncedRecordIdRef.current = undefined;
     setAttemptSyncNotice(null);
     setSelectedAttempts([]);
+    setNoteDraft('');
+    setNoteFeedback(null);
     setActiveRevealIndex(0);
     setCardFlipped(false);
   };
@@ -719,7 +793,7 @@ export function TodayView({
               <h2 className="text-[11px] font-medium tracking-wide text-[#777B61]">
                 나에게 던져볼 질문
               </h2>
-              <p className="text-[17px] sm:text-[20px] font-semibold leading-[1.48] sm:leading-[1.5] text-[#34312D] break-keep">
+              <p className="font-question text-[18px] sm:text-[21px] font-normal leading-[1.68] sm:leading-[1.72] text-[#34312D] break-keep">
                 {activeCard.reflectionQuestion}
               </p>
             </div>
@@ -922,6 +996,92 @@ export function TodayView({
             )}
           </div>
         )}
+      </div>
+
+      {/* 4. Insight Note Direct Input Space */}
+      <div
+        aria-label="인사이트 노트 작성"
+        className="mt-7 sm:mt-9 pt-6 border-t border-[#E5DED1] space-y-3.5"
+      >
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-xs font-medium tracking-wide text-[#777B61]">
+              인사이트 노트
+            </h2>
+            {currentSessionRecord?.userNote?.trim() && (
+              <button
+                type="button"
+                onClick={() => onGoToJournal(currentSessionRecord.id)}
+                className="inline-flex items-center gap-1 text-xs font-medium text-[#777B61] hover:text-[#34312D] underline underline-offset-4 cursor-pointer"
+              >
+                <span>인사이트 노트에서 보기</span>
+                <ArrowRight className="w-3 h-3" aria-hidden="true" />
+              </button>
+            )}
+          </div>
+          <p className="text-xs leading-relaxed text-[#827B72]">
+            리딩을 보며 떠오른 생각이나 느낀 점을 기록해 두면 인사이트 노트에 보관됩니다.
+          </p>
+        </div>
+
+        {currentSessionRecord?.userNote?.trim() && (
+          <div className="rounded-xl bg-[#FFFCF6]/85 border border-[#E5DED1] px-4 py-3 space-y-1.5">
+            <p className="text-[11px] font-medium text-[#777B61]">
+              이번 리딩에 저장된 기록
+            </p>
+            <p className="text-sm leading-relaxed text-[#34312D] whitespace-pre-wrap">
+              {currentSessionRecord.userNote}
+            </p>
+          </div>
+        )}
+
+        <form onSubmit={handleSaveInsightNote} className="space-y-3">
+          <textarea
+            id="reading-insight-note"
+            aria-label="인사이트 노트 입력"
+            rows={4}
+            value={noteDraft}
+            onChange={(e) => {
+              setNoteDraft(e.target.value);
+              if (noteFeedback) setNoteFeedback(null);
+            }}
+            placeholder={
+              currentSessionRecord?.userNote?.trim()
+                ? '이어서 남기고 싶은 생각이 있다면 추가로 적어 보세요.'
+                : '카드를 보며 떠오른 생각이나 마음에 남은 문장을 자유롭게 적어 보세요.'
+            }
+            className="w-full rounded-xl border border-[#E5DED1] bg-[#FFFCF6] px-4 py-3 text-[14.5px] sm:text-[15px] leading-relaxed text-[#34312D] placeholder:text-[#827B72]/75 focus:outline-none focus:border-[#777B61] focus:ring-1 focus:ring-[#777B61]/30 resize-y"
+          />
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-h-[20px]">
+              {noteFeedback && (
+                <p
+                  role="status"
+                  aria-live="polite"
+                  className={`inline-flex items-center gap-1.5 text-xs font-medium ${
+                    noteFeedback.type === 'success'
+                      ? 'text-[#777B61]'
+                      : 'text-[#A65D4E]'
+                  }`}
+                >
+                  {noteFeedback.type === 'success' && (
+                    <Check className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                  )}
+                  <span>{noteFeedback.text}</span>
+                </p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={!noteDraft.trim()}
+              className="inline-flex items-center justify-center gap-1.5 min-h-[42px] px-5 py-2 rounded-xl bg-[#777B61] hover:bg-[#646850] disabled:opacity-45 disabled:cursor-not-allowed text-[#FFFCF6] text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
+            >
+              <span>인사이트 노트에 저장</span>
+            </button>
+          </div>
+        </form>
       </div>
     </section>
   );

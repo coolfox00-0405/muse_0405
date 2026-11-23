@@ -1,8 +1,19 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "MaruBuri";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    url("https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-Regular.woff2") format("woff2"),
+    url("https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-Regular.woff") format("woff");
+}
+
 @theme {
   --font-display: "Cormorant Garamond", "Noto Serif KR", Georgia, serif;
   --font-serif: "Noto Serif KR", Georgia, serif;
+  --font-question: "MaruBuri", "Noto Serif KR", Georgia, serif;
   --font-sans: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
 
   --color-canvas: #F7F3EA;
