@@ -65,6 +65,7 @@ export default function App() {
     records,
     storageError,
     syncReadingAttempts,
+    addReflection,
     addFreeformReflection,
     updateReflection,
     addFollowUpNote,
@@ -354,6 +355,7 @@ export default function App() {
             onDelete={deleteReflection}
             onImport={importReflections}
             onGoToToday={() => setActiveTab('today')}
+            onOpenEncyclopedia={handleOpenEncyclopedia}
           />
         )}
 
@@ -409,6 +411,16 @@ export default function App() {
         onClose={handleCloseEncyclopedia}
         records={records}
         initialCardId={encyclopediaCardId}
+        onBackToReading={() => {
+          handleCloseEncyclopedia();
+          setActiveTab('today');
+        }}
+        onOpenRecord={(recordId) => {
+          handleCloseEncyclopedia();
+          setFocusedRecordId(recordId);
+          setActiveTab('journal');
+        }}
+        onAddCardReflection={(card, note) => addReflection(card, note)}
       />
     </div>
   );

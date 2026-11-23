@@ -35,7 +35,7 @@ export function AboutView({ onOpenEncyclopedia }: AboutViewProps) {
         <div className="bg-[#FFFCF6] border border-[#E7E0D5] rounded-2xl p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <h2 className="font-serif text-lg font-medium text-[#34312D]">
-              78장 타로 도감 · 이미지 확인
+              78장 타로 카드 도감
             </h2>
             <p className="text-xs sm:text-sm leading-relaxed text-[#827B72]">
               메이저 22장과 마이너 56장 각각의 고유한 일러스트와 상징, 내가 남긴 카드별 기록을 한눈에 살펴볼 수 있습니다.

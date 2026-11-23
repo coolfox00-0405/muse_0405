@@ -157,7 +157,7 @@ export function CardShuffleSpread({
               alt=""
               referrerPolicy="no-referrer"
               decoding="async"
-              className="w-full h-full object-cover scale-[1.32] pointer-events-none"
+              className="w-full h-full object-cover pointer-events-none"
             />
             {isAlreadySelected && (
               <span

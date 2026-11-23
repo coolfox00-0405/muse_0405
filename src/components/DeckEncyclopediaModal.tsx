@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { X, Search, ArrowLeft, CheckCircle2, AlertTriangle, BookOpen } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback, FormEvent } from 'react';
+import { X, Search, ArrowLeft, BookOpen, ArrowUpRight, PenLine, Check, AlertTriangle } from 'lucide-react';
 import { FULL_TAROT_DECK } from '../data/cards';
 import { ReflectionRecord, TarotCard, TarotSuit } from '../types/reflection';
 import { TarotCardArtwork } from './TarotCardArtwork';
@@ -11,6 +11,12 @@ interface DeckEncyclopediaModalProps {
   onClose: () => void;
   records: ReflectionRecord[];
   initialCardId?: string | null;
+  onBackToReading?: () => void;
+  onOpenRecord?: (recordId: string) => void;
+  onAddCardReflection?: (
+    card: TarotCard,
+    note: string
+  ) => { ok: boolean; error?: string; record?: ReflectionRecord };
 }
 
 const FILTER_OPTIONS: { id: FilterCategory; label: string; count: number }[] = [
@@ -34,11 +40,24 @@ export function DeckEncyclopediaModal({
   onClose,
   records,
   initialCardId = null,
+  onBackToReading,
+  onOpenRecord,
+  onAddCardReflection,
 }: DeckEncyclopediaModalProps) {
   const [category, setCategory] = useState<FilterCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCard, setSelectedCard] = useState<TarotCard | null>(null);
+  const [selectedCard, setSelectedCard] = useState<TarotCard | null>(() =>
+    initialCardId
+      ? FULL_TAROT_DECK.find((c) => c.id === initialCardId) ?? null
+      : null
+  );
   const [imageStatusMap, setImageStatusMap] = useState<Record<string, boolean>>({});
+  const [isWritingNote, setIsWritingNote] = useState(false);
+  const [cardNoteDraft, setCardNoteDraft] = useState('');
+  const [noteFeedback, setNoteFeedback] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -49,6 +68,9 @@ export function DeckEncyclopediaModal({
     } else {
       setSelectedCard(null);
     }
+    setIsWritingNote(false);
+    setCardNoteDraft('');
+    setNoteFeedback(null);
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -65,6 +87,39 @@ export function DeckEncyclopediaModal({
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, initialCardId, onClose]);
+
+  useEffect(() => {
+    setIsWritingNote(false);
+    setCardNoteDraft('');
+    setNoteFeedback(null);
+  }, [selectedCard?.id]);
+
+  const handleSaveCardNote = (e: FormEvent) => {
+    e.preventDefault();
+    if (!selectedCard || !onAddCardReflection) return;
+    const trimmed = cardNoteDraft.trim();
+    if (!trimmed) {
+      setNoteFeedback({
+        type: 'error',
+        text: '남길 생각을 짧게라도 입력해 주세요.',
+      });
+      return;
+    }
+    const result = onAddCardReflection(selectedCard, trimmed);
+    if (result.ok) {
+      setCardNoteDraft('');
+      setIsWritingNote(false);
+      setNoteFeedback({
+        type: 'success',
+        text: '인사이트 노트에 기록되었습니다.',
+      });
+    } else {
+      setNoteFeedback({
+        type: 'error',
+        text: result.error || '기록을 저장하지 못했습니다.',
+      });
+    }
+  };
 
   const handleStatusChange = useCallback((cardId: string, loaded: boolean) => {
     setImageStatusMap((prev) => {
@@ -156,7 +211,7 @@ export function DeckEncyclopediaModal({
               id="deck-encyclopedia-title"
               className="font-serif text-lg sm:text-xl font-medium text-[#34312D] truncate"
             >
-              78장 타로 도감 및 이미지 검수
+              78장 타로 카드 도감
             </h2>
           </div>
 
@@ -170,47 +225,39 @@ export function DeckEncyclopediaModal({
           </button>
         </header>
 
-        {/* Verification Summary Strip */}
-        <div className="shrink-0 bg-[#FFFCF6]/70 border-b border-[#E5DED1] px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[#34312D]/85">
-            <span className="inline-flex items-center gap-1.5 font-medium text-[#777B61]">
-              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-              <span>
-                전체 {deckIntegrity.total}장 · 고유 일러스트{' '}
-                {deckIntegrity.uniqueImageCount}장 연결됨
-              </span>
-            </span>
-            <span className="text-[#827B72] tabular-nums">
-              현재 필터 {filteredCards.length}장 중 로드 확인 {loadStats.loaded}장
+        {/* Only surface error bar if a missing/broken asset actually occurs */}
+        {(deckIntegrity.missingCount > 0 || loadStats.failed > 0) && (
+          <div className="shrink-0 bg-[#A65D4E]/10 border-b border-[#A65D4E]/25 px-4 sm:px-6 py-2 text-xs text-[#7A3B2E] flex items-center gap-1.5">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            <span>
+              일부 카드 이미지를 불러오지 못해 기본 카드 화면으로 표시되고 있습니다.
             </span>
           </div>
-
-          {(deckIntegrity.missingCount > 0 || loadStats.failed > 0) && (
-            <span className="inline-flex items-center gap-1 text-[#A65D4E] font-medium">
-              <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-              <span>
-                누락 {deckIntegrity.missingCount}장 · 오류 {loadStats.failed}장
-              </span>
-            </span>
-          )}
-        </div>
+        )}
 
         {/* Body: Either Card Detail View OR Filter + 78-Card Grid */}
         {selectedCard ? (
           <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-5 sm:py-7">
             <div className="max-w-4xl mx-auto space-y-6">
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <button
                   type="button"
                   onClick={() => setSelectedCard(null)}
                   className="inline-flex items-center gap-2 min-h-[44px] px-3.5 py-2 rounded-xl border border-[#E5DED1] bg-[#FFFCF6] text-sm text-[#34312D] hover:bg-[#E5DED1]/45 transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4 text-[#777B61]" aria-hidden="true" />
-                  <span>78장 목록으로 돌아가기</span>
+                  <span>78장 목록으로</span>
                 </button>
-                <span className="text-xs text-[#827B72] font-mono">
-                  {selectedCard.id}
-                </span>
+                {onBackToReading && (
+                  <button
+                    type="button"
+                    onClick={onBackToReading}
+                    className="inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-xl border border-[#E5DED1] bg-[#FFFCF6] text-sm text-[#777B61] hover:text-[#34312D] hover:bg-[#E5DED1]/45 transition-colors cursor-pointer"
+                  >
+                    <span>카드 뽑기로 돌아가기</span>
+                    <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
+                  </button>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 items-start">
@@ -303,43 +350,129 @@ export function DeckEncyclopediaModal({
                   {/* User Personal Notes for This Card (Visually Separated) */}
                   <section
                     aria-label="이 카드에 남긴 나의 기록"
-                    className="rounded-2xl border border-dashed border-[#B69A70]/60 bg-[#FFFCF6]/65 p-5 sm:p-6 space-y-3"
+                    className="rounded-2xl border border-dashed border-[#B69A70]/60 bg-[#FFFCF6]/65 p-5 sm:p-6 space-y-4"
                   >
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <h4 className="inline-flex items-center gap-1.5 text-sm font-medium text-[#34312D]">
                         <BookOpen
                           className="w-4 h-4 text-[#777B61]"
                           aria-hidden="true"
                         />
                         <span>이 카드에 남긴 나의 기록</span>
+                        <span className="text-xs font-normal text-[#827B72] tabular-nums ml-1">
+                          {selectedCardNotes.length}건
+                        </span>
                       </h4>
-                      <span className="text-xs text-[#827B72] tabular-nums">
-                        {selectedCardNotes.length}건
-                      </span>
+                      {onAddCardReflection && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsWritingNote((prev) => !prev);
+                            setNoteFeedback(null);
+                          }}
+                          className="inline-flex items-center gap-1.5 min-h-[36px] px-3 py-1.5 rounded-xl border border-[#E5DED1] bg-[#FFFCF6] hover:bg-[#E5DED1]/45 text-xs font-medium text-[#34312D] transition-colors cursor-pointer"
+                        >
+                          <PenLine className="w-3.5 h-3.5 text-[#777B61]" aria-hidden="true" />
+                          <span>{isWritingNote ? '작성 닫기' : '인사이트 노트에 기록'}</span>
+                        </button>
+                      )}
                     </div>
+
+                    {noteFeedback && (
+                      <div
+                        role="status"
+                        aria-live="polite"
+                        className={`flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-xs border ${
+                          noteFeedback.type === 'success'
+                            ? 'bg-[#777B61]/10 border-[#777B61]/25 text-[#34312D]'
+                            : 'bg-[#A65D4E]/10 border-[#A65D4E]/25 text-[#7A3B2E]'
+                        }`}
+                      >
+                        <Check className="w-3.5 h-3.5 text-[#777B61] shrink-0" aria-hidden="true" />
+                        <span>{noteFeedback.text}</span>
+                      </div>
+                    )}
+
+                    {isWritingNote && onAddCardReflection && (
+                      <form onSubmit={handleSaveCardNote} className="space-y-3">
+                        <textarea
+                          rows={3}
+                          value={cardNoteDraft}
+                          onChange={(e) => setCardNoteDraft(e.target.value)}
+                          placeholder={`「${selectedCard.nameKo}」 카드를 바라보며 떠오른 생각을 가볍게 적어 보세요.`}
+                          aria-label="카드 성찰 메모 작성"
+                          className="w-full rounded-xl bg-[#FFFCF6] border border-[#E5DED1] px-3.5 py-2.5 text-sm leading-relaxed text-[#34312D] placeholder:text-[#827B72]/75 focus:outline-none focus:border-[#777B61]"
+                        />
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsWritingNote(false);
+                              setNoteFeedback(null);
+                            }}
+                            className="min-h-[38px] px-3.5 py-1.5 rounded-lg border border-[#E5DED1] bg-[#FFFCF6] text-xs text-[#827B72] hover:text-[#34312D] cursor-pointer"
+                          >
+                            취소
+                          </button>
+                          <button
+                            type="submit"
+                            className="min-h-[38px] px-4 py-1.5 rounded-lg bg-[#777B61] hover:bg-[#646850] text-[#FFFCF6] text-xs font-medium cursor-pointer"
+                          >
+                            노트에 저장
+                          </button>
+                        </div>
+                      </form>
+                    )}
 
                     {selectedCardNotes.length === 0 ? (
                       <p className="text-xs sm:text-sm text-[#827B72] leading-relaxed">
                         아직 이 카드를 만나 인사이트 노트에 남긴 개인 기록이 없습니다.
                       </p>
                     ) : (
-                      <ul className="space-y-3">
+                      <ul className="space-y-2.5">
                         {selectedCardNotes.map((rec) => (
-                          <li
-                            key={rec.id}
-                            className="rounded-xl bg-[#FFFCF6] border border-[#E5DED1] p-3.5 space-y-1.5"
-                          >
-                            <p className="text-xs text-[#827B72] tabular-nums">
-                              {rec.date}
-                            </p>
-                            {rec.selectedAction && (
-                              <p className="text-xs text-[#777B61]">
-                                실천 기록: {rec.selectedAction}
-                              </p>
+                          <li key={rec.id}>
+                            {onOpenRecord ? (
+                              <button
+                                type="button"
+                                onClick={() => onOpenRecord(rec.id)}
+                                className="w-full text-left rounded-xl bg-[#FFFCF6] border border-[#E5DED1] hover:border-[#777B61] p-3.5 space-y-1.5 transition-colors group cursor-pointer"
+                              >
+                                <div className="flex items-center justify-between gap-2 text-xs text-[#827B72] tabular-nums">
+                                  <span>{rec.date}</span>
+                                  <span className="inline-flex items-center gap-0.5 text-[#777B61] group-hover:underline">
+                                    기록 열기
+                                    <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
+                                  </span>
+                                </div>
+                                {rec.selectedAction && (
+                                  <p className="text-xs text-[#777B61]">
+                                    선택한 시도: {rec.selectedAction}
+                                  </p>
+                                )}
+                                <p className="text-sm leading-relaxed text-[#34312D] whitespace-pre-wrap">
+                                  {rec.userNote ||
+                                    rec.actionMemo ||
+                                    '(선택한 시도만 기록됨)'}
+                                </p>
+                              </button>
+                            ) : (
+                              <div className="rounded-xl bg-[#FFFCF6] border border-[#E5DED1] p-3.5 space-y-1.5">
+                                <p className="text-xs text-[#827B72] tabular-nums">
+                                  {rec.date}
+                                </p>
+                                {rec.selectedAction && (
+                                  <p className="text-xs text-[#777B61]">
+                                    선택한 시도: {rec.selectedAction}
+                                  </p>
+                                )}
+                                <p className="text-sm leading-relaxed text-[#34312D] whitespace-pre-wrap">
+                                  {rec.userNote ||
+                                    rec.actionMemo ||
+                                    '(선택한 시도만 기록됨)'}
+                                </p>
+                              </div>
                             )}
-                            <p className="text-sm leading-relaxed text-[#34312D] whitespace-pre-wrap">
-                              {rec.userNote || '(메모 없이 실천만 기록됨)'}
-                            </p>
                           </li>
                         ))}
                       </ul>

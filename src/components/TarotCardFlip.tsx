@@ -63,7 +63,7 @@ export function TarotCardFlip({
               referrerPolicy="no-referrer"
               decoding="async"
               onError={() => setBackError(true)}
-              className="w-full h-full object-cover scale-[1.32]"
+              className="w-full h-full object-cover"
             />
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-[#F7F3EA] text-[#777B61]">

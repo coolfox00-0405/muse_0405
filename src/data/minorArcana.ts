@@ -1,6 +1,6 @@
 import { TarotCard, TarotSuit } from '../types/reflection';
 
-const BACK_IMAGE = '/src/assets/images/lucida_card_back.webp';
+const BACK_IMAGE = '/src/assets/images/lucida_card_back_art_1795405904799.jpg';
 
 const SUIT_META: Record<
   TarotSuit,
@@ -41,6 +41,7 @@ interface MinorCardSeed {
   question: string;
   action: string;
   guide: string;
+  imageUrl?: string;
 }
 
 const WANDS_SEEDS: MinorCardSeed[] = [
@@ -53,6 +54,7 @@ const WANDS_SEEDS: MinorCardSeed[] = [
     question: '요즘 내 안에서 유독 관심이 끌리는 새로운 아이디어는 무엇인가요?',
     action: '떠오른 아이디어 하나를 3줄 이내로 짧게 메모해 두기',
     guide: '완드 에이스는 행동 이전의 순수한 열정과 가능성의 씨앗을 상징합니다.',
+    imageUrl: '/src/assets/images/wands_ace_art_1795405955993.jpg',
   },
   {
     rankNum: 'II',
@@ -63,6 +65,7 @@ const WANDS_SEEDS: MinorCardSeed[] = [
     question: '지금 머무는 자리에서 한 발짝 더 넓혀 보고 싶은 시야는 어디인가요?',
     action: '고민 중인 일의 두 가지 방향을 나란히 적어 비교해 보기',
     guide: '완드 2는 현재를 딛고 다음 방향을 차분히 가늠하는 시선을 보여줍니다.',
+    imageUrl: '/src/assets/images/wands_two_art_1795405957813.jpg',
   },
   {
     rankNum: 'III',
@@ -73,6 +76,7 @@ const WANDS_SEEDS: MinorCardSeed[] = [
     question: '지금까지 기울인 노력 중, 조금 더 시간을 두고 지켜봐 주고 싶은 것은 무엇인가요?',
     action: '당장 확인하려던 결과 대신, 다음 주에 해보고 싶은 일 하나 떠올리기',
     guide: '완드 3은 첫걸음 이후의 넓은 전망과 여유 있는 기다림을 상징합니다.',
+    imageUrl: '/src/assets/images/wands_three_art_1795405955908.jpg',
   },
   {
     rankNum: 'IV',
@@ -83,6 +87,7 @@ const WANDS_SEEDS: MinorCardSeed[] = [
     question: '최근에 소소하게라도 스스로 기특하다고 느꼈던 순간은 언제였나요?',
     action: '오늘 해낸 작은 일 하나를 떠올리며 스스로에게 수고했다고 말해주기',
     guide: '완드 4는 여정 중간에 찾아오는 따뜻한 안도감과 작은 축제의 쉼표를 뜻합니다.',
+    imageUrl: '/src/assets/images/wands_four_art_1795405956388.jpg',
   },
   {
     rankNum: 'V',
@@ -93,6 +98,7 @@ const WANDS_SEEDS: MinorCardSeed[] = [
     question: '최근 의견이나 마음이 부딪혔던 상황에서 내가 정말 지키고 싶었던 것은 무엇인가요?',
     action: '불편했던 대립을 승패가 아닌 ‘서로 다른 기준’으로 바라보며 한 줄 정리하기',
     guide: '완드 5는 경쟁과 마찰 속에서 자신의 진짜 의도를 다듬는 과정을 비춥니다.',
+    imageUrl: '/src/assets/images/wands_five_art_1795405955983.jpg',
   },
   {
     rankNum: 'VI',
@@ -103,6 +109,7 @@ const WANDS_SEEDS: MinorCardSeed[] = [
     question: '남들의 시선과 상관없이 내가 스스로 잘해냈다고 느끼는 부분은 무엇인가요?',
     action: '내가 가진 강점이나 최근의 작은 성취를 한 가지 적어 보기',
     guide: '완드 6은 노력에 대한 건강한 인정과 앞으로 나아갈 힘을 상징합니다.',
+    imageUrl: '/src/assets/images/wands_six_art_1795405957901.jpg',
   },
   {
     rankNum: 'VII',
@@ -113,6 +120,7 @@ const WANDS_SEEDS: MinorCardSeed[] = [
     question: '요즘 무리해서 양보하거나 흔들리고 있는 나만의 기준은 무엇인가요?',
     action: '부담스러운 요청 하나에 대해 정중하게 거절하거나 보류할 말 떠올려 보기',
     guide: '완드 7은 외부의 압박 속에서 자신의 입장과 에너지를 지키는 태도를 돌아보게 합니다.',
+    imageUrl: '/src/assets/images/wands_seven_art_clean_1795406010835.jpg',
   },
   {
     rankNum: 'VIII',
@@ -123,6 +131,7 @@ const WANDS_SEEDS: MinorCardSeed[] = [
     question: '오래 미뤄두었지만 막상 시작하면 금방 끝날 것 같은 일은 무엇인가요?',
     action: '미뤄둔 작은 연락이나 일 한 가지를 5분 안에 처리해 보기',
     guide: '완드 8은 막힘없이 흐르는 에너지와 간결한 실행력을 상징합니다.',
+    imageUrl: '/src/assets/images/wands_eight_art_clean_1795406080402.jpg',
   },
   {
     rankNum: 'IX',
@@ -133,6 +142,7 @@ const WANDS_SEEDS: MinorCardSeed[] = [
     question: '지금 내 몸과 마음이 가장 필요로 하는 휴식은 어떤 모습인가요?',
     action: '해야 할 일 목록에서 하나를 지우고, 15분간 아무것도 하지 않는 시간 갖기',
     guide: '완드 9는 긴장 속에서도 포기하지 않은 인내와, 그만큼 필요한 돌봄을 함께 비춥니다.',
+    imageUrl: '/src/assets/images/wands_nine_art_1795405955402.jpg',
   },
   {
     rankNum: 'X',
@@ -143,6 +153,7 @@ const WANDS_SEEDS: MinorCardSeed[] = [
     question: '지금 내가 쥐고 있는 짐 중에서, 잠시 내려놓거나 나누어도 괜찮은 것은 무엇인가요?',
     action: '가장 무겁게 느껴지는 책임 하나를 적고, 덜어낼 방법을 한 가지 찾아보기',
     guide: '완드 10은 지나친 책임감을 알아차리고 짐의 무게를 다시 조율하는 성찰을 돕습니다.',
+    imageUrl: '/src/assets/images/wands_ten_art_1795405955961.jpg',
   },
   {
     rankNum: 'Page',
@@ -153,6 +164,7 @@ const WANDS_SEEDS: MinorCardSeed[] = [
     question: '서툴러도 괜찮다면, 요즘 호기심이 가는 분야나 경험은 무엇인가요?',
     action: '궁금했던 주제에 대해 가볍게 자료 하나만 찾아 읽어 보기',
     guide: '완드 시종은 결과보다 탐구 자체를 즐기는 열린 호기심을 상징합니다.',
+    imageUrl: '/src/assets/images/wands_page_art_1795405956301.jpg',
   },
   {
     rankNum: 'Knight',
@@ -163,6 +175,7 @@ const WANDS_SEEDS: MinorCardSeed[] = [
     question: '지금 빠르게 밀어붙이고 있는 일에서, 한 번쯤 점검해 보면 좋을 부분은 무엇인가요?',
     action: '열정이 앞서는 일 앞에서 잠깐 멈추고 핵심 목표 한 문장 확인하기',
     guide: '완드 기사는 망설임 없는 행동력과 방향 감각의 균형을 돌아보게 합니다.',
+    imageUrl: '/src/assets/images/wands_knight_art_1795405955981.jpg',
   },
   {
     rankNum: 'Queen',
@@ -173,6 +186,7 @@ const WANDS_SEEDS: MinorCardSeed[] = [
     question: '내가 가장 나답고 편안하게 느껴지는 순간은 언제인가요?',
     action: '남의 시선 대신 내가 기분 좋아지는 방식 하나로 하루의 일부 채우기',
     guide: '완드 여왕은 따뜻하면서도 흔들리지 않는 내면의 활력과 자기 신뢰를 상징합니다.',
+    imageUrl: '/src/assets/images/wands_queen_art_1795405956629.jpg',
   },
   {
     rankNum: 'King',
@@ -183,6 +197,7 @@ const WANDS_SEEDS: MinorCardSeed[] = [
     question: '앞으로 몇 달 뒤의 나를 위해 지금 가장 가치 있게 쓰고 싶은 에너지는 무엇인가요?',
     action: '장기적으로 지키고 싶은 나만의 방향 한 줄을 노트에 적어 보기',
     guide: '완드 왕은 열정을 성숙한 비전과 안정된 리더십으로 이끌어 가는 태도를 뜻합니다.',
+    imageUrl: '/src/assets/images/wands_king_art_1795405957795.jpg',
   },
 ];
 
@@ -196,6 +211,7 @@ const CUPS_SEEDS: MinorCardSeed[] = [
     question: '최근 내 마음을 부드럽게 건드렸던 순간이나 사람은 무엇이었나요?',
     action: '고마웠거나 따뜻했던 기억 하나를 떠올리며 잠시 머물러 보기',
     guide: '컵 에이스는 순수한 감정의 시작과 마음을 여는 여유를 상징합니다.',
+    imageUrl: '/src/assets/images/cups_ace_art_1795406085111.jpg',
   },
   {
     rankNum: 'II',
@@ -206,6 +222,7 @@ const CUPS_SEEDS: MinorCardSeed[] = [
     question: '지금 내 마음을 솔직하게 나누고 싶은 사람, 혹은 나 자신과의 대화는 어떤 모습인가요?',
     action: '소중한 사람에게 안부를 묻거나, 나 자신에게 다정한 한마디 건네기',
     guide: '컵 2는 대등하고 따뜻한 공감과 마음의 조화를 비춥니다.',
+    imageUrl: '/src/assets/images/cups_two_art_1795406083505.jpg',
   },
   {
     rankNum: 'III',
@@ -216,6 +233,7 @@ const CUPS_SEEDS: MinorCardSeed[] = [
     question: '함께 있으면 마음이 편안해지는 사람들과 나누고 싶은 이야기는 무엇인가요?',
     action: '편안한 지인에게 짧은 안부 메시지를 보내거나 즐거운 기억 떠올리기',
     guide: '컵 3은 관계 속에서 얻는 가벼운 기쁨과 정서적 연대를 상징합니다.',
+    imageUrl: '/src/assets/images/cups_three_art_1795406080339.jpg',
   },
   {
     rankNum: 'IV',
@@ -226,6 +244,7 @@ const CUPS_SEEDS: MinorCardSeed[] = [
     question: '요즘 익숙함 속에서 당연하게 지나치고 있는 작은 위로나 기회는 없을까요?',
     action: '평소 무심코 지나치던 주변 풍경이나 일상에서 새로운 점 하나 찾아보기',
     guide: '컵 4는 정서적 권태 속에서 내면의 욕구와 주변의 선물을 다시 살피게 합니다.',
+    imageUrl: '/src/assets/images/cups_four_art_1795406011583.jpg',
   },
   {
     rankNum: 'V',
@@ -236,6 +255,7 @@ const CUPS_SEEDS: MinorCardSeed[] = [
     question: '아쉬움이 남는 일 뒤편에서, 여전히 내 곁에 남아 있는 소중한 것은 무엇인가요?',
     action: '속상한 감정을 억누르지 않고 인정한 뒤, 남아 있는 감사한 점 한 가지 적기',
     guide: '컵 5는 상실과 후회의 감정을 존중하면서도 회복의 시선을 건넵니다.',
+    imageUrl: '/src/assets/images/cups_five_art_clean_1795406179411.jpg',
   },
   {
     rankNum: 'VI',
@@ -246,6 +266,7 @@ const CUPS_SEEDS: MinorCardSeed[] = [
     question: '어린 시절이나 예전의 내가 진심으로 좋아했던 것은 무엇이었나요?',
     action: '예전에 좋아하던 음악을 듣거나 따뜻한 기억 하나를 노트에 남겨 보기',
     guide: '컵 6은 과거의 따뜻한 기억을 통해 현재의 마음을 회복하는 상징입니다.',
+    imageUrl: '/src/assets/images/cups_six_art_clean_1795406186266.jpg',
   },
   {
     rankNum: 'VII',
@@ -256,6 +277,7 @@ const CUPS_SEEDS: MinorCardSeed[] = [
     question: '머릿속에 떠다니는 여러 바람 중, 지금 가장 진심으로 원하는 하나는 무엇인가요?',
     action: '떠오르는 생각들을 다 적고 그중 가장 마음이 가는 하나에 동그라미 치기',
     guide: '컵 7은 풍부한 상상과 선택지 속에서 현실적인 중심을 찾는 과정을 비춥니다.',
+    imageUrl: '/src/assets/images/cups_seven_art_1795406087412.jpg',
   },
   {
     rankNum: 'VIII',
@@ -266,6 +288,7 @@ const CUPS_SEEDS: MinorCardSeed[] = [
     question: '익숙해서 머물고 있지만, 사실은 다음 단계로 넘어가고 싶다고 느끼는 부분은 무엇인가요?',
     action: '더 이상 나를 채워주지 못하는 습관이나 미련 하나를 조용히 적어 보기',
     guide: '컵 8은 익숙한 것을 뒤로하고 더 진실한 만족을 찾아 나서는 용기를 상징합니다.',
+    imageUrl: '/src/assets/images/cups_eight_art_1795406082058.jpg',
   },
   {
     rankNum: 'IX',
@@ -276,6 +299,7 @@ const CUPS_SEEDS: MinorCardSeed[] = [
     question: '지금 내 삶에서 이미 충분히 잘 자리 잡고 있다고 느끼는 부분은 무엇인가요?',
     action: '오늘 누린 소소한 편안함 한 가지를 의식적으로 음미해 보기',
     guide: '컵 9는 외부의 비교에서 벗어나 현재의 충만함을 느끼는 태도를 뜻합니다.',
+    imageUrl: '/src/assets/images/cups_nine_art_1795406080392.jpg',
   },
   {
     rankNum: 'X',
@@ -296,6 +320,7 @@ const CUPS_SEEDS: MinorCardSeed[] = [
     question: '요즘 내 마음속에서 작게 피어오르는 솔직한 감정은 무엇인가요?',
     action: '지금 기분을 판단하지 않고 색깔이나 날씨에 비유해 한 줄 적어 보기',
     guide: '컵 시종은 부드러운 감수성과 마음을 솔직하게 표현하는 태도를 비춥니다.',
+    imageUrl: '/src/assets/images/cups_page_art_1795406185899.jpg',
   },
   {
     rankNum: 'Knight',
@@ -339,6 +364,7 @@ const SWORDS_SEEDS: MinorCardSeed[] = [
     question: '지금 머릿속을 어지럽히는 문제의 진짜 핵심을 한 문장으로 줄인다면 무엇일까요?',
     action: '복잡한 고민을 종이에 딱 한 문장으로 요약해 보기',
     guide: '소드 에이스는 안개를 걷어내는 맑은 이성과 명쾌한 통찰을 상징합니다.',
+    imageUrl: '/src/assets/images/swords_ace_art_1795406184793.jpg',
   },
   {
     rankNum: 'II',
@@ -359,6 +385,7 @@ const SWORDS_SEEDS: MinorCardSeed[] = [
     question: '괜찮은 척 넘기려 했지만 사실은 마음이 아팠던 일이 있나요?',
     action: '불편했던 감정을 꾸미지 않고 있는 그대로 한 문장만 적어 보기',
     guide: '소드 3은 아픈 감정을 정직하게 마주하고 통과해 가는 성찰의 과정을 뜻합니다.',
+    imageUrl: '/src/assets/images/swords_three_art_1795406191149.jpg',
   },
   {
     rankNum: 'IV',
@@ -631,7 +658,8 @@ function buildSuitCards(suit: TarotSuit, seeds: MinorCardSeed[]): TarotCard[] {
     gentleAction: seed.action,
     meaningGuide: seed.guide,
     symbolKey: suit,
-    frontImageUrl: `/src/assets/images/${suit}_${seed.rankEn.toLowerCase()}.webp`,
+    frontImageUrl:
+      seed.imageUrl ?? `/src/assets/images/${suit}_${seed.rankEn.toLowerCase()}.webp`,
     backImageUrl: BACK_IMAGE,
   }));
 }

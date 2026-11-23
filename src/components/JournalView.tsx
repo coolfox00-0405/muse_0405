@@ -18,6 +18,7 @@ import {
   Upload,
   Search,
   X,
+  ArrowUpRight,
 } from 'lucide-react';
 import { ReflectionRecord } from '../types/reflection';
 import { getCardById } from '../data/cards';
@@ -73,6 +74,7 @@ interface JournalViewProps {
     mode: 'merge' | 'replace'
   ) => { ok: boolean; addedCount: number; totalCount: number; error?: string };
   onGoToToday: () => void;
+  onOpenEncyclopedia?: (cardId?: string) => void;
 }
 
 export function JournalView({
@@ -85,6 +87,7 @@ export function JournalView({
   onDelete,
   onImport,
   onGoToToday,
+  onOpenEncyclopedia,
 }: JournalViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(
     focusedRecordId || (records.length > 0 ? records[0].id : null)
@@ -313,6 +316,90 @@ export function JournalView({
     }
   };
 
+  const escapeCsvCell = (value: string): string => {
+    const safe = value.replace(/\r\n/g, '\n');
+    return `"${safe.replace(/"/g, '""')}"`;
+  };
+
+  const handleExportCsv = () => {
+    if (records.length === 0) {
+      setBackupFeedback({
+        type: 'error',
+        text: '내보낼 기록이 아직 없습니다.',
+      });
+      return;
+    }
+    try {
+      const headers = [
+        '날짜',
+        '기록 유형',
+        '카드명',
+        '영문명',
+        '방향',
+        '성찰 질문',
+        '선택한 시도',
+        '시도 메모',
+        '나의 생각',
+        '다시 돌아본 기록',
+      ];
+      const rows = records.map((rec) => {
+        const typeLabel =
+          rec.cardId === 'freeform'
+            ? '자유 기록'
+            : rec.readingType === 'three'
+            ? '카드 성찰(3장)'
+            : '카드 성찰';
+        const attemptsText =
+          rec.selectedActions?.map((a) => a.actionText).join(' / ') ||
+          rec.selectedAction ||
+          '';
+        const followUpsText =
+          rec.followUpNotes
+            ?.map((f) => `${f.createdAt.slice(0, 10)}: ${f.note}`)
+            .join(' | ') || '';
+        const orientLabel =
+          rec.cardId === 'freeform'
+            ? ''
+            : rec.orientation === 'reversed'
+            ? '역방향'
+            : '정방향';
+        return [
+          rec.date,
+          typeLabel,
+          rec.cardName,
+          rec.cardNameEn,
+          orientLabel,
+          rec.reflectionQuestion,
+          attemptsText,
+          rec.actionMemo || '',
+          rec.userNote,
+          followUpsText,
+        ]
+          .map(escapeCsvCell)
+          .join(',');
+      });
+      const csvContent = `\uFEFF${headers.map(escapeCsvCell).join(',')}\n${rows.join('\n')}`;
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `lucida-insight-notes-${getLocalDateString()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setBackupFeedback({
+        type: 'success',
+        text: `총 ${records.length}개의 기록을 CSV 파일로 내보냈습니다.`,
+      });
+    } catch {
+      setBackupFeedback({
+        type: 'error',
+        text: 'CSV 파일을 생성하는 중 문제가 발생했습니다.',
+      });
+    }
+  };
+
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
@@ -464,7 +551,16 @@ export function JournalView({
           className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-xl bg-[#777B61] hover:bg-[#646850] text-[#FFFCF6] text-sm font-medium transition-colors whitespace-nowrap cursor-pointer"
         >
           <Download className="w-4 h-4" aria-hidden="true" />
-          <span>JSON 파일로 내보내기</span>
+          <span>JSON 백업</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleExportCsv}
+          className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-xl border border-[#E7E0D5] bg-[#FFFCF6] hover:bg-[#E7E0D5]/45 text-sm text-[#34312D] font-medium transition-colors whitespace-nowrap cursor-pointer"
+        >
+          <Download className="w-4 h-4 text-[#777B61]" aria-hidden="true" />
+          <span>CSV 내보내기</span>
         </button>
 
         <button
@@ -473,7 +569,7 @@ export function JournalView({
           className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-xl border border-[#E7E0D5] bg-[#F7F3EA]/60 hover:bg-[#E7E0D5]/50 text-sm text-[#34312D] font-medium transition-colors whitespace-nowrap cursor-pointer"
         >
           <Upload className="w-4 h-4 text-[#777B61]" aria-hidden="true" />
-          <span>백업 파일 불러오기</span>
+          <span>JSON 복원하기</span>
         </button>
 
         <input
@@ -625,6 +721,18 @@ export function JournalView({
               {showBackupPanel ? '백업 닫기' : '백업 불러오기'}
             </button>
           </div>
+
+          <aside
+            aria-label="기록 예시"
+            className="max-w-md mx-auto mt-4 rounded-xl bg-[#F7F3EA]/70 border border-[#E5DED1] p-4 text-left space-y-1.5"
+          >
+            <p className="text-[11px] font-medium text-[#777B61]">
+              기록 예시 · 한 문장만 남겨도 충분해요
+            </p>
+            <p className="text-xs sm:text-[13px] leading-relaxed text-[#34312D]/85">
+              “오늘 유난히 조급했던 이유가 결과보다 타인의 시선 때문이었다는 걸 알아차렸다. 내일은 내 속도를 먼저 챙겨보자.”
+            </p>
+          </aside>
         </div>
       </section>
     );
@@ -953,7 +1061,20 @@ export function JournalView({
                           ? getCardById(selectedRecord.cardId)
                           : undefined;
                       if (!matchedCard) return null;
-                      return (
+                      return onOpenEncyclopedia ? (
+                        <button
+                          type="button"
+                          onClick={() => onOpenEncyclopedia(matchedCard.id)}
+                          aria-label={`${matchedCard.nameKo} 카드 도감에서 자세히 보기`}
+                          className="w-14 sm:w-16 aspect-[896/1200] rounded-[10px] overflow-hidden border border-[#E5DED1] hover:border-[#777B61] bg-[#FFFCF6] shrink-0 transition-colors cursor-pointer"
+                        >
+                          <TarotCardArtwork
+                            card={matchedCard}
+                            size="thumbnail"
+                            isReversed={selectedRecord.orientation === 'reversed'}
+                          />
+                        </button>
+                      ) : (
                         <div className="w-14 sm:w-16 aspect-[896/1200] rounded-[10px] overflow-hidden border border-[#E5DED1] bg-[#FFFCF6] shrink-0">
                           <TarotCardArtwork
                             card={matchedCard}
@@ -981,6 +1102,18 @@ export function JournalView({
                           </span>
                         )}
                       </h2>
+                      {selectedRecord.cardId !== 'freeform' &&
+                        getCardById(selectedRecord.cardId) &&
+                        onOpenEncyclopedia && (
+                          <button
+                            type="button"
+                            onClick={() => onOpenEncyclopedia(selectedRecord.cardId)}
+                            className="inline-flex items-center gap-1 text-xs font-medium text-[#777B61] hover:text-[#34312D] underline underline-offset-4 cursor-pointer"
+                          >
+                            <span>카드 도감에서 자세히 보기</span>
+                            <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
+                          </button>
+                        )}
                     </div>
                   </div>
 
@@ -1067,10 +1200,22 @@ export function JournalView({
                           : undefined;
                         if (!activeSnap || !activeSnapCard) return null;
                         return (
-                          <div className="pt-2 border-t border-[#E5DED1] text-xs leading-relaxed text-[#34312D]/85 space-y-1">
-                            <p className="font-medium text-[#34312D]">
-                              {activeSnap.positionLabel} · {activeSnapCard.nameKo} ({activeSnapCard.nameEn})
-                            </p>
+                          <div className="pt-2 border-t border-[#E5DED1] text-xs leading-relaxed text-[#34312D]/85 space-y-1.5">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <p className="font-medium text-[#34312D]">
+                                {activeSnap.positionLabel} · {activeSnapCard.nameKo} ({activeSnapCard.nameEn})
+                              </p>
+                              {onOpenEncyclopedia && (
+                                <button
+                                  type="button"
+                                  onClick={() => onOpenEncyclopedia(activeSnapCard.id)}
+                                  className="inline-flex items-center gap-0.5 text-[11px] font-medium text-[#777B61] hover:text-[#34312D] underline underline-offset-2 cursor-pointer"
+                                >
+                                  <span>도감 보기</span>
+                                  <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
+                                </button>
+                              )}
+                            </div>
                             <p>{activeSnapCard.meaningGuide}</p>
                             <p className="text-[#777B61]">
                               질문: {activeSnapCard.reflectionQuestion}

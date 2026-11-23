@@ -324,7 +324,7 @@ export function TodayView({
             지금, 나에게
           </h1>
           <p className="text-sm sm:text-base leading-relaxed text-[#34312D]/90 max-w-md mx-auto">
-            내 안의 빛을 발견하는 시간.
+            내 안의 빛을 발견하는 시간 · 정답을 찾기보다 나에게 필요한 질문을 만나는 시간
           </p>
         </header>
 
@@ -728,6 +728,30 @@ export function TodayView({
                 {activeCard.reflectionQuestion}
               </p>
             </div>
+            {(() => {
+              const pastMatches = records.filter(
+                (r) =>
+                  r.readingSessionId !== readingSessionId &&
+                  (r.cardId === activeCard.id ||
+                    r.spreadCards?.some((s) => s.cardId === activeCard.id))
+              );
+              if (pastMatches.length === 0) return null;
+              return (
+                <div className="pt-1.5 border-t border-[#E7E0D5]/70 flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <span className="text-[#827B72]">
+                    이전에 「{activeCard.nameKo}」 카드를 만났던 기록 {pastMatches.length}건
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onGoToJournal(pastMatches[0].id)}
+                    className="inline-flex items-center gap-1 font-medium text-[#777B61] hover:text-[#34312D] underline underline-offset-4 cursor-pointer"
+                  >
+                    <span>이전 기록 이어서 보기</span>
+                    <ArrowRight className="w-3 h-3" aria-hidden="true" />
+                  </button>
+                </div>
+              );
+            })()}
           </div>
 
           <aside
@@ -914,7 +938,7 @@ export function TodayView({
           <div className="rounded-2xl bg-[#FFFCF6]/85 border border-[#E5DED1] p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="space-y-1">
               <p className="text-xs font-medium tracking-wide text-[#777B61]">
-                카드 도감 · 보조 탐색
+                78장 타로 카드 도감
               </p>
               <p className="text-sm text-[#34312D]/90 leading-relaxed">
                 「{activeCard.nameKo}」 카드의 상징과 78장 타로 전체 일러스트를 차분히 살펴볼 수 있습니다.

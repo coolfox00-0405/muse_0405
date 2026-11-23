@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { BookOpen, Compass, ArrowUpRight } from 'lucide-react';
+import { BookOpen, Compass, ArrowUpRight, Check } from 'lucide-react';
 import { ReflectionRecord } from '../types/reflection';
 import {
   AnalysisRange,
@@ -30,11 +30,15 @@ export function ReadMyselfView({
   const [range, setRange] = useState<AnalysisRange>('recent');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [flaggedRanges, setFlaggedRanges] = useState<Record<string, boolean>>({});
 
   const filteredRecords = useMemo(
     () => filterRecordsByRange(records, range, startDate, endDate),
     [records, range, startDate, endDate]
   );
+
+  const rangeKey = `${range}:${startDate}:${endDate}:${filteredRecords.length}`;
+  const isSummaryFlagged = Boolean(flaggedRanges[rangeKey]);
 
   const analysis = useMemo(() => {
     if (filteredRecords.length < 2) return null;
@@ -367,13 +371,44 @@ export function ReadMyselfView({
             </ul>
           </article>
 
-          {/* Safety & Local Processing Notice */}
-          <p className="text-xs leading-relaxed text-[#827B72] px-1 pt-2">
-            이 화면은 외부 AI 서버로 기록을 전송하지 않고, 현재 브라우저에
-            저장된 실제 기록만을 바탕으로 정리한 규칙 기반 참고 자료입니다.
-            성격을 규정하거나 심리 상태를 진단하지 않으며, 스스로를 돌아보는
-            참고 관점으로만 활용해 주세요.
-          </p>
+          {/* Safety, Feedback & Local Processing Notice */}
+          <div className="rounded-2xl bg-[#FFFCF6]/80 border border-[#E7E0D5] p-5 sm:p-6 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs leading-relaxed text-[#827B72]">
+                이 화면은 외부 AI 서버로 기록을 전송하지 않고, 현재 브라우저에
+                저장된 실제 기록만을 바탕으로 정리한 규칙 기반 참고 자료입니다.
+              </p>
+              <button
+                type="button"
+                onClick={() =>
+                  setFlaggedRanges((prev) => ({
+                    ...prev,
+                    [rangeKey]: !prev[rangeKey],
+                  }))
+                }
+                aria-pressed={isSummaryFlagged}
+                className={`inline-flex items-center gap-1.5 min-h-[36px] px-3.5 py-1.5 rounded-xl border text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                  isSummaryFlagged
+                    ? 'bg-[#777B61]/10 border-[#777B61] text-[#34312D]'
+                    : 'bg-[#FFFCF6] border-[#E7E0D5] text-[#827B72] hover:text-[#34312D]'
+                }`}
+              >
+                {isSummaryFlagged && (
+                  <Check className="w-3.5 h-3.5 text-[#777B61]" aria-hidden="true" />
+                )}
+                <span>
+                  {isSummaryFlagged
+                    ? '나에게는 맞지 않음으로 표시됨'
+                    : '이 요약이 나에게는 맞지 않아요'}
+                </span>
+              </button>
+            </div>
+            <p className="text-xs leading-relaxed text-[#827B72]">
+              {isSummaryFlagged
+                ? '표시해 두었습니다. 규칙 기반 요약은 단어와 빈도의 단순한 참고일 뿐이며, 기록에 담긴 나만의 맥락과 느낌이 언제나 가장 우선합니다.'
+                : '성격을 규정하거나 심리 상태를 진단하지 않으며, 스스로를 돌아보는 참고 관점으로만 활용해 주세요.'}
+            </p>
+          </div>
         </div>
       )}
     </section>
