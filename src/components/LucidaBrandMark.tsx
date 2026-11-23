@@ -38,13 +38,13 @@ export function LucidaBrandMark({
         className={`flex flex-col items-center justify-center text-center select-none pointer-events-none ${className}`}
       >
         <div className="inline-flex items-center justify-center gap-1.5 sm:gap-2 text-[#777B61]">
-          <CrescentStarSymbol className="w-[17px] h-[17px] sm:w-[19px] sm:h-[19px] shrink-0" />
-          <span className="font-display text-[17px] sm:text-[19px] font-medium tracking-[0.2em] text-[#6E7259] leading-none">
+          <CrescentStarSymbol className="w-[14.5px] h-[14.5px] sm:w-[19px] sm:h-[19px] shrink-0" />
+          <span className="font-display text-[14.5px] sm:text-[19px] font-medium tracking-[0.2em] text-[#6E7259] leading-none">
             LUCIDA
           </span>
         </div>
         {subtitle && (
-          <p className="mt-1.5 text-[10px] sm:text-[11px] tracking-[0.18em] text-[#827B72] leading-none uppercase">
+          <p className="mt-0.5 sm:mt-1.5 text-[8.5px] sm:text-[11px] tracking-[0.18em] text-[#827B72] leading-none uppercase">
             {subtitle}
           </p>
         )}

@@ -155,6 +155,25 @@ export default function App() {
     setReadingSessionId(createReadingSessionId());
   }, []);
 
+  const scrollTarget = useCallback((elementId?: string) => {
+    if (typeof window === 'undefined') return;
+    const prefersReducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+    const behavior: ScrollBehavior = prefersReducedMotion ? 'auto' : 'smooth';
+
+    window.requestAnimationFrame(() => {
+      if (elementId) {
+        const el = document.getElementById(elementId);
+        if (el) {
+          el.scrollIntoView({ behavior, block: 'center' });
+          return;
+        }
+      }
+      window.scrollTo({ top: 0, behavior });
+    });
+  }, []);
+
   const handleStartShuffle = useCallback(() => {
     if (shuffleTimerRef.current !== null) {
       window.clearTimeout(shuffleTimerRef.current);
@@ -166,6 +185,10 @@ export default function App() {
     setSelectedOrientations([]);
     setReadingSessionId(createReadingSessionId());
     performUniqueShuffle(deckMode);
+
+    if (typeof window !== 'undefined' && window.scrollY > 24) {
+      scrollTarget();
+    }
 
     const prefersReducedMotion =
       typeof window !== 'undefined' &&
@@ -182,7 +205,7 @@ export default function App() {
       setDrawPhase('selecting');
       shuffleTimerRef.current = null;
     }, 900);
-  }, [deckMode, performUniqueShuffle]);
+  }, [deckMode, performUniqueShuffle, scrollTarget]);
 
   const handleSelectCard = useCallback(
     (card: TarotCard) => {
@@ -212,29 +235,11 @@ export default function App() {
 
       if (next.length >= drawCount) {
         setDrawPhase('revealed');
+        scrollTarget();
       }
     },
-    [drawPhase, drawCount, deckMode, allowReversed]
+    [drawPhase, drawCount, deckMode, allowReversed, scrollTarget]
   );
-
-  const scrollTarget = useCallback((elementId?: string) => {
-    if (typeof window === 'undefined') return;
-    const prefersReducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
-    ).matches;
-    const behavior: ScrollBehavior = prefersReducedMotion ? 'auto' : 'smooth';
-
-    window.requestAnimationFrame(() => {
-      if (elementId) {
-        const el = document.getElementById(elementId);
-        if (el) {
-          el.scrollIntoView({ behavior, block: 'center' });
-          return;
-        }
-      }
-      window.scrollTo({ top: 0, behavior });
-    });
-  }, []);
 
   const resetActiveReadingState = useCallback(() => {
     if (shuffleTimerRef.current !== null) {
@@ -283,9 +288,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F7F3EA] text-[#34312D]">
-      {/* Desktop Top Navigation */}
-      <header className="hidden md:block sticky top-0 z-30 bg-[#F7F3EA]/90 backdrop-blur-md border-b border-[#E5DED1]">
-        <div className="max-w-5xl mx-auto px-8 h-16 flex items-center justify-between gap-6">
+      {/* Top Navigation Header (Mobile & Desktop) */}
+      <header className="sticky top-0 z-30 bg-[#F7F3EA]/90 backdrop-blur-md border-b border-[#E5DED1]">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-8 h-12 md:h-16 flex items-center justify-between gap-4 md:gap-6">
           <button
             type="button"
             onClick={() => setLogoModalOpen(true)}
@@ -302,8 +307,8 @@ export default function App() {
             <span>LUCIDA</span>
           </button>
 
-          <div className="flex items-center gap-4 lg:gap-5">
-            <nav aria-label={t.nav.primaryNavAria} className="flex items-center gap-6 lg:gap-8">
+          <div className="flex items-center gap-2.5 sm:gap-4 lg:gap-5">
+            <nav aria-label={t.nav.primaryNavAria} className="hidden md:flex items-center gap-6 lg:gap-8">
               {navItems.map((item) => {
                 const isActive = activeTab === item.id;
                 return (
@@ -334,11 +339,6 @@ export default function App() {
           </div>
         </div>
       </header>
-
-      {/* Mobile Top-Right Language Bar */}
-      <div className="md:hidden sticky top-0 z-30 bg-[#F7F3EA]/90 backdrop-blur-md border-b border-[#E5DED1]/50 px-4 h-11 flex items-center justify-end">
-        <LanguageSwitcher />
-      </div>
 
       {/* Storage Error Banner if localStorage fails */}
       {storageError && (

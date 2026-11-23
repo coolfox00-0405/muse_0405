@@ -54,9 +54,9 @@ export function TarotCardFlip({
           isRevealed ? 'is-flipped' : ''
         }`}
       >
-        {/* Card Back — Bespoke LUCIDA Botanical Engraving */}
+        {/* Card Back — LUCIDA Botanical Crescent & Star */}
         <div
-          className={`card-face card-face-back rounded-[18px] overflow-hidden bg-[#B8B99C] border border-[#F3EBDD] shadow-[0_14px_34px_-16px_rgba(52,49,45,0.2)] transition-transform duration-200 ${
+          className={`card-face card-face-back rounded-[14px] overflow-hidden bg-[#FAF6EC] border border-[#E5DED1] shadow-[0_14px_34px_-16px_rgba(52,49,45,0.2)] transition-transform duration-200 ${
             isClickable ? 'group-hover:-translate-y-1' : ''
           }`}
         >
@@ -67,7 +67,7 @@ export function TarotCardFlip({
               referrerPolicy="no-referrer"
               decoding="async"
               onError={() => setBackError(true)}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-[#B8B99C] text-[#F3EBDD]">

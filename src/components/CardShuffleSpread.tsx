@@ -46,28 +46,41 @@ export function CardShuffleSpread({
     preloadCardImages(cardsToRender, TAROT_CARD_BACK_IMAGE);
   }, [cardsToRender]);
 
+  if (phase === 'idle') {
+    return (
+      <div className="relative w-full max-w-[540px] h-[196px] sm:h-[248px] mx-auto flex items-center justify-center select-none">
+        <button
+          type="button"
+          onClick={onStartShuffle}
+          aria-label={t.shuffleSpread.idleAria}
+          className="relative w-[130px] sm:w-[162px] aspect-[2/3] rounded-[10px] overflow-hidden bg-[#FAF6EC] shadow-[0_10px_24px_-14px_rgba(52,49,45,0.18)] transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#777B61] cursor-pointer"
+        >
+          <img
+            src={TAROT_CARD_BACK_IMAGE}
+            alt={t.cardFlip.backImageAlt}
+            referrerPolicy="no-referrer"
+            decoding="async"
+            className="w-full h-full object-contain pointer-events-none"
+          />
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="relative w-full max-w-[540px] h-[208px] sm:h-[248px] mx-auto flex items-center justify-center select-none">
+    <div className="relative w-full max-w-[540px] h-[216px] sm:h-[254px] mx-auto flex items-center justify-center select-none">
       {cardsToRender.map((card, index) => {
         const offset = index - CENTER_INDEX; // -3 .. +3
         const fanAngle = offset * 7.5; // -22.5deg .. +22.5deg
         const fanX = offset * 30;
-        const fanY = Math.abs(offset) * Math.abs(offset) * 3.2;
+        const fanY = Math.abs(offset) * Math.abs(offset) * 2.2 - 6;
 
         const isEven = index % 2 === 0;
         const selectedOrder = selectedOrderMap.get(card.id);
         const isAlreadySelected = selectedOrder !== undefined;
 
         let animateProps;
-        if (phase === 'idle') {
-          animateProps = {
-            x: offset * 1.8,
-            y: Math.abs(offset) * 0.8,
-            rotate: offset * 0.8,
-            scale: 1,
-            opacity: 1,
-          };
-        } else if (phase === 'shuffling') {
+        if (phase === 'shuffling') {
           animateProps = prefersReducedMotion
             ? { x: 0, y: 0, rotate: 0, scale: 0.98, opacity: [1, 0.7, 1] }
             : {
@@ -89,7 +102,6 @@ export function CardShuffleSpread({
         }
 
         const isSelecting = phase === 'selecting';
-        const isIdle = phase === 'idle';
         const isDisabled =
           phase === 'shuffling' || (isSelecting && isAlreadySelected);
 
@@ -99,9 +111,7 @@ export function CardShuffleSpread({
             type="button"
             disabled={isDisabled}
             onClick={() => {
-              if (isIdle) {
-                onStartShuffle();
-              } else if (isSelecting && !isAlreadySelected) {
+              if (isSelecting && !isAlreadySelected) {
                 onSelectCard(card);
               }
             }}
@@ -110,8 +120,6 @@ export function CardShuffleSpread({
                 ? isAlreadySelected
                   ? t.shuffleSpread.selectingPickedAria(index + 1, selectedOrder)
                   : t.shuffleSpread.selectingPickAria(index + 1)
-                : isIdle
-                ? t.shuffleSpread.idleAria
                 : t.shuffleSpread.shufflingAria
             }
             initial={false}
@@ -146,12 +154,12 @@ export function CardShuffleSpread({
               zIndex: isAlreadySelected ? 20 + selectedOrder : index + 1,
               transformOrigin: 'center bottom',
             }}
-            className={`absolute w-[124px] sm:w-[148px] aspect-[3/4] rounded-[14px] overflow-hidden bg-[#B8B99C] border shadow-[0_12px_28px_-14px_rgba(52,49,45,0.2)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] ${
+            className={`absolute w-[116px] sm:w-[140px] aspect-[2/3] rounded-[10px] overflow-hidden bg-[#FAF6EC] shadow-[0_12px_28px_-14px_rgba(52,49,45,0.2)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] ${
               isAlreadySelected
-                ? 'border-[#F3EBDD] ring-2 ring-[#777B61]/45 cursor-not-allowed'
-                : isSelecting || isIdle
-                ? 'border-[#F3EBDD] cursor-pointer'
-                : 'border-[#F3EBDD] cursor-default'
+                ? 'ring-2 ring-[#777B61]/50 cursor-not-allowed'
+                : isSelecting
+                ? 'cursor-pointer'
+                : 'cursor-default'
             }`}
           >
             <img
@@ -159,7 +167,7 @@ export function CardShuffleSpread({
               alt=""
               referrerPolicy="no-referrer"
               decoding="async"
-              className="w-full h-full object-cover pointer-events-none"
+              className="w-full h-full object-contain pointer-events-none"
             />
             {isAlreadySelected && (
               <span

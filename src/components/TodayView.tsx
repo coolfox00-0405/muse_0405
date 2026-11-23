@@ -342,20 +342,20 @@ export function TodayView({
     return (
       <section
         aria-label={t.today.sectionShuffleAria}
-        className="w-full max-w-2xl mx-auto px-5 sm:px-8 pt-2 sm:pt-7 pb-8 flex flex-col items-center text-center"
+        className="w-full max-w-2xl mx-auto px-5 sm:px-8 pt-1 sm:pt-7 pb-8 flex flex-col items-center text-center"
       >
         {/* Collapsible First-Visit Onboarding Card */}
-        {!onboardingDismissed && (
+        {!onboardingDismissed && phase === 'idle' && (
           <aside
             aria-label={t.today.onboardingAsideAria}
-            className="w-full mb-5 sm:mb-6 rounded-2xl bg-[#FFFCF6] border border-[#E5DED1] px-4 py-3 text-left"
+            className="w-full mb-2.5 sm:mb-6 rounded-2xl bg-[#FFFCF6] border border-[#E5DED1] px-3.5 py-1.5 sm:px-4 sm:py-3 text-left"
           >
             <div className="flex items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={() => setOnboardingOpen((prev) => !prev)}
                 aria-expanded={onboardingOpen}
-                className="inline-flex items-center gap-2 text-xs font-medium text-[#777B61] cursor-pointer min-h-[32px] text-left"
+                className="inline-flex items-center gap-2 text-xs font-medium text-[#777B61] cursor-pointer min-h-[28px] sm:min-h-[32px] text-left"
               >
                 <span>{t.today.onboardingToggle}</span>
                 {onboardingOpen ? (
@@ -367,7 +367,7 @@ export function TodayView({
               <button
                 type="button"
                 onClick={handleDismissOnboarding}
-                className="text-xs text-[#827B72] hover:text-[#34312D] underline underline-offset-2 whitespace-nowrap cursor-pointer min-h-[32px] shrink-0"
+                className="text-xs text-[#827B72] hover:text-[#34312D] underline underline-offset-2 whitespace-nowrap cursor-pointer min-h-[28px] sm:min-h-[32px] shrink-0"
               >
                 {t.today.onboardingDismiss}
               </button>
@@ -386,25 +386,25 @@ export function TodayView({
         <header
           className={
             phase === 'idle'
-              ? 'mb-5 sm:mb-7 space-y-6 sm:space-y-8'
-              : 'mb-3 sm:mb-4 space-y-3'
+              ? 'mb-2 sm:mb-7 space-y-2.5 sm:space-y-8'
+              : 'mb-2 sm:mb-4 space-y-2 sm:space-y-3'
           }
         >
           <LucidaBrandMark
             variant="hero"
             subtitle={phase === 'idle' ? t.today.heroSubtitle : undefined}
           />
-          <div className="space-y-1.5 sm:space-y-2">
-            <h1 className="font-serif text-[28px] sm:text-4xl font-medium text-[#34312D]">
+          <div className="space-y-0.5 sm:space-y-2">
+            <h1 className="font-serif text-[22px] sm:text-4xl font-medium text-[#34312D] leading-tight sm:leading-normal">
               {t.today.heroTitle}
             </h1>
-            <p className="text-sm sm:text-[15px] leading-relaxed text-[#827B72] max-w-md mx-auto">
+            <p className="text-[13px] sm:text-[15px] leading-snug sm:leading-relaxed text-[#827B72] max-w-md mx-auto">
               {t.today.heroLead}
             </p>
           </div>
         </header>
 
-        <div className="w-full my-1 overflow-visible">
+        <div className="w-full my-0 sm:my-1 overflow-visible">
           <CardShuffleSpread
             phase={phase === 'revealed' ? 'idle' : phase}
             spreadCards={spreadCards}
@@ -416,11 +416,15 @@ export function TodayView({
 
         <div
           id="reading-setup-controls"
-          className="mt-4 sm:mt-6 space-y-3 w-full max-w-md scroll-mt-24"
+          className={`w-full max-w-md scroll-mt-24 ${
+            phase === 'idle'
+              ? 'mt-2 sm:mt-6 space-y-2 sm:space-y-3'
+              : 'mt-2.5 sm:mt-5 space-y-2.5'
+          }`}
         >
           {phase === 'idle' && (
             <>
-              <div className="flex flex-wrap items-center justify-center gap-2">
+              <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
                 <div
                   role="group"
                   aria-label={t.today.deckGroupAria}
@@ -430,7 +434,7 @@ export function TodayView({
                     type="button"
                     onClick={() => onChangeDeckMode('full')}
                     aria-pressed={deckMode === 'full'}
-                    className={`min-h-[36px] px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                    className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
                       deckMode === 'full'
                         ? 'bg-[#777B61] text-[#FFFCF6]'
                         : 'text-[#827B72] hover:text-[#34312D]'
@@ -442,7 +446,7 @@ export function TodayView({
                     type="button"
                     onClick={() => onChangeDeckMode('major')}
                     aria-pressed={deckMode === 'major'}
-                    className={`min-h-[36px] px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                    className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
                       deckMode === 'major'
                         ? 'bg-[#777B61] text-[#FFFCF6]'
                         : 'text-[#827B72] hover:text-[#34312D]'
@@ -461,7 +465,7 @@ export function TodayView({
                     type="button"
                     onClick={() => onChangeDrawCount(1)}
                     aria-pressed={drawCount === 1}
-                    className={`min-h-[36px] px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                    className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
                       drawCount === 1
                         ? 'bg-[#777B61] text-[#FFFCF6]'
                         : 'text-[#827B72] hover:text-[#34312D]'
@@ -473,7 +477,7 @@ export function TodayView({
                     type="button"
                     onClick={() => onChangeDrawCount(3)}
                     aria-pressed={drawCount === 3}
-                    className={`min-h-[36px] px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                    className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
                       drawCount === 3
                         ? 'bg-[#777B61] text-[#FFFCF6]'
                         : 'text-[#827B72] hover:text-[#34312D]'
@@ -492,7 +496,7 @@ export function TodayView({
                     type="button"
                     onClick={() => onChangeAllowReversed(false)}
                     aria-pressed={!allowReversed}
-                    className={`min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                    className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
                       !allowReversed
                         ? 'bg-[#777B61] text-[#FFFCF6]'
                         : 'text-[#827B72] hover:text-[#34312D]'
@@ -504,7 +508,7 @@ export function TodayView({
                     type="button"
                     onClick={() => onChangeAllowReversed(true)}
                     aria-pressed={allowReversed}
-                    className={`min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                    className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
                       allowReversed
                         ? 'bg-[#777B61] text-[#FFFCF6]'
                         : 'text-[#827B72] hover:text-[#34312D]'
@@ -515,7 +519,7 @@ export function TodayView({
                 </div>
               </div>
 
-              <p className="text-[15px] leading-relaxed text-[#34312D]/85">
+              <p className="text-[13.5px] sm:text-[15px] leading-snug sm:leading-relaxed text-[#34312D]/85">
                 {t.today.idlePrompt}
               </p>
               <button
@@ -559,7 +563,7 @@ export function TodayView({
               <p
                 role="status"
                 aria-live="polite"
-                className="text-[15px] leading-relaxed text-[#34312D]/90"
+                className="text-[14.5px] sm:text-[15px] leading-relaxed text-[#34312D]/90"
               >
                 {drawCount === 1
                   ? t.today.selectingSinglePrompt
@@ -567,13 +571,13 @@ export function TodayView({
               </p>
 
               {drawCount === 3 && (
-                <div className="grid grid-cols-3 gap-2 pt-1 text-left">
+                <div className="grid grid-cols-3 gap-2 pt-0.5 text-left">
                   {t.today.threeCardPositions.map((label, idx) => {
                     const picked = Boolean(selectedCards[idx]);
                     return (
                       <div
                         key={idx}
-                        className={`rounded-xl border px-3 py-2 text-xs transition-colors ${
+                        className={`rounded-xl border px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs transition-colors ${
                           picked
                             ? 'bg-[#777B61]/10 border-[#777B61]/40 text-[#34312D]'
                             : 'bg-[#FFFCF6] border-[#E5DED1] text-[#827B72]'
@@ -592,14 +596,38 @@ export function TodayView({
                 </div>
               )}
 
-              <button
-                type="button"
-                onClick={onStartShuffle}
-                className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 rounded-xl border border-[#E5DED1] bg-[#FFFCF6] hover:bg-[#E5DED1]/45 text-sm text-[#827B72] hover:text-[#34312D] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
-              >
-                <Shuffle className="w-4 h-4" aria-hidden="true" />
-                <span>{t.today.reshuffleButton}</span>
-              </button>
+              <div className="w-[88%] sm:w-full sm:max-w-[300px] mx-auto grid grid-cols-2 gap-2 pt-0.5">
+                <button
+                  type="button"
+                  onClick={handleReshuffle}
+                  className="min-w-0 min-h-[40px] sm:min-h-[42px] inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl border border-[#E5DED1] bg-[#FFFCF6] hover:bg-[#E5DED1]/45 text-[11.5px] sm:text-xs font-medium text-[#6B645C] hover:text-[#34312D] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
+                >
+                  <Shuffle className="w-3.5 h-3.5 text-[#777B61] shrink-0" aria-hidden="true" />
+                  <span>{t.today.reshuffleButton}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleGoHomeClick}
+                  className="min-w-0 min-h-[40px] sm:min-h-[42px] inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl border border-[#E5DED1] bg-[#FFFCF6] hover:bg-[#E5DED1]/45 text-[11.5px] sm:text-xs font-medium text-[#6B645C] hover:text-[#34312D] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
+                >
+                  <Home className="w-3.5 h-3.5 text-[#777B61] shrink-0" aria-hidden="true" />
+                  <span>{t.today.goHomeButton}</span>
+                </button>
+              </div>
+
+              {savedRecordCount > 0 && (
+                <p className="text-xs text-[#777B61] pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => onGoToJournal()}
+                    className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-[#34312D] transition-colors cursor-pointer"
+                  >
+                    <span>{t.today.savedNotesBanner(savedRecordCount)}</span>
+                    <ArrowRight className="w-3 h-3" aria-hidden="true" />
+                  </button>
+                </p>
+              )}
             </>
           )}
         </div>
