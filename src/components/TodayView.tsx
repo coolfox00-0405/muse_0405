@@ -25,7 +25,6 @@ import { getCardById } from '../data/cards';
 import { TarotCardFlip } from './TarotCardFlip';
 import { TarotCardArtwork } from './TarotCardArtwork';
 import { CardShuffleSpread, DrawPhase } from './CardShuffleSpread';
-import { LucidaBrandMark } from './LucidaBrandMark';
 import type { ReadingDrawCount } from '../App';
 import { useLanguage } from '../i18n/LanguageContext';
 import { getLocalizedCard } from '../i18n/cardHelpers';
@@ -342,13 +341,19 @@ export function TodayView({
     return (
       <section
         aria-label={t.today.sectionShuffleAria}
-        className="w-full max-w-2xl mx-auto px-5 sm:px-8 pt-1 sm:pt-7 pb-8 flex flex-col items-center text-center"
+        className={`w-full max-w-2xl mx-auto px-5 sm:px-8 pb-8 flex flex-col items-center text-center ${
+          phase === 'idle'
+            ? onboardingDismissed
+              ? 'pt-[clamp(1.75rem,8vh,5rem)] sm:pt-7'
+              : 'pt-[clamp(1rem,2.5vh,2rem)] sm:pt-7'
+            : 'pt-3 sm:pt-7'
+        }`}
       >
         {/* Collapsible First-Visit Onboarding Card */}
         {!onboardingDismissed && phase === 'idle' && (
           <aside
             aria-label={t.today.onboardingAsideAria}
-            className="w-full mb-2.5 sm:mb-6 rounded-2xl bg-[#FFFCF6] border border-[#E5DED1] px-3.5 py-1.5 sm:px-4 sm:py-3 text-left"
+            className="w-full mb-5 sm:mb-6 rounded-2xl bg-[#FFFCF6] border border-[#E5DED1] px-3.5 py-1.5 sm:px-4 sm:py-3 text-left"
           >
             <div className="flex items-center justify-between gap-3">
               <button
@@ -386,19 +391,15 @@ export function TodayView({
         <header
           className={
             phase === 'idle'
-              ? 'mb-1.5 sm:mb-6 space-y-2 sm:space-y-7'
-              : 'mb-1.5 sm:mb-4 space-y-1.5 sm:space-y-3'
+              ? 'mb-[clamp(1.25rem,3.5vh,2rem)] sm:mb-7'
+              : 'mb-2.5 sm:mb-4'
           }
         >
-          <LucidaBrandMark
-            variant="hero"
-            subtitle={phase === 'idle' ? t.today.heroSubtitle : undefined}
-          />
-          <div className="space-y-0.5 sm:space-y-2">
-            <h1 className="font-serif text-[20px] sm:text-4xl font-medium text-[#34312D] leading-tight sm:leading-normal">
+          <div className="space-y-2 sm:space-y-2.5">
+            <h1 className="font-serif text-[22px] sm:text-4xl font-medium text-[#34312D] leading-tight sm:leading-normal">
               {t.today.heroTitle}
             </h1>
-            <p className="text-[12.5px] sm:text-[15px] leading-snug sm:leading-relaxed text-[#827B72] max-w-md mx-auto">
+            <p className="text-[13.5px] sm:text-[15px] leading-relaxed text-[#827B72] max-w-md mx-auto">
               {t.today.heroLead}
             </p>
           </div>
@@ -418,8 +419,8 @@ export function TodayView({
           id="reading-setup-controls"
           className={`w-full max-w-md scroll-mt-24 ${
             phase === 'idle'
-              ? 'mt-1.5 sm:mt-5 space-y-1.5 sm:space-y-2.5'
-              : 'mt-2 sm:mt-5 space-y-2'
+              ? 'mt-[clamp(1.25rem,3.5vh,2rem)] sm:mt-7 space-y-[clamp(0.875rem,2.5vh,1.5rem)] sm:space-y-4'
+              : 'mt-2.5 sm:mt-5 space-y-2'
           }`}
         >
           {phase === 'idle' && (
@@ -519,20 +520,16 @@ export function TodayView({
                 </div>
               </div>
 
-              <p className="text-[13.5px] sm:text-[15px] leading-snug sm:leading-relaxed text-[#34312D]/85">
-                {t.today.idlePrompt}
-              </p>
-              <button
-                type="button"
-                onClick={onStartShuffle}
-                className="w-[72%] sm:w-full sm:max-w-[280px] mx-auto min-h-[40px] sm:min-h-[42px] inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-[#777B61] hover:bg-[#646850] active:scale-[0.995] text-[#FFFCF6] text-[14.5px] sm:text-[15px] font-medium shadow-xs transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
-              >
-                <Shuffle className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>{t.today.shuffleButton}</span>
-              </button>
-              <p className="text-xs leading-relaxed text-[#827B72]">
-                {t.today.idleSubHint}
-              </p>
+              <div className="pt-0.5 pb-1">
+                <button
+                  type="button"
+                  onClick={onStartShuffle}
+                  className="w-[72%] sm:w-full sm:max-w-[280px] mx-auto min-h-[42px] sm:min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#777B61] hover:bg-[#646850] active:scale-[0.995] text-[#FFFCF6] text-[14.5px] sm:text-[15px] font-medium shadow-xs transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
+                >
+                  <Shuffle className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span>{t.today.shuffleButton}</span>
+                </button>
+              </div>
               {savedRecordCount > 0 && (
                 <p className="text-xs text-[#777B61] pt-1">
                   <button
@@ -633,7 +630,7 @@ export function TodayView({
         </div>
 
         {/* Gentle below-the-fold guide preview */}
-        <div className="w-full mt-7 sm:mt-9 pt-6 border-t border-[#E5DED1] text-left space-y-4">
+        <div className="w-full mt-9 sm:mt-11 pt-6 border-t border-[#E5DED1] text-left space-y-4">
           <h2 className="font-serif text-base sm:text-lg font-medium text-[#34312D]">
             {t.today.guideTitle}
           </h2>
