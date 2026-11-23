@@ -730,11 +730,11 @@ export function TodayView({
             <p className="text-[13px] sm:text-[15px] leading-[1.55] sm:leading-[1.65] text-[#34312D]/85">
               {activeCard.meaningGuide}
             </p>
-            <div className="pt-1.5 sm:pt-2 border-t border-[#E7E0D5]/80 space-y-0.5 sm:space-y-1">
+            <div className="pt-3 sm:pt-4 pb-1 sm:pb-1.5 border-t border-[#E7E0D5]/80 space-y-1.5 sm:space-y-2">
               <h2 className="text-[11px] font-medium tracking-wide text-[#777B61]">
                 나에게 던져볼 질문
               </h2>
-              <p className="text-[13.5px] sm:text-[16px] font-medium leading-snug text-[#34312D]">
+              <p className="text-[17px] sm:text-[20px] font-semibold leading-[1.48] sm:leading-[1.5] text-[#34312D] break-keep">
                 {activeCard.reflectionQuestion}
               </p>
             </div>
