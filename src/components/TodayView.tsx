@@ -22,6 +22,7 @@ import { generatePersonalizedAttempts } from '../utils/attemptGenerator';
 import { TarotCardFlip } from './TarotCardFlip';
 import { TarotCardArtwork } from './TarotCardArtwork';
 import { CardShuffleSpread, DrawPhase } from './CardShuffleSpread';
+import { LucidaBrandMark } from './LucidaBrandMark';
 import type { ReadingDrawCount } from '../App';
 
 const ONBOARDING_KEY = 'lucida_onboarding_dismissed';
@@ -265,7 +266,7 @@ export function TodayView({
     return (
       <section
         aria-label="지금, 나에게 — 카드 섞기 및 선택"
-        className="w-full max-w-2xl mx-auto px-5 sm:px-8 pt-4 sm:pt-7 pb-8 flex flex-col items-center text-center"
+        className="w-full max-w-2xl mx-auto px-5 sm:px-8 pt-3 sm:pt-5 pb-8 flex flex-col items-center text-center"
       >
         {/* Collapsible First-Visit Onboarding Card */}
         {!onboardingDismissed && (
@@ -316,16 +317,25 @@ export function TodayView({
           </aside>
         )}
 
-        <header className="mb-4 sm:mb-6 space-y-1.5">
-          <p className="font-display text-sm tracking-[0.22em] text-[#827B72]">
-            LUCIDA
-          </p>
-          <h1 className="font-serif text-[28px] sm:text-4xl font-medium text-[#34312D]">
-            지금, 나에게
-          </h1>
-          <p className="text-sm sm:text-base leading-relaxed text-[#34312D]/90 max-w-md mx-auto">
-            내 안의 빛을 발견하는 시간 · 정답을 찾기보다 나에게 필요한 질문을 만나는 시간
-          </p>
+        <header
+          className={
+            phase === 'idle'
+              ? 'mb-4 sm:mb-6 space-y-3.5 sm:space-y-4'
+              : 'mb-2.5 sm:mb-4 space-y-2'
+          }
+        >
+          <LucidaBrandMark
+            variant={phase === 'idle' ? 'hero' : 'compact'}
+            subtitle={phase === 'idle' ? 'NOW, LOOK WITHIN' : undefined}
+          />
+          <div className="space-y-1.5">
+            <h1 className="font-serif text-[28px] sm:text-4xl font-medium text-[#34312D]">
+              지금, 나에게
+            </h1>
+            <p className="text-sm sm:text-base leading-relaxed text-[#34312D]/85 max-w-md mx-auto">
+              잠시 멈추어 내 마음을 바라보는 시간
+            </p>
+          </div>
         </header>
 
         <div className="w-full my-1 overflow-visible">

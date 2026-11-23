@@ -1,4 +1,6 @@
 import { BookOpen } from 'lucide-react';
+import { PWAInstallButton } from './PWAInstallButton';
+import { LucidaBrandMark } from './LucidaBrandMark';
 
 interface AboutViewProps {
   onOpenEncyclopedia?: () => void;
@@ -8,16 +10,16 @@ export function AboutView({ onOpenEncyclopedia }: AboutViewProps) {
   return (
     <section
       aria-label="앱 소개"
-      className="w-full max-w-2xl mx-auto px-5 sm:px-8 pt-6 sm:pt-12 pb-12 space-y-10"
+      className="w-full max-w-2xl mx-auto px-5 sm:px-8 pt-4 sm:pt-6 pb-12 space-y-10"
     >
-      <header className="space-y-3 border-b border-[#E7E0D5] pb-8">
-        <p className="font-serif text-sm tracking-[0.2em] text-[#827B72]">
-          LUCIDA
-        </p>
-        <h1 className="font-serif text-3xl sm:text-4xl font-medium text-[#34312D]">
-          LUCIDA에 대하여
-        </h1>
-      </header>
+      <div>
+        <LucidaBrandMark variant="compact" className="mb-3 sm:mb-4" />
+        <header className="space-y-2 border-b border-[#E7E0D5] pb-6">
+          <h1 className="font-serif text-3xl sm:text-4xl font-medium text-[#34312D]">
+            LUCIDA에 대하여
+          </h1>
+        </header>
+      </div>
 
       <div className="bg-[#FFFCF6] border border-[#E7E0D5] rounded-2xl p-6 sm:p-8 space-y-4">
         <p className="font-serif text-lg sm:text-xl leading-[1.7] text-[#34312D]">
@@ -51,6 +53,8 @@ export function AboutView({ onOpenEncyclopedia }: AboutViewProps) {
           </button>
         </div>
       )}
+
+      <PWAInstallButton variant="card" />
 
       <div className="space-y-5 px-1">
         <h2 className="font-serif text-xl font-medium text-[#34312D]">

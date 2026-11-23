@@ -10,6 +10,7 @@ import { ReadMyselfView } from './components/ReadMyselfView';
 import { AboutView } from './components/AboutView';
 import { DrawPhase } from './components/CardShuffleSpread';
 import { DeckEncyclopediaModal } from './components/DeckEncyclopediaModal';
+import { PWAInstallButton } from './components/PWAInstallButton';
 
 const NAV_ITEMS: { id: ActiveTab; label: string }[] = [
   { id: 'today', label: '지금, 나에게' },
@@ -263,37 +264,46 @@ export default function App() {
           <button
             type="button"
             onClick={() => setActiveTab('today')}
-            className="font-display text-xl font-medium tracking-[0.16em] text-[#34312D] whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#777B61]"
+            className="inline-flex items-center gap-2 font-display text-lg font-medium tracking-[0.2em] text-[#34312D] whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#777B61]"
           >
-            LUCIDA
+            <img
+              src="/brand/lucida-symbol.png"
+              alt=""
+              aria-hidden="true"
+              className="w-7 h-auto object-contain mix-blend-multiply"
+            />
+            <span>LUCIDA</span>
           </button>
 
-          <nav aria-label="주요 메뉴" className="flex items-center gap-8">
-            {NAV_ITEMS.map((item) => {
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setActiveTab(item.id)}
-                  aria-current={isActive ? 'page' : undefined}
-                  className={`relative py-1 text-sm font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#777B61] ${
-                    isActive
-                      ? 'text-[#34312D]'
-                      : 'text-[#827B72] hover:text-[#34312D]'
-                  }`}
-                >
-                  {item.label}
-                  {isActive && (
-                    <span
-                      aria-hidden="true"
-                      className="absolute inset-x-0 -bottom-[21px] h-[2px] bg-[#777B61]"
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </nav>
+          <div className="flex items-center gap-6">
+            <nav aria-label="주요 메뉴" className="flex items-center gap-8">
+              {NAV_ITEMS.map((item) => {
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setActiveTab(item.id)}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={`relative py-1 text-sm font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#777B61] ${
+                      isActive
+                        ? 'text-[#34312D]'
+                        : 'text-[#827B72] hover:text-[#34312D]'
+                    }`}
+                  >
+                    {item.label}
+                    {isActive && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-x-0 -bottom-[21px] h-[2px] bg-[#777B61]"
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+            <PWAInstallButton variant="header" />
+          </div>
         </div>
       </header>
 

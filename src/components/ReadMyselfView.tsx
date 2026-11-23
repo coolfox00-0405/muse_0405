@@ -7,6 +7,7 @@ import {
   analyzeReflections,
 } from '../utils/reflectionAnalyzer';
 import { formatKoreanDate } from '../hooks/useReflections';
+import { LucidaBrandMark } from './LucidaBrandMark';
 
 interface ReadMyselfViewProps {
   records: ReflectionRecord[];
@@ -48,9 +49,11 @@ export function ReadMyselfView({
   return (
     <section
       aria-label="나를 읽다"
-      className="w-full max-w-4xl mx-auto px-5 sm:px-8 pt-6 sm:pt-10 pb-12 space-y-8"
+      className="w-full max-w-4xl mx-auto px-5 sm:px-8 pt-4 sm:pt-6 pb-12 space-y-8"
     >
-      <header className="space-y-2 border-b border-[#E7E0D5] pb-6">
+      <div>
+        <LucidaBrandMark variant="compact" className="mb-3 sm:mb-4" />
+        <header className="space-y-2 border-b border-[#E7E0D5] pb-6">
         <p className="font-serif text-sm tracking-[0.14em] text-[#827B72]">
           Read Myself
         </p>
@@ -61,7 +64,8 @@ export function ReadMyselfView({
           인사이트 노트에 쌓인 기록을 원하는 범위로 모아, 생각과 관심사의
           흐름을 차분히 살펴봅니다.
         </p>
-      </header>
+        </header>
+      </div>
 
       {/* Range Selector */}
       <div className="space-y-4">

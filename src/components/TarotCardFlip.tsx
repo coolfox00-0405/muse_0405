@@ -68,6 +68,12 @@ export function TarotCardFlip({
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-[#F7F3EA] text-[#777B61]">
               <div className="w-full h-full border border-[#777B61]/35 rounded-xl flex flex-col items-center justify-center gap-3">
+                <img
+                  src="/brand/lucida-symbol.png"
+                  alt=""
+                  aria-hidden="true"
+                  className="w-14 h-14 object-contain mix-blend-multiply"
+                />
                 <span className="font-display text-lg tracking-[0.22em] text-[#34312D]">
                   LUCIDA
                 </span>

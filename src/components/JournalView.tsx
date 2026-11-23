@@ -23,6 +23,7 @@ import {
 import { ReflectionRecord } from '../types/reflection';
 import { getCardById } from '../data/cards';
 import { TarotCardArtwork } from './TarotCardArtwork';
+import { LucidaBrandMark } from './LucidaBrandMark';
 import {
   formatKoreanDate,
   formatKoreanTime,
@@ -684,8 +685,9 @@ export function JournalView({
     return (
       <section
         aria-label="인사이트 노트"
-        className="w-full max-w-2xl mx-auto px-5 sm:px-8 pt-10 sm:pt-14 pb-12 text-center"
+        className="w-full max-w-2xl mx-auto px-5 sm:px-8 pt-4 sm:pt-7 pb-12 text-center"
       >
+        <LucidaBrandMark variant="compact" className="mb-4 sm:mb-5" />
         {backupPanel}
 
         <div className="bg-[#FFFCF6] border border-[#E7E0D5] rounded-2xl px-6 py-14 sm:py-16 space-y-5">
@@ -741,8 +743,9 @@ export function JournalView({
   return (
     <section
       aria-label="인사이트 노트"
-      className="w-full max-w-5xl mx-auto px-5 sm:px-8 pt-6 sm:pt-10 pb-12"
+      className="w-full max-w-5xl mx-auto px-5 sm:px-8 pt-4 sm:pt-6 pb-12"
     >
+      <LucidaBrandMark variant="compact" className="mb-3 sm:mb-4" />
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-[#E7E0D5] pb-4">
         <div className="flex items-baseline gap-3">
           <h1 className="font-serif text-2xl sm:text-3xl font-medium text-[#34312D]">
