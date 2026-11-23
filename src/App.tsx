@@ -475,36 +475,36 @@ export default function App() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{
-              duration: prefersReducedMotion ? 0.08 : 0.2,
-              ease: 'easeOut',
+              duration: prefersReducedMotion ? 0.08 : 0.24,
+              ease: 'easeInOut',
             }}
             onClick={() => setLogoModalOpen(false)}
-            className="fixed inset-0 z-50 flex items-center justify-center p-5 sm:p-8 bg-[#1E1C19]/70 backdrop-blur-[2px] cursor-pointer"
+            className="fixed inset-0 z-50 flex items-center justify-center p-5 sm:p-8 bg-[#1E1C19]/68 backdrop-blur-[2px] cursor-pointer"
           >
             <motion.div
-              initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
+              initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
               animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
               exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
               transition={{
-                duration: prefersReducedMotion ? 0.08 : 0.2,
-                ease: 'easeOut',
+                duration: prefersReducedMotion ? 0.08 : 0.24,
+                ease: 'easeInOut',
               }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-[min(86vw,440px)] max-h-[82dvh] rounded-2xl bg-[#FFFCF6] border border-[#E5DED1] p-5 sm:p-7 shadow-[0_24px_64px_-14px_rgba(18,16,14,0.55)] flex items-center justify-center cursor-default"
+              className="relative w-full max-w-[min(88vw,460px)] max-h-[84dvh] rounded-2xl bg-[#FBF7EE] border border-[#E5DED1] p-5 sm:p-7 shadow-[0_24px_64px_-14px_rgba(18,16,14,0.52)] flex items-center justify-center cursor-default"
             >
               <button
                 type="button"
                 onClick={() => setLogoModalOpen(false)}
                 aria-label={t.nav.logoModalCloseAria}
-                className="absolute top-3 right-3 sm:top-3.5 sm:right-3.5 w-9 h-9 rounded-full bg-[#F7F3EA]/90 hover:bg-[#E5DED1]/70 border border-[#E5DED1] text-[#34312D] flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61]"
+                className="absolute top-3 right-3 sm:top-3.5 sm:right-3.5 z-10 w-9 h-9 rounded-full bg-[#F7F3EA]/92 hover:bg-[#E5DED1]/75 border border-[#E5DED1] text-[#34312D] flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61]"
               >
                 <X className="w-4 h-4" aria-hidden="true" />
               </button>
 
               <img
-                src="/brand/lucida-symbol.png"
+                src="/brand/lucida-logo-main.png"
                 alt={t.nav.logoAlt}
-                className="w-full h-auto max-h-[68dvh] object-contain mix-blend-multiply select-none pointer-events-none"
+                className="w-full h-auto max-h-[70dvh] object-contain mix-blend-multiply select-none pointer-events-none"
               />
             </motion.div>
           </motion.div>
