@@ -350,7 +350,6 @@ export default function App() {
               }
               setActiveTab('journal');
             }}
-            onOpenEncyclopedia={handleOpenEncyclopedia}
           />
         )}
 
@@ -365,7 +364,6 @@ export default function App() {
             onDelete={deleteReflection}
             onImport={importReflections}
             onGoToToday={() => setActiveTab('today')}
-            onOpenEncyclopedia={handleOpenEncyclopedia}
           />
         )}
 

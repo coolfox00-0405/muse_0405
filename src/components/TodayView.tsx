@@ -50,7 +50,6 @@ interface TodayViewProps {
   onGoHome: () => void;
   savedRecordCount?: number;
   onGoToJournal: (targetRecordId?: string) => void;
-  onOpenEncyclopedia?: (cardId?: string) => void;
 }
 
 export function TodayView({
@@ -73,7 +72,6 @@ export function TodayView({
   onGoHome,
   savedRecordCount = 0,
   onGoToJournal,
-  onOpenEncyclopedia,
 }: TodayViewProps) {
   const [onboardingDismissed, setOnboardingDismissed] = useState<boolean>(() => {
     try {
@@ -586,19 +584,6 @@ export function TodayView({
               </p>
             </div>
           </div>
-
-          {onOpenEncyclopedia && (
-            <div className="pt-2 flex justify-center">
-              <button
-                type="button"
-                onClick={() => onOpenEncyclopedia()}
-                className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-xl border border-[#E5DED1] bg-[#FFFCF6] hover:bg-[#E5DED1]/45 text-xs sm:text-sm text-[#34312D] transition-colors cursor-pointer"
-              >
-                <BookOpen className="w-4 h-4 text-[#777B61]" aria-hidden="true" />
-                <span>78장 타로 카드 도감 · 일러스트 보기</span>
-              </button>
-            </div>
-          )}
         </div>
       </section>
     );
@@ -938,42 +923,6 @@ export function TodayView({
           </div>
         )}
       </div>
-
-      {/* 4. Secondary Content at Bottom: Card Encyclopedia */}
-      {onOpenEncyclopedia && (
-        <aside
-          aria-label="카드 도감 안내"
-          className="mt-7 sm:mt-9 pt-6 border-t border-[#E5DED1]"
-        >
-          <div className="rounded-2xl bg-[#FFFCF6]/85 border border-[#E5DED1] p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="space-y-1">
-              <p className="text-xs font-medium tracking-wide text-[#777B61]">
-                78장 타로 카드 도감
-              </p>
-              <p className="text-sm text-[#34312D]/90 leading-relaxed">
-                「{activeCard.nameKo}」 카드의 상징과 78장 타로 전체 일러스트를 차분히 살펴볼 수 있습니다.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => onOpenEncyclopedia(activeCard.id)}
-                className="inline-flex items-center gap-2 min-h-[44px] px-4 py-2 rounded-xl border border-[#E5DED1] bg-[#FFFCF6] hover:bg-[#E5DED1]/45 text-xs sm:text-sm font-medium text-[#34312D] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
-              >
-                <BookOpen className="w-4 h-4 text-[#777B61]" aria-hidden="true" />
-                <span>{activeCard.nameKo} 도감 보기</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onOpenEncyclopedia()}
-                className="inline-flex items-center gap-1.5 min-h-[44px] px-4 py-2 rounded-xl border border-[#E5DED1] bg-[#F7F3EA]/70 hover:bg-[#E5DED1]/45 text-xs sm:text-sm text-[#827B72] hover:text-[#34312D] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
-              >
-                <span>78장 전체 보기</span>
-              </button>
-            </div>
-          </div>
-        </aside>
-      )}
     </section>
   );
 }
