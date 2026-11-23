@@ -278,18 +278,18 @@ export default function App() {
     <div className="min-h-screen flex flex-col bg-[#F7F3EA] text-[#34312D]">
       {/* Top Navigation Header (Mobile & Desktop) */}
       <header className="sticky top-0 z-30 bg-[#F7F3EA]/90 backdrop-blur-md border-b border-[#E5DED1]">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-8 h-12 md:h-16 flex items-center justify-between gap-4 md:gap-6">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-8 h-10 md:h-16 flex items-center justify-between gap-3 md:gap-6">
           <button
             type="button"
             onClick={handleLogoClick}
             aria-label={t.nav.logoHomeAria}
-            className="inline-flex items-center gap-2 font-display text-lg font-medium tracking-[0.2em] text-[#34312D] whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#777B61]"
+            className="inline-flex items-center gap-1.5 md:gap-2 font-display text-[15px] md:text-lg font-medium tracking-[0.18em] md:tracking-[0.2em] text-[#34312D] whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#777B61]"
           >
             <img
               src="/brand/lucida-symbol.png"
               alt=""
               aria-hidden="true"
-              className="w-7 h-auto object-contain mix-blend-multiply"
+              className="w-[22px] md:w-7 h-auto object-contain mix-blend-multiply"
             />
             <span>LUCIDA</span>
           </button>

@@ -386,8 +386,8 @@ export function TodayView({
         <header
           className={
             phase === 'idle'
-              ? 'mb-2 sm:mb-7 space-y-2.5 sm:space-y-8'
-              : 'mb-2 sm:mb-4 space-y-2 sm:space-y-3'
+              ? 'mb-1.5 sm:mb-6 space-y-2 sm:space-y-7'
+              : 'mb-1.5 sm:mb-4 space-y-1.5 sm:space-y-3'
           }
         >
           <LucidaBrandMark
@@ -395,16 +395,16 @@ export function TodayView({
             subtitle={phase === 'idle' ? t.today.heroSubtitle : undefined}
           />
           <div className="space-y-0.5 sm:space-y-2">
-            <h1 className="font-serif text-[22px] sm:text-4xl font-medium text-[#34312D] leading-tight sm:leading-normal">
+            <h1 className="font-serif text-[20px] sm:text-4xl font-medium text-[#34312D] leading-tight sm:leading-normal">
               {t.today.heroTitle}
             </h1>
-            <p className="text-[13px] sm:text-[15px] leading-snug sm:leading-relaxed text-[#827B72] max-w-md mx-auto">
+            <p className="text-[12.5px] sm:text-[15px] leading-snug sm:leading-relaxed text-[#827B72] max-w-md mx-auto">
               {t.today.heroLead}
             </p>
           </div>
         </header>
 
-        <div className="w-full my-0 sm:my-1 overflow-visible">
+        <div className="w-full my-0 sm:my-1 overflow-x-clip">
           <CardShuffleSpread
             phase={phase === 'revealed' ? 'idle' : phase}
             spreadCards={spreadCards}
@@ -418,8 +418,8 @@ export function TodayView({
           id="reading-setup-controls"
           className={`w-full max-w-md scroll-mt-24 ${
             phase === 'idle'
-              ? 'mt-2 sm:mt-6 space-y-2 sm:space-y-3'
-              : 'mt-2.5 sm:mt-5 space-y-2.5'
+              ? 'mt-1.5 sm:mt-5 space-y-1.5 sm:space-y-2.5'
+              : 'mt-2 sm:mt-5 space-y-2'
           }`}
         >
           {phase === 'idle' && (
@@ -748,9 +748,9 @@ export function TodayView({
       )}
 
       {/* 1. Main Reading Result: Card Artwork + Interpretation + Overall Synthesis */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-7 lg:gap-9 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-7 lg:gap-9 items-start">
         {/* 1-1. Selected Card & Card Title */}
-        <div className="lg:col-span-5 flex flex-row sm:flex-col items-start sm:items-center gap-3.5 sm:gap-0 w-full">
+        <div className="lg:col-span-5 flex flex-row sm:flex-col items-center gap-3.5 sm:gap-0 w-full">
           <div className="shrink-0">
             <TarotCardFlip
               card={activeCard}
@@ -774,40 +774,37 @@ export function TodayView({
                 </p>
               );
             })()}
-            <h1 className="font-serif text-lg sm:text-[24px] font-medium text-[#34312D] leading-snug">
+            <h1 className="font-serif text-[19px] sm:text-[24px] font-medium text-[#34312D] leading-snug">
               {activeLoc.displayName}
             </h1>
-            <p className="text-[11px] sm:text-xs text-[#777B61]">
+            <p className="text-[11px] sm:text-xs text-[#777B61]/90 leading-relaxed">
               {activeLoc.keywords.join(' · ')}
             </p>
-            <blockquote className="sm:hidden pt-1.5 mt-1 border-t border-[#E5DED1] font-serif text-[14px] leading-[1.45] text-[#34312D]">
-              “{activeLoc.insight}”
-            </blockquote>
           </div>
         </div>
 
         {/* 1-2. Card Interpretation, Reflection Question & Overall Synthesis */}
-        <div className="lg:col-span-7 space-y-2 sm:space-y-4">
-          <div className="bg-[#FFFCF6] border border-[#E5DED1] rounded-2xl p-3 sm:p-6 space-y-1.5 sm:space-y-3.5">
-            <div className="hidden sm:flex flex-wrap items-center justify-between gap-2">
-              <p className="text-xs font-medium tracking-wide text-[#777B61]">
+        <div className="lg:col-span-7 space-y-2.5 sm:space-y-4">
+          <div className="bg-[#FAF7EF] border border-[#E8E3D6]/80 rounded-2xl p-4 sm:p-6 space-y-3 sm:space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[11px] sm:text-xs font-medium tracking-[0.06em] text-[#777B61]">
                 {t.today.messageHeading}
               </p>
-              <p className="text-xs text-[#827B72]">
+              <p className="hidden sm:block text-[11px] text-[#827B72]">
                 {activeLoc.keywords.join(' · ')}
               </p>
             </div>
-            <blockquote className="hidden sm:block font-serif text-[21px] leading-[1.55] text-[#34312D]">
+            <blockquote className="font-serif text-[17.5px] sm:text-[22px] font-medium leading-[1.58] sm:leading-[1.6] text-[#2F2C28]">
               “{activeLoc.insight}”
             </blockquote>
-            <p className="text-[13px] sm:text-[15px] leading-[1.55] sm:leading-[1.65] text-[#34312D]/85">
+            <p className="text-[13.5px] sm:text-[15px] leading-[1.68] sm:leading-[1.72] text-[#34312D]/82">
               {activeLoc.meaningGuide}
             </p>
-            <div className="pt-3 sm:pt-4 pb-1 sm:pb-1.5 border-t border-[#E7E0D5]/80 space-y-1.5 sm:space-y-2">
-              <h2 className="text-[11px] font-medium tracking-wide text-[#777B61]">
+            <div className="rounded-xl bg-[#F2F1E6]/85 border border-[#E2DFCF]/75 px-3.5 py-3 sm:px-5 sm:py-4 space-y-1.5 sm:space-y-2">
+              <h2 className="text-[10.5px] sm:text-[11px] font-medium tracking-[0.06em] text-[#777B61]/90">
                 {t.today.questionHeading}
               </h2>
-              <p className="font-question text-[18px] sm:text-[21px] font-normal leading-[1.68] sm:leading-[1.72] text-[#51483E] break-keep">
+              <p className="font-question text-[16.5px] sm:text-[20px] font-medium leading-[1.68] sm:leading-[1.72] text-[#34312D] break-keep">
                 {activeLoc.reflectionQuestion}
               </p>
             </div>
@@ -820,7 +817,7 @@ export function TodayView({
               );
               if (pastMatches.length === 0) return null;
               return (
-                <div className="pt-1.5 border-t border-[#E7E0D5]/70 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="pt-2 border-t border-[#E8E3D6]/75 flex flex-wrap items-center justify-between gap-2 text-xs">
                   <span className="text-[#827B72]">
                     {t.today.pastRecordNotice(
                       activeLoc.displayName,
@@ -842,9 +839,9 @@ export function TodayView({
 
           <aside
             aria-label={t.today.synthesisAria}
-            className="rounded-2xl bg-[#FFFCF6] border border-[#E5DED1] p-3 sm:p-5 space-y-1 sm:space-y-2"
+            className="rounded-2xl bg-[#F5F4EA]/90 border border-[#E6E3D5]/80 p-3.5 sm:p-5 space-y-1.5 sm:space-y-2.5"
           >
-            <p className="text-[11px] sm:text-xs font-medium tracking-wide text-[#777B61]">
+            <p className="text-[11px] sm:text-xs font-medium tracking-[0.05em] text-[#777B61]">
               {t.today.synthesisHeading}
             </p>
             {selectedCards.length > 1 && (
@@ -854,7 +851,7 @@ export function TodayView({
                   return (
                     <div
                       key={`${card.id}-summary`}
-                      className="rounded-xl bg-[#F7F3EA]/80 border border-[#E5DED1]/80 px-3 py-2"
+                      className="rounded-xl bg-[#FAF7EF] border border-[#E6E3D5]/80 px-3 py-2"
                     >
                       <p className="text-[11px] font-medium text-[#777B61]">
                         0{idx + 1}. {t.today.threeCardPositions[idx]}
@@ -867,7 +864,7 @@ export function TodayView({
                 })}
               </div>
             )}
-            <p className="text-[12.5px] sm:text-[15px] leading-[1.52] sm:leading-[1.65] text-[#34312D]/90">
+            <p className="text-[13px] sm:text-[14.5px] leading-[1.68] sm:leading-[1.72] text-[#34312D]/85">
               {getOverallSynthesisMessage()}
             </p>
           </aside>
