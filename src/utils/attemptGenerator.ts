@@ -386,7 +386,7 @@ function getMajorDefaultAngle(
     emotion:
       custom?.emotion ??
       (isRev
-        ? `역방향으로 나온 「${card.nameKo}」의 ${particle(kw0, '이/가')} 내 안에서 어떤 망설임이나 여운으로 느껴지는지 살피기`
+        ? `「${card.nameKo}」의 ${particle(kw0, '이/가')} 내 안에서 어떤 망설임이나 여운으로 느껴지는지 천천히 살피기`
         : `「${card.nameKo}」가 비추는 ‘${kw0} · ${kw1}’ 앞에서 지금 내 마음에 올라오는 감정 알아차리기`),
     thought:
       custom?.thought ??

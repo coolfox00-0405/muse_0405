@@ -331,7 +331,7 @@ export function DeckEncyclopediaModal({
                         <p className="text-xs font-medium text-[#777B61] mb-1">
                           나에게 던져볼 질문
                         </p>
-                        <p className="font-question text-[16.5px] sm:text-[17.5px] font-normal leading-[1.68] text-[#34312D] break-keep">
+                        <p className="font-question text-[16.5px] sm:text-[17.5px] font-normal leading-[1.68] text-[#51483E] break-keep">
                           {selectedCard.reflectionQuestion}
                         </p>
                       </div>

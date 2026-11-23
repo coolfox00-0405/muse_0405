@@ -29,7 +29,7 @@ export function TarotCardArtwork({
     return (
       <img
         src={card.frontImageUrl}
-        alt={`${card.nameKo} (${card.nameEn})${isReversed ? ' 역방향' : ''} 타로 카드 일러스트`}
+        alt={`${card.nameKo} (${card.nameEn}) 카드 일러스트`}
         referrerPolicy="no-referrer"
         loading={priority ? 'eager' : 'lazy'}
         decoding="async"

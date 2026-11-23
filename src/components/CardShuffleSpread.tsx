@@ -144,12 +144,12 @@ export function CardShuffleSpread({
               zIndex: isAlreadySelected ? 20 + selectedOrder : index + 1,
               transformOrigin: 'center bottom',
             }}
-            className={`absolute w-[124px] sm:w-[148px] aspect-[3/4] rounded-[14px] overflow-hidden bg-[#FFFCF6] border shadow-[0_12px_28px_-14px_rgba(52,49,45,0.28)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] ${
+            className={`absolute w-[124px] sm:w-[148px] aspect-[3/4] rounded-[14px] overflow-hidden bg-[#B8B99C] border shadow-[0_12px_28px_-14px_rgba(52,49,45,0.2)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] ${
               isAlreadySelected
-                ? 'border-[#777B61] ring-2 ring-[#777B61]/40 cursor-not-allowed'
+                ? 'border-[#F3EBDD] ring-2 ring-[#777B61]/45 cursor-not-allowed'
                 : isSelecting || isIdle
-                ? 'border-[#E5DED1] cursor-pointer'
-                : 'border-[#E5DED1] cursor-default'
+                ? 'border-[#F3EBDD] cursor-pointer'
+                : 'border-[#F3EBDD] cursor-default'
             }`}
           >
             <img

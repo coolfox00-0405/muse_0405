@@ -1,6 +1,6 @@
 import { TarotCard, TarotSuit } from '../types/reflection';
 
-const BACK_IMAGE = '/src/assets/images/lucida_card_back_art_1795405904799.jpg';
+const BACK_IMAGE = '/src/assets/images/lucida_card_back_final_1795429006700.jpg';
 
 const SUIT_META: Record<
   TarotSuit,
@@ -310,6 +310,7 @@ const CUPS_SEEDS: MinorCardSeed[] = [
     question: '나에게 ‘마음이 놓이는 평온함’이란 어떤 장면으로 떠오르나요?',
     action: '내가 편안함을 느끼는 사람이나 공간의 특징을 짧게 기록해 보기',
     guide: '컵 10은 관계와 내면이 어우러지는 따뜻한 평온과 소속감을 상징합니다.',
+    imageUrl: '/src/assets/images/cups_ten_art_1795428089664.jpg',
   },
   {
     rankNum: 'Page',
@@ -331,6 +332,7 @@ const CUPS_SEEDS: MinorCardSeed[] = [
     question: '조건을 따지지 않는다면, 지금 내 마음이 가장 따뜻하게 반응하는 일은 무엇인가요?',
     action: '좋아하는 일을 위해 아주 작은 시간이라도 의도적으로 내어 보기',
     guide: '컵 기사는 이상과 감정을 소중히 여기며 진심을 향해 나아가는 모습을 상징합니다.',
+    imageUrl: '/src/assets/images/cups_knight_art_1795428089606.jpg',
   },
   {
     rankNum: 'Queen',
@@ -341,6 +343,7 @@ const CUPS_SEEDS: MinorCardSeed[] = [
     question: '남을 배려하느라 잠시 뒤로 미뤄두었던 나의 감정은 무엇인가요?',
     action: '지금 내 마음이 어떤 상태인지 스스로에게 먼저 안부를 물어보기',
     guide: '컵 여왕은 깊은 공감 능력과 흔들리지 않는 정서적 돌봄을 상징합니다.',
+    imageUrl: '/src/assets/images/cups_queen_art_1795428089955.jpg',
   },
   {
     rankNum: 'King',
@@ -351,6 +354,7 @@ const CUPS_SEEDS: MinorCardSeed[] = [
     question: '요즘 마음이 흔들리는 상황에서 조금 더 너그럽고 차분하게 바라볼 수 있는 시선은 무엇인가요?',
     action: '감정이 올라올 때 바로 반응하지 않고 깊게 숨을 세 번 쉬어 보기',
     guide: '컵 왕은 감정을 억누르지 않으면서도 중심을 지키는 성숙한 평정심을 뜻합니다.',
+    imageUrl: '/src/assets/images/cups_king_art_1795428090164.jpg',
   },
 ];
 
@@ -375,6 +379,7 @@ const SWORDS_SEEDS: MinorCardSeed[] = [
     question: '지금 눈을 감고 미루어 두고 있지만, 조만간 마주해야 할 선택은 무엇인가요?',
     action: '결정을 방해하는 가장 큰 걱정 한 가지를 솔직하게 적어 보기',
     guide: '소드 2는 상반된 생각 사이에서 잠시 멈추어 진심을 확인하는 순간을 비춥니다.',
+    imageUrl: '/src/assets/images/swords_two_art_1795428090471.jpg',
   },
   {
     rankNum: 'III',
@@ -396,6 +401,7 @@ const SWORDS_SEEDS: MinorCardSeed[] = [
     question: '지금 당장 결론을 내지 않고 하루만 머릿속에서 내려놓아도 괜찮은 고민은 무엇인가요?',
     action: '잠시 알림을 끄고 눈을 감은 채 5분간 머리를 쉬어 주기',
     guide: '소드 4는 치열한 생각 이후에 반드시 필요한 고요한 회복의 쉼표를 상징합니다.',
+    imageUrl: '/src/assets/images/swords_four_art_1795428089414.jpg',
   },
   {
     rankNum: 'V',
@@ -406,6 +412,7 @@ const SWORDS_SEEDS: MinorCardSeed[] = [
     question: '지금 굳이 증명하거나 이기려 애쓰느라 마음을 소모하고 있는 일은 없나요?',
     action: '소모적인 논쟁이나 비교에서 한 발짝 물러나 나의 평온을 우선해 보기',
     guide: '소드 5는 불필요한 갈등을 알아차리고 더 중요한 가치를 지키는 시선을 제안합니다.',
+    imageUrl: '/src/assets/images/swords_five_art_clean_1795428180103.jpg',
   },
   {
     rankNum: 'VI',
@@ -416,6 +423,7 @@ const SWORDS_SEEDS: MinorCardSeed[] = [
     question: '복잡했던 상황에서 한 걸음 벗어나기 위해 지금 바꿀 수 있는 작은 환경은 무엇인가요?',
     action: '잠시 장소를 옮겨 산책하거나 책상 위를 가볍게 정리해 보기',
     guide: '소드 6은 혼란을 뒤로하고 조금 더 차분한 상태로 건너가는 전환을 상징합니다.',
+    imageUrl: '/src/assets/images/swords_six_art_clean_1795428179394.jpg',
   },
   {
     rankNum: 'VII',
@@ -426,6 +434,7 @@ const SWORDS_SEEDS: MinorCardSeed[] = [
     question: '불편함을 피하기 위해 나 자신에게 살짝 둘러대고 있는 변명은 없나요?',
     action: '미루고 있던 일의 진짜 이유를 솔직하게 한 줄로 적어 보기',
     guide: '소드 7은 영리한 대처와 자기 기만 사이의 경계를 차분히 돌아보게 합니다.',
+    imageUrl: '/src/assets/images/swords_seven_art_v2_1795428210538.jpg',
   },
   {
     rankNum: 'VIII',
@@ -436,6 +445,7 @@ const SWORDS_SEEDS: MinorCardSeed[] = [
     question: '‘안 될 거야’라고 미리 단정 짓고 있는 생각 중, 사실과 다른 부분은 무엇인가요?',
     action: '막막한 상황에서 시도해 볼 수 있는 아주 작은 대안 한 가지만 찾아보기',
     guide: '소드 8은 스스로 만든 생각의 울타리를 알아차리고 시야를 여는 계기를 비춥니다.',
+    imageUrl: '/src/assets/images/swords_eight_art_v5_1795428301570.jpg',
   },
   {
     rankNum: 'IX',
@@ -446,6 +456,7 @@ const SWORDS_SEEDS: MinorCardSeed[] = [
     question: '지금 나를 지치게 하는 걱정 중, 아직 일어나지 않은 일에 대한 상상은 얼마나 되나요?',
     action: '머릿속 걱정을 종이에 꺼내 적은 뒤, 지금 당장 해결할 필요 없는 것은 지워 두기',
     guide: '소드 9는 불안을 억누르기보다 사실과 상상을 분리해 마음을 다독이게 합니다.',
+    imageUrl: '/src/assets/images/swords_nine_art_1795428119232.jpg',
   },
   {
     rankNum: 'X',
@@ -456,6 +467,7 @@ const SWORDS_SEEDS: MinorCardSeed[] = [
     question: '이제는 충분히 겪었으니 여기서 마침표를 찍어도 괜찮은 고민은 무엇인가요?',
     action: '끝내고 싶은 생각 하나를 적고 ‘여기까지’라고 스스로 매듭지어 보기',
     guide: '소드 10은 한 단계의 완전한 종료와 그 너머에 찾아오는 새로운 여명을 상징합니다.',
+    imageUrl: '/src/assets/images/swords_ten_art_clean_1795428180053.jpg',
   },
   {
     rankNum: 'Page',
@@ -466,6 +478,7 @@ const SWORDS_SEEDS: MinorCardSeed[] = [
     question: '요즘 내가 조금 더 자세히 알고 싶거나 확인해 보고 싶은 주제는 무엇인가요?',
     action: '궁금했던 점에 대해 스스로에게 질문 한 가지를 또렷하게 적어 보기',
     guide: '소드 시종은 맑은 호기심과 사실을 객관적으로 살피는 탐구 태도를 뜻합니다.',
+    imageUrl: '/src/assets/images/swords_page_art_1795428180204.jpg',
   },
   {
     rankNum: 'Knight',
@@ -476,6 +489,7 @@ const SWORDS_SEEDS: MinorCardSeed[] = [
     question: '지금 단호하게 정리하고 싶은 일에서, 부드러움을 함께 챙길 수 있는 방법은 무엇인가요?',
     action: '단정적인 표현 대신 ‘나는 이렇게 생각해’라는 말로 생각을 정리해 보기',
     guide: '소드 기사는 명쾌한 결단력과 신중한 소통의 균형을 돌아보게 합니다.',
+    imageUrl: '/src/assets/images/swords_knight_art_1795428210653.jpg',
   },
   {
     rankNum: 'Queen',
@@ -486,6 +500,7 @@ const SWORDS_SEEDS: MinorCardSeed[] = [
     question: '지금 내 삶에서 조금 더 분명하고 정직하게 말하고 싶은 경계는 무엇인가요?',
     action: '모호하게 남겨두었던 기준 하나를 나만의 언어로 또렷하게 적어 보기',
     guide: '소드 여왕은 명석한 통찰과 흔들리지 않는 독립적인 기준을 상징합니다.',
+    imageUrl: '/src/assets/images/swords_queen_art_1795428210918.jpg',
   },
   {
     rankNum: 'King',
@@ -496,6 +511,7 @@ const SWORDS_SEEDS: MinorCardSeed[] = [
     question: '지금의 상황을 제3자의 눈으로 차분히 바라본다면 어떤 조언을 해주고 싶나요?',
     action: '고민 중인 사안에 대해 찬성과 반대 시선을 각각 한 줄씩 적어 보기',
     guide: '소드 왕은 치우치지 않는 공정한 판단과 명료한 원칙을 상징합니다.',
+    imageUrl: '/src/assets/images/swords_king_art_1795428210041.jpg',
   },
 ];
 
@@ -509,6 +525,7 @@ const PENTACLES_SEEDS: MinorCardSeed[] = [
     question: '지금 내 일상에서 바로 심어 볼 수 있는 작은 습관이나 기회는 무엇인가요?',
     action: '매일 5분만 투자할 수 있는 아주 작은 일상 습관 하나 정해 보기',
     guide: '펜타클 에이스는 현실 속에서 자라날 수 있는 구체적인 시작과 자원을 상징합니다.',
+    imageUrl: '/src/assets/images/pentacles_ace_art_1795428210655.jpg',
   },
   {
     rankNum: 'II',
@@ -519,6 +536,7 @@ const PENTACLES_SEEDS: MinorCardSeed[] = [
     question: '요즘 내 일상에서 균형을 맞추기 위해 조금 조율해 보고 싶은 두 가지는 무엇인가요?',
     action: '오늘의 일정 중 무리한 계획 하나를 가볍게 조정해 보기',
     guide: '펜타클 2는 변화하는 일상 속에서 유연하게 중심을 잡는 감각을 비춥니다.',
+    imageUrl: '/src/assets/images/pentacles_two_art_1795428242817.jpg',
   },
   {
     rankNum: 'III',
@@ -529,6 +547,7 @@ const PENTACLES_SEEDS: MinorCardSeed[] = [
     question: '지금 내가 정성을 들여 조금 더 다듬고 싶은 일이나 기술은 무엇인가요?',
     action: '혼자 고민하던 일에 대해 주변의 의견이나 피드백을 가볍게 물어보기',
     guide: '펜타클 3은 성실한 과정과 협력을 통해 가치를 쌓아가는 태도를 상징합니다.',
+    imageUrl: '/src/assets/images/pentacles_three_art_1795428241466.jpg',
   },
   {
     rankNum: 'IV',
@@ -539,6 +558,7 @@ const PENTACLES_SEEDS: MinorCardSeed[] = [
     question: '안정감을 지키려다 지나치게 꽉 붙잡고 있는 습관이나 생각은 무엇인가요?',
     action: '완벽하게 통제하려던 일 하나에 작은 여유 공간을 남겨 두기',
     guide: '펜타클 4는 안정에 대한 자연스러운 욕구와 적절한 놓아줌의 균형을 살피게 합니다.',
+    imageUrl: '/src/assets/images/pentacles_four_art_1795428241415.jpg',
   },
   {
     rankNum: 'V',
@@ -549,6 +569,7 @@ const PENTACLES_SEEDS: MinorCardSeed[] = [
     question: '지금 내가 혼자 감당하기 버거워 누군가의 도움을 받아도 괜찮은 부분은 무엇인가요?',
     action: '도움이 필요할 때 연락할 수 있는 사람이나 자원을 한 가지 떠올려 보기',
     guide: '펜타클 5는 어려움 속에서도 고립되지 않고 연결과 회복을 찾는 시선을 건넵니다.',
+    imageUrl: '/src/assets/images/pentacles_five_art_clean_v2_1795428271610.jpg',
   },
   {
     rankNum: 'VI',
@@ -559,6 +580,7 @@ const PENTACLES_SEEDS: MinorCardSeed[] = [
     question: '요즘 내 관계나 일상에서 주는 것과 받는 것의 균형은 어떤 상태인가요?',
     action: '누군가의 작은 호의에 진심으로 고맙다고 말하거나, 가벼운 친절 건네기',
     guide: '펜타클 6은 자원과 마음의 건강한 순환과 상호 존중을 상징합니다.',
+    imageUrl: '/src/assets/images/pentacles_six_art_1795428241400.jpg',
   },
   {
     rankNum: 'VII',
@@ -569,6 +591,7 @@ const PENTACLES_SEEDS: MinorCardSeed[] = [
     question: '그동안 꾸준히 해온 일 중, 조금 더 믿고 기다려 주고 싶은 것은 무엇인가요?',
     action: '지난 몇 주간 내가 쌓아온 작은 노력들을 2~3가지 적어 확인해 보기',
     guide: '펜타클 7은 성급한 평가 대신 과정의 성장을 차분히 돌아보는 시선을 뜻합니다.',
+    imageUrl: '/src/assets/images/pentacles_seven_art_v2_1795428302408.jpg',
   },
   {
     rankNum: 'VIII',
@@ -579,6 +602,7 @@ const PENTACLES_SEEDS: MinorCardSeed[] = [
     question: '결과를 서두르지 않고 그저 차분히 몰입해 보고 싶은 일은 무엇인가요?',
     action: '지금 하는 일 중 한 가지에만 온전히 집중하는 10분 가져 보기',
     guide: '펜타클 8은 꾸준한 연습과 성실한 몰입이 주는 고요한 성취감을 상징합니다.',
+    imageUrl: '/src/assets/images/pentacles_eight_art_1795428270802.jpg',
   },
   {
     rankNum: 'IX',
@@ -589,6 +613,7 @@ const PENTACLES_SEEDS: MinorCardSeed[] = [
     question: '내가 스스로 일구어 낸 일상 속에서 가장 아끼고 싶은 나만의 시간은 무엇인가요?',
     action: '나를 위한 작은 정원을 가꾸듯, 편안하고 단정한 휴식 시간 챙기기',
     guide: '펜타클 9는 건강한 자립심과 스스로 가꾼 일상의 품격을 상징합니다.',
+    imageUrl: '/src/assets/images/pentacles_nine_art_v2_1795428304173.jpg',
   },
   {
     rankNum: 'X',
@@ -599,6 +624,7 @@ const PENTACLES_SEEDS: MinorCardSeed[] = [
     question: '시간이 흘러도 내 삶에 든든히 남아 있었으면 하는 가치는 무엇인가요?',
     action: '오래 지키고 싶은 생활 습관이나 소중한 관계 한 가지를 떠올려 보기',
     guide: '펜타클 10은 세대와 시간을 넘어 이어지는 안정감과 지속 가능한 풍요를 뜻합니다.',
+    imageUrl: '/src/assets/images/pentacles_ten_art_v2_1795428303233.jpg',
   },
   {
     rankNum: 'Page',
@@ -609,6 +635,7 @@ const PENTACLES_SEEDS: MinorCardSeed[] = [
     question: '지금 내 현실에서 차분히 배워 보고 싶은 실용적인 기술이나 습관은 무엇인가요?',
     action: '배우고 싶은 것의 첫 단계를 아주 작게 쪼개어 적어 보기',
     guide: '펜타클 시종은 현실에 발을 딛고 성실하게 배우는 초심의 자세를 상징합니다.',
+    imageUrl: '/src/assets/images/pentacles_page_art_1795428327615.jpg',
   },
   {
     rankNum: 'Knight',
@@ -619,6 +646,7 @@ const PENTACLES_SEEDS: MinorCardSeed[] = [
     question: '속도가 느리다고 조급해하고 있지만, 사실은 잘 이어가고 있는 일은 무엇인가요?',
     action: '오늘 해야 할 일 중 가장 기본적인 한 가지를 차분히 마무리해 보기',
     guide: '펜타클 기사는 변함없는 성실함과 신뢰할 수 있는 발걸음을 상징합니다.',
+    imageUrl: '/src/assets/images/pentacles_knight_art_1795428304368.jpg',
   },
   {
     rankNum: 'Queen',
@@ -629,6 +657,7 @@ const PENTACLES_SEEDS: MinorCardSeed[] = [
     question: '지금 내 몸과 일상을 가장 실질적으로 편안하게 돌봐줄 수 있는 일은 무엇인가요?',
     action: '따뜻한 물을 마시거나 주변 공간을 5분만 정돈하며 몸을 챙기기',
     guide: '펜타클 여왕은 일상을 따뜻하고 단단하게 가꾸는 현실적인 돌봄을 상징합니다.',
+    imageUrl: '/src/assets/images/pentacles_queen_art_1795428327359.jpg',
   },
   {
     rankNum: 'King',
@@ -639,6 +668,7 @@ const PENTACLES_SEEDS: MinorCardSeed[] = [
     question: '내가 지금까지 쌓아온 경험과 자원 중, 앞으로도 든든한 버팀목이 되어줄 것은 무엇인가요?',
     action: '내가 가진 시간·체력·자원을 가장 안정적으로 쓰는 방법 한 가지 점검하기',
     guide: '펜타클 왕은 꾸준한 노력 끝에 얻는 단단한 안정과 넉넉한 책임감을 뜻합니다.',
+    imageUrl: '/src/assets/images/pentacles_king_art_v2_1795428414305.jpg',
   },
 ];
 

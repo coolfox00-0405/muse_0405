@@ -52,7 +52,7 @@ export function TarotCardFlip({
       >
         {/* Card Back — Bespoke LUCIDA Botanical Engraving */}
         <div
-          className={`card-face card-face-back rounded-[18px] overflow-hidden bg-[#FFFCF6] border border-[#E5DED1] shadow-[0_14px_34px_-16px_rgba(52,49,45,0.22)] transition-transform duration-200 ${
+          className={`card-face card-face-back rounded-[18px] overflow-hidden bg-[#B8B99C] border border-[#F3EBDD] shadow-[0_14px_34px_-16px_rgba(52,49,45,0.2)] transition-transform duration-200 ${
             isClickable ? 'group-hover:-translate-y-1' : ''
           }`}
         >
@@ -66,15 +66,27 @@ export function TarotCardFlip({
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-[#F7F3EA] text-[#777B61]">
-              <div className="w-full h-full border border-[#777B61]/35 rounded-xl flex flex-col items-center justify-center gap-3">
-                <img
-                  src="/brand/lucida-symbol.png"
-                  alt=""
+            <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-[#B8B99C] text-[#F3EBDD]">
+              <div className="w-full h-full border border-[#F3EBDD]/70 rounded-xl flex flex-col items-center justify-center gap-3">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
                   aria-hidden="true"
-                  className="w-14 h-14 object-contain mix-blend-multiply"
-                />
-                <span className="font-display text-lg tracking-[0.22em] text-[#34312D]">
+                  className="w-10 h-10 text-[#F3EBDD]"
+                >
+                  <path
+                    d="M14.8 4.4A7.6 7.6 0 1 0 19.6 15.1A5.8 5.8 0 0 1 11.1 7.4A5.7 5.7 0 0 1 14.8 4.4Z"
+                    stroke="currentColor"
+                    strokeWidth="1.35"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M16.6 5.1L17.2 7.1L19.2 7.7L17.2 8.3L16.6 10.3L16 8.3L14 7.7L16 7.1L16.6 5.1Z"
+                    fill="currentColor"
+                  />
+                </svg>
+                <span className="font-display text-lg tracking-[0.22em] text-[#F3EBDD]">
                   LUCIDA
                 </span>
               </div>

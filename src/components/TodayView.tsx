@@ -185,9 +185,9 @@ export function TodayView({
     if (!card) return '';
     const orient = selectedOrientations[0] ?? 'upright';
     if (orient === 'reversed') {
-      return `역방향으로 놓인 「${card.nameKo}」 카드는 ‘${card.keywords.join(
+      return `「${card.nameKo}」 카드는 지금의 나에게 ‘${card.keywords.join(
         ' · '
-      )}’이라는 주제를 평소와 조금 다른 각도에서 천천히 들여다보게 합니다. 서둘러 결론을 내리기보다 지금 내 마음에 걸리는 지점을 담담히 살펴보세요.`;
+      )}’이라는 주제를 평소와 조금 다른 각도에서 천천히 들여다보게 합니다. 서둘러 결론을 내리기보다 지금 내 마음에 조용히 걸리는 지점을 담담히 살펴보세요.`;
     }
 
     return `「${card.nameKo}」 카드는 지금의 나에게 ‘${card.keywords.join(
@@ -454,7 +454,7 @@ export function TodayView({
                         : 'text-[#827B72] hover:text-[#34312D]'
                     }`}
                   >
-                    메이저 22장
+                    핵심 22장
                   </button>
                 </div>
 
@@ -491,7 +491,7 @@ export function TodayView({
 
                 <div
                   role="group"
-                  aria-label="카드 방향 설정"
+                  aria-label="해석 시선 설정"
                   className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#FFFCF6] border border-[#E7E0D5]"
                 >
                   <button
@@ -504,7 +504,7 @@ export function TodayView({
                         : 'text-[#827B72] hover:text-[#34312D]'
                     }`}
                   >
-                    정방향
+                    기본 시선
                   </button>
                   <button
                     type="button"
@@ -516,7 +516,7 @@ export function TodayView({
                         : 'text-[#827B72] hover:text-[#34312D]'
                     }`}
                   >
-                    정·역방향
+                    열린 시선
                   </button>
                 </div>
               </div>
@@ -527,9 +527,9 @@ export function TodayView({
               <button
                 type="button"
                 onClick={onStartShuffle}
-                className="w-full max-w-sm mx-auto min-h-[48px] inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#777B61] hover:bg-[#646850] active:scale-[0.99] text-[#FFFCF6] text-[15px] font-medium transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
+                className="w-[72%] sm:w-full sm:max-w-[280px] mx-auto min-h-[40px] sm:min-h-[42px] inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-[#777B61] hover:bg-[#646850] active:scale-[0.995] text-[#FFFCF6] text-[14.5px] sm:text-[15px] font-medium shadow-xs transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
               >
-                <Shuffle className="w-4 h-4" aria-hidden="true" />
+                <Shuffle className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span>카드 섞기</span>
               </button>
               <p className="text-xs leading-relaxed text-[#827B72]">
@@ -676,9 +676,9 @@ export function TodayView({
     }
 
     if (activeOrientation === 'reversed') {
-      return `역방향으로 놓인 「${activeCard.nameKo}」 카드는 ‘${activeCard.keywords.join(
+      return `「${activeCard.nameKo}」 카드는 지금의 나에게 ‘${activeCard.keywords.join(
         ' · '
-      )}’이라는 주제를 평소와 조금 다른 각도에서 천천히 들여다보게 합니다. 서둘러 결론을 내리기보다 지금 내 마음에 걸리는 지점을 담담히 살펴보세요.`;
+      )}’이라는 주제를 평소와 조금 다른 각도에서 천천히 들여다보게 합니다. 서둘러 결론을 내리기보다 지금 내 마음에 조용히 걸리는 지점을 담담히 살펴보세요.`;
     }
 
     return `「${activeCard.nameKo}」 카드는 지금의 나에게 ‘${activeCard.keywords.join(
@@ -752,14 +752,20 @@ export function TodayView({
           </div>
 
           <div className="flex-1 min-w-0 sm:mt-3.5 text-left sm:text-center space-y-1">
-            <p className="text-[11px] sm:text-xs tracking-[0.05em] text-[#827B72]">
-              {selectedCards.length > 1
-                ? `${THREE_CARD_POSITIONS[activeRevealIndex]} · `
-                : ''}
-              {activeCard.arcana === 'minor' ? '마이너' : '메이저'} ·{' '}
-              {activeOrientation === 'reversed' ? '역방향' : '정방향'}
-              {activeCard.suitTheme ? ` · ${activeCard.suitTheme}` : ''}
-            </p>
+            {(() => {
+              const metaParts = [
+                selectedCards.length > 1
+                  ? THREE_CARD_POSITIONS[activeRevealIndex]
+                  : null,
+                activeCard.suitTheme || null,
+              ].filter(Boolean);
+              if (metaParts.length === 0) return null;
+              return (
+                <p className="text-[11px] sm:text-xs tracking-[0.05em] text-[#827B72]">
+                  {metaParts.join(' · ')}
+                </p>
+              );
+            })()}
             <h1 className="font-serif text-lg sm:text-[24px] font-medium text-[#34312D] leading-snug">
               {activeCard.nameKo}
             </h1>
@@ -793,7 +799,7 @@ export function TodayView({
               <h2 className="text-[11px] font-medium tracking-wide text-[#777B61]">
                 나에게 던져볼 질문
               </h2>
-              <p className="font-question text-[18px] sm:text-[21px] font-normal leading-[1.68] sm:leading-[1.72] text-[#34312D] break-keep">
+              <p className="font-question text-[18px] sm:text-[21px] font-normal leading-[1.68] sm:leading-[1.72] text-[#51483E] break-keep">
                 {activeCard.reflectionQuestion}
               </p>
             </div>
@@ -842,7 +848,6 @@ export function TodayView({
                     </p>
                     <p className="font-serif text-sm text-[#34312D] mt-0.5">
                       {card.nameKo}
-                      {selectedOrientations[idx] === 'reversed' ? ' · 역방향' : ''}
                     </p>
                   </div>
                 ))}
