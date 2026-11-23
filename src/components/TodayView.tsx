@@ -266,13 +266,13 @@ export function TodayView({
     return (
       <section
         aria-label="지금, 나에게 — 카드 섞기 및 선택"
-        className="w-full max-w-2xl mx-auto px-5 sm:px-8 pt-3 sm:pt-5 pb-8 flex flex-col items-center text-center"
+        className="w-full max-w-2xl mx-auto px-5 sm:px-8 pt-4 sm:pt-7 pb-8 flex flex-col items-center text-center"
       >
         {/* Collapsible First-Visit Onboarding Card */}
         {!onboardingDismissed && (
           <aside
             aria-label="LUCIDA 첫 방문 안내"
-            className="w-full mb-4 sm:mb-5 rounded-2xl bg-[#FFFCF6] border border-[#E5DED1] px-4 py-3 text-left"
+            className="w-full mb-5 sm:mb-6 rounded-2xl bg-[#FFFCF6] border border-[#E5DED1] px-4 py-3 text-left"
           >
             <div className="flex items-center justify-between gap-3">
               <button
@@ -320,19 +320,19 @@ export function TodayView({
         <header
           className={
             phase === 'idle'
-              ? 'mb-4 sm:mb-6 space-y-3.5 sm:space-y-4'
-              : 'mb-2.5 sm:mb-4 space-y-2'
+              ? 'mb-5 sm:mb-7 space-y-6 sm:space-y-8'
+              : 'mb-3 sm:mb-4 space-y-3'
           }
         >
           <LucidaBrandMark
-            variant={phase === 'idle' ? 'hero' : 'compact'}
+            variant="hero"
             subtitle={phase === 'idle' ? 'NOW, LOOK WITHIN' : undefined}
           />
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 sm:space-y-2">
             <h1 className="font-serif text-[28px] sm:text-4xl font-medium text-[#34312D]">
               지금, 나에게
             </h1>
-            <p className="text-sm sm:text-base leading-relaxed text-[#34312D]/85 max-w-md mx-auto">
+            <p className="text-sm sm:text-[15px] leading-relaxed text-[#827B72] max-w-md mx-auto">
               잠시 멈추어 내 마음을 바라보는 시간
             </p>
           </div>
