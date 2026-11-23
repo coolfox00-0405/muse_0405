@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef, useMemo, FormEvent } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Shuffle,
   Check,
-  AlertCircle,
   ArrowRight,
   ArrowDown,
   ChevronDown,
@@ -26,7 +25,6 @@ import { CardShuffleSpread, DrawPhase } from './CardShuffleSpread';
 import type { ReadingDrawCount } from '../App';
 
 const ONBOARDING_KEY = 'lucida_onboarding_dismissed';
-const CARD_DRAFT_KEY = 'lucida_draft_card_note';
 const THREE_CARD_POSITIONS = ['지금의 마음', '바라볼 시선', '작은 걸음'] as const;
 
 interface TodayViewProps {
@@ -47,19 +45,6 @@ interface TodayViewProps {
   onSyncAttempts: (
     payload: ReadingSyncPayload
   ) => { ok: boolean; recordId?: string; error?: string };
-  onSaveReflection: (
-    card: TarotCard,
-    note: string,
-    selectedAction?: string,
-    orientation?: 'upright' | 'reversed',
-    spreadCards?: SpreadCardSnapshot[],
-    options?: {
-      readingSessionId?: string;
-      overallMessage?: string;
-      selectedActions?: SelectedAttemptItem[];
-      actionMemo?: string;
-    }
-  ) => { ok: boolean; error?: string; record?: ReflectionRecord };
   onStartNewReading: () => void;
   onGoHome: () => void;
   savedRecordCount?: number;
@@ -83,7 +68,6 @@ export function TodayView({
   onStartShuffle,
   onSelectCard,
   onSyncAttempts,
-  onSaveReflection,
   onStartNewReading,
   onGoHome,
   savedRecordCount = 0,
@@ -99,13 +83,6 @@ export function TodayView({
   });
   const [onboardingOpen, setOnboardingOpen] = useState(false);
 
-  const [note, setNote] = useState<string>(() => {
-    try {
-      return window.localStorage.getItem(CARD_DRAFT_KEY) || '';
-    } catch {
-      return '';
-    }
-  });
   const [selectedAttempts, setSelectedAttempts] = useState<SelectedAttemptItem[]>(
     () => {
       const existing = records.find(
@@ -114,98 +91,30 @@ export function TodayView({
       return existing?.selectedActions ?? [];
     }
   );
-  const [actionMemo, setActionMemo] = useState<string>(() => {
-    const existing = records.find(
-      (r) => r.readingSessionId === readingSessionId
-    );
-    return existing?.actionMemo ?? '';
-  });
   const [attemptSyncNotice, setAttemptSyncNotice] = useState<string | null>(null);
-  const memoSyncTimerRef = useRef<number | null>(null);
   const lastSyncedRecordIdRef = useRef<string | undefined>(
     records.find((r) => r.readingSessionId === readingSessionId)?.id
   );
-  const latestAttemptsRef = useRef<SelectedAttemptItem[]>(selectedAttempts);
-  const latestMemoRef = useRef<string>(actionMemo);
 
   const [cardFlipped, setCardFlipped] = useState(false);
   const [activeRevealIndex, setActiveRevealIndex] = useState(0);
-  const [feedback, setFeedback] = useState<{
-    type: 'success' | 'error';
-    message: string;
-  } | null>(null);
 
   const activeCard =
     selectedCards[activeRevealIndex] ?? selectedCards[0] ?? null;
   const activeOrientation: 'upright' | 'reversed' =
     selectedOrientations[activeRevealIndex] ?? selectedOrientations[0] ?? 'upright';
 
+  // Restore attempt checkboxes only when switching to a different readingSessionId
   useEffect(() => {
-    latestAttemptsRef.current = selectedAttempts;
-  }, [selectedAttempts]);
-
-  useEffect(() => {
-    latestMemoRef.current = actionMemo;
-  }, [actionMemo]);
-
-  // Auto-save card reflection draft
-  useEffect(() => {
-    try {
-      if (note.trim()) {
-        window.localStorage.setItem(CARD_DRAFT_KEY, note);
-      } else {
-        window.localStorage.removeItem(CARD_DRAFT_KEY);
-      }
-    } catch {
-      // Ignore storage quota errors for drafts
-    }
-  }, [note]);
-
-  // Restore attempt checkboxes & memo only when switching to a different readingSessionId
-  useEffect(() => {
-    if (memoSyncTimerRef.current !== null) {
-      window.clearTimeout(memoSyncTimerRef.current);
-      memoSyncTimerRef.current = null;
-    }
     const existing = records.find(
       (r) => r.readingSessionId === readingSessionId
     );
     const nextAttempts = existing?.selectedActions ?? [];
-    const nextMemo = existing?.actionMemo ?? '';
     lastSyncedRecordIdRef.current = existing?.id;
-    latestAttemptsRef.current = nextAttempts;
-    latestMemoRef.current = nextMemo;
     setSelectedAttempts(nextAttempts);
-    setActionMemo(nextMemo);
     setAttemptSyncNotice(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [readingSessionId]);
-
-  const flushOnUnmountRef = useRef<() => void>(() => {});
-  flushOnUnmountRef.current = () => {
-    const rootCard = selectedCards[0] ?? activeCard;
-    if (!rootCard) return;
-    const rootOrientation = selectedOrientations[0] ?? activeOrientation;
-    onSyncAttempts({
-      readingSessionId,
-      card: rootCard,
-      orientation: rootOrientation,
-      spreadCards: buildSpreadSnapshot(),
-      overallMessage: computeOverallMessage(),
-      selectedActions: latestAttemptsRef.current,
-      actionMemo: latestMemoRef.current,
-    });
-  };
-
-  useEffect(() => {
-    return () => {
-      if (memoSyncTimerRef.current !== null) {
-        window.clearTimeout(memoSyncTimerRef.current);
-        memoSyncTimerRef.current = null;
-        flushOnUnmountRef.current();
-      }
-    };
-  }, []);
 
   useEffect(() => {
     setActiveRevealIndex(0);
@@ -272,10 +181,7 @@ export function TodayView({
     [selectedCards, selectedOrientations, overallSynthesisSnapshot]
   );
 
-  const syncCurrentAttempts = (
-    nextAttempts: SelectedAttemptItem[],
-    nextMemo: string
-  ) => {
+  const syncCurrentAttempts = (nextAttempts: SelectedAttemptItem[]) => {
     const rootCard = selectedCards[0] ?? activeCard;
     if (!rootCard) return;
     const rootOrientation = selectedOrientations[0] ?? activeOrientation;
@@ -287,21 +193,14 @@ export function TodayView({
       spreadCards: buildSpreadSnapshot(),
       overallMessage: computeOverallMessage(),
       selectedActions: nextAttempts,
-      actionMemo: nextMemo,
     });
 
     if (result.ok) {
       lastSyncedRecordIdRef.current = result.recordId;
-      if (nextAttempts.length > 0 && nextMemo.trim().length > 0) {
+      if (nextAttempts.length > 0) {
         setAttemptSyncNotice(
-          `선택한 시도 ${nextAttempts.length}개와 메모가 인사이트 노트에 자동 저장되었습니다.`
+          `선택한 시도 ${nextAttempts.length}개가 인사이트 노트에 자동 저장되었습니다.`
         );
-      } else if (nextAttempts.length > 0) {
-        setAttemptSyncNotice(
-          `선택한 시도 ${nextAttempts.length}개가 인사이트 노트에 자동 복사되어 저장되었습니다.`
-        );
-      } else if (nextMemo.trim().length > 0) {
-        setAttemptSyncNotice('작성한 메모가 인사이트 노트에 자동 저장되었습니다.');
       } else {
         setAttemptSyncNotice(null);
       }
@@ -322,48 +221,11 @@ export function TodayView({
       ? selectedAttempts.filter((item) => !isAttemptSame(item, candidate))
       : [...selectedAttempts, candidate];
 
-    latestAttemptsRef.current = nextAttempts;
     setSelectedAttempts(nextAttempts);
-    syncCurrentAttempts(nextAttempts, latestMemoRef.current);
-  };
-
-  const handleActionMemoChange = (value: string) => {
-    latestMemoRef.current = value;
-    setActionMemo(value);
-    if (memoSyncTimerRef.current !== null) {
-      window.clearTimeout(memoSyncTimerRef.current);
-    }
-    memoSyncTimerRef.current = window.setTimeout(() => {
-      syncCurrentAttempts(latestAttemptsRef.current, value);
-      memoSyncTimerRef.current = null;
-    }, 280);
-  };
-
-  const handleActionMemoBlur = () => {
-    if (memoSyncTimerRef.current !== null) {
-      window.clearTimeout(memoSyncTimerRef.current);
-      memoSyncTimerRef.current = null;
-    }
-    const currentMemo = latestMemoRef.current;
-    const currentAttempts = latestAttemptsRef.current;
-    if (currentMemo.trim().length > 0 || currentAttempts.length > 0) {
-      syncCurrentAttempts(currentAttempts, currentMemo);
-    } else {
-      const hasLinked = records.some(
-        (r) => r.readingSessionId === readingSessionId
-      );
-      if (hasLinked) {
-        syncCurrentAttempts(currentAttempts, '');
-      }
-    }
+    syncCurrentAttempts(nextAttempts);
   };
 
   const handleOpenLinkedJournal = () => {
-    if (memoSyncTimerRef.current !== null) {
-      window.clearTimeout(memoSyncTimerRef.current);
-      memoSyncTimerRef.current = null;
-      syncCurrentAttempts(latestAttemptsRef.current, latestMemoRef.current);
-    }
     onGoToJournal(lastSyncedRecordIdRef.current);
   };
 
@@ -376,66 +238,10 @@ export function TodayView({
     }
   };
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    if (!activeCard) return;
-
-    if (memoSyncTimerRef.current !== null) {
-      window.clearTimeout(memoSyncTimerRef.current);
-      memoSyncTimerRef.current = null;
-    }
-
-    const spreadSnapshot = buildSpreadSnapshot();
-    const rootCard = selectedCards[0] ?? activeCard;
-    const rootOrientation = selectedOrientations[0] ?? activeOrientation;
-
-    const result = onSaveReflection(
-      rootCard,
-      note,
-      selectedAttempts.map((a) => a.actionText).join(' / ') || undefined,
-      rootOrientation,
-      spreadSnapshot,
-      {
-        readingSessionId,
-        overallMessage: computeOverallMessage(),
-        selectedActions: selectedAttempts,
-        actionMemo: latestMemoRef.current,
-      }
-    );
-    if (result.ok) {
-      if (result.record?.id) {
-        lastSyncedRecordIdRef.current = result.record.id;
-      }
-      setNote('');
-      try {
-        window.localStorage.removeItem(CARD_DRAFT_KEY);
-      } catch {
-        // Ignore
-      }
-      setFeedback({
-        type: 'success',
-        message: '인사이트 노트에 저장되었습니다.',
-      });
-    } else {
-      setFeedback({
-        type: 'error',
-        message: result.error || '기록을 저장하지 못했습니다.',
-      });
-    }
-  };
-
   const resetReadingTransientState = () => {
-    if (memoSyncTimerRef.current !== null) {
-      window.clearTimeout(memoSyncTimerRef.current);
-      memoSyncTimerRef.current = null;
-    }
     lastSyncedRecordIdRef.current = undefined;
-    latestAttemptsRef.current = [];
-    latestMemoRef.current = '';
-    setFeedback(null);
     setAttemptSyncNotice(null);
     setSelectedAttempts([]);
-    setActionMemo('');
     setActiveRevealIndex(0);
     setCardFlipped(false);
   };
@@ -832,7 +638,6 @@ export function TodayView({
                 type="button"
                 onClick={() => {
                   setActiveRevealIndex(idx);
-                  setFeedback(null);
                 }}
                 aria-pressed={isActive}
                 className={`flex items-center gap-2 sm:gap-3.5 p-2 sm:p-3.5 rounded-xl sm:rounded-2xl border text-left transition-colors cursor-pointer ${
@@ -877,38 +682,30 @@ export function TodayView({
             />
           </div>
 
-          <div className="flex-1 min-w-0 sm:mt-4 text-left sm:text-center space-y-1">
-            <p className="text-[11px] sm:text-xs tracking-[0.06em] text-[#827B72]">
+          <div className="flex-1 min-w-0 sm:mt-3.5 text-left sm:text-center space-y-1">
+            <p className="text-[11px] sm:text-xs tracking-[0.05em] text-[#827B72]">
               {selectedCards.length > 1
                 ? `${THREE_CARD_POSITIONS[activeRevealIndex]} · `
                 : ''}
-              {activeCard.arcana === 'minor'
-                ? `마이너 · ${activeCard.arcanaNumber} · ${
-                    activeOrientation === 'reversed' ? '역방향' : '정방향'
-                  }`
-                : `메이저 ${activeCard.arcanaNumber} · ${
-                    activeOrientation === 'reversed' ? '역방향' : '정방향'
-                  }`}
+              {activeCard.arcana === 'minor' ? '마이너' : '메이저'} ·{' '}
+              {activeOrientation === 'reversed' ? '역방향' : '정방향'}
               {activeCard.suitTheme ? ` · ${activeCard.suitTheme}` : ''}
             </p>
-            <h1 className="font-serif text-lg sm:text-[25px] font-medium text-[#34312D] leading-snug">
+            <h1 className="font-serif text-lg sm:text-[24px] font-medium text-[#34312D] leading-snug">
               {activeCard.nameKo}
-              <span className="ml-1.5 text-xs sm:text-base font-normal text-[#827B72]">
-                ({activeCard.nameEn})
-              </span>
             </h1>
             <p className="text-[11px] sm:text-xs text-[#777B61]">
               {activeCard.keywords.join(' · ')}
             </p>
-            <blockquote className="sm:hidden pt-1.5 mt-1.5 border-t border-[#E5DED1] font-serif text-[14.5px] leading-[1.48] text-[#34312D]">
+            <blockquote className="sm:hidden pt-1.5 mt-1 border-t border-[#E5DED1] font-serif text-[14px] leading-[1.45] text-[#34312D]">
               “{activeCard.insight}”
             </blockquote>
           </div>
         </div>
 
         {/* 1-2. Card Interpretation, Reflection Question & Overall Synthesis */}
-        <div className="lg:col-span-7 space-y-2.5 sm:space-y-4">
-          <div className="bg-[#FFFCF6] border border-[#E5DED1] rounded-2xl p-3.5 sm:p-6 space-y-2 sm:space-y-3.5">
+        <div className="lg:col-span-7 space-y-2 sm:space-y-4">
+          <div className="bg-[#FFFCF6] border border-[#E5DED1] rounded-2xl p-3 sm:p-6 space-y-1.5 sm:space-y-3.5">
             <div className="hidden sm:flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs font-medium tracking-wide text-[#777B61]">
                 나에게 온 메시지
@@ -920,14 +717,14 @@ export function TodayView({
             <blockquote className="hidden sm:block font-serif text-[21px] leading-[1.55] text-[#34312D]">
               “{activeCard.insight}”
             </blockquote>
-            <p className="text-[13.5px] sm:text-[15px] leading-[1.6] sm:leading-[1.65] text-[#34312D]/85">
+            <p className="text-[13px] sm:text-[15px] leading-[1.55] sm:leading-[1.65] text-[#34312D]/85">
               {activeCard.meaningGuide}
             </p>
-            <div className="pt-2 border-t border-[#E7E0D5]/80 space-y-0.5 sm:space-y-1">
+            <div className="pt-1.5 sm:pt-2 border-t border-[#E7E0D5]/80 space-y-0.5 sm:space-y-1">
               <h2 className="text-[11px] font-medium tracking-wide text-[#777B61]">
                 나에게 던져볼 질문
               </h2>
-              <p className="text-[14px] sm:text-[16px] font-medium leading-snug text-[#34312D]">
+              <p className="text-[13.5px] sm:text-[16px] font-medium leading-snug text-[#34312D]">
                 {activeCard.reflectionQuestion}
               </p>
             </div>
@@ -935,7 +732,7 @@ export function TodayView({
 
           <aside
             aria-label="리딩 종합 메시지"
-            className="rounded-2xl bg-[#FFFCF6] border border-[#E5DED1] p-3.5 sm:p-5 space-y-1.5 sm:space-y-2"
+            className="rounded-2xl bg-[#FFFCF6] border border-[#E5DED1] p-3 sm:p-5 space-y-1 sm:space-y-2"
           >
             <p className="text-[11px] sm:text-xs font-medium tracking-wide text-[#777B61]">
               리딩 종합 메시지
@@ -958,7 +755,7 @@ export function TodayView({
                 ))}
               </div>
             )}
-            <p className="text-[13px] sm:text-[15px] leading-[1.58] sm:leading-[1.65] text-[#34312D]/90">
+            <p className="text-[12.5px] sm:text-[15px] leading-[1.52] sm:leading-[1.65] text-[#34312D]/90">
               {getOverallSynthesisMessage()}
             </p>
           </aside>
@@ -968,7 +765,7 @@ export function TodayView({
       {/* 2. Primary CTA ('새 리딩 시작') & Compact Secondary Pair ('다시 섞기' / '처음 화면으로') */}
       <div
         aria-label="리딩 다음 행동"
-        className="mt-4 sm:mt-6 flex flex-col items-center space-y-2"
+        className="mt-3.5 sm:mt-6 flex flex-col items-center space-y-2"
       >
         <button
           type="button"
@@ -1004,228 +801,108 @@ export function TodayView({
         </p>
       </div>
 
-      {/* 3. Optional Reflection Attempts & Insight Note Form */}
-      <div className="mt-7 sm:mt-9 pt-6 border-t border-[#E5DED1] grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
-        {/* 3-1. Personalized Selectable Attempts (4 items) & Auto-Sync Memo */}
-        <div
-          aria-label="선택 가능한 시도"
-          className="lg:col-span-6 space-y-3.5"
-        >
-          <div className="space-y-1">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-xs font-medium tracking-wide text-[#777B61]">
-                선택 가능한 시도 (선택사항 · {personalizedAttempts.length}가지 제안)
-              </h2>
-              {selectedAttempts.length > 0 && (
-                <span className="text-xs font-medium text-[#777B61] tabular-nums">
-                  {selectedAttempts.length}개 선택 · 자동 저장됨
-                </span>
-              )}
-            </div>
-            <p className="text-xs leading-relaxed text-[#827B72]">
-              마음에 남는 시도가 있다면 가볍게 선택해 보세요. 모두 선택하지 않아도 괜찮습니다.
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            {personalizedAttempts.map((candidate, idx) => {
-              const checked = isAttemptChecked(candidate);
-
-              return (
-                <label
-                  key={candidate.attemptId || `${candidate.cardId}-${idx}`}
-                  className={`flex items-start gap-3 p-3.5 sm:p-4 rounded-xl border cursor-pointer transition-colors ${
-                    checked
-                      ? 'bg-[#777B61]/10 border-[#777B61] ring-1 ring-[#777B61]/25'
-                      : 'bg-[#FFFCF6]/80 border-[#E7E0D5] hover:border-[#777B61]/55'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => handleToggleAttempt(candidate)}
-                    className="mt-1 w-4 h-4 accent-[#777B61] rounded cursor-pointer shrink-0"
-                  />
-                  <div className="space-y-1 min-w-0">
-                    {(candidate.categoryLabel || candidate.positionLabel) && (
-                      <p className="text-[11px] font-medium text-[#777B61]">
-                        {[
-                          candidate.categoryLabel,
-                          candidate.positionLabel
-                            ? `${candidate.positionLabel} (${candidate.cardName})`
-                            : null,
-                        ]
-                          .filter(Boolean)
-                          .join(' · ')}
-                      </p>
-                    )}
-                    <span
-                      className={`block text-[14.5px] sm:text-[15px] leading-relaxed ${
-                        checked
-                          ? 'text-[#34312D] font-medium'
-                          : 'text-[#34312D]/90'
-                      }`}
-                    >
-                      {candidate.actionText}
-                    </span>
-                  </div>
-                </label>
-              );
-            })}
-          </div>
-
-          <div className="rounded-xl bg-[#FFFCF6]/90 border border-[#E7E0D5] p-3.5 sm:p-4 space-y-2.5">
-            <div className="flex flex-wrap items-baseline justify-between gap-1.5">
-              <label
-                htmlFor="attempt-quick-memo"
-                className="text-xs font-medium text-[#34312D]/90"
-              >
-                자유로운 메모 (선택사항)
-              </label>
-              <span className="text-[11px] text-[#827B72]">
-                꼭 완성된 문장으로 쓰지 않아도 괜찮습니다.
+      {/* 3. Selectable Attempts (4 personalized items, auto-synced to Insight Note) */}
+      <div
+        aria-label="선택 가능한 시도"
+        className="mt-7 sm:mt-9 pt-6 border-t border-[#E5DED1] space-y-4"
+      >
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-xs font-medium tracking-wide text-[#777B61]">
+              선택 가능한 시도
+            </h2>
+            {selectedAttempts.length > 0 && (
+              <span className="text-xs font-medium text-[#777B61] tabular-nums">
+                {selectedAttempts.length}개 선택 · 자동 저장됨
               </span>
-            </div>
-            <textarea
-              id="attempt-quick-memo"
-              name="attemptQuickMemo"
-              rows={2}
-              value={actionMemo}
-              onChange={(e) => handleActionMemoChange(e.target.value)}
-              onBlur={handleActionMemoBlur}
-              placeholder="지금 떠오르는 생각을 가볍게 남겨보세요."
-              className="w-full rounded-lg bg-[#F7F3EA]/55 border border-[#E7E0D5] px-3 py-2 text-sm leading-relaxed text-[#34312D] placeholder:text-[#827B72]/75 focus:outline-none focus:border-[#777B61] focus:ring-2 focus:ring-[#777B61]/15 transition-colors resize-y"
-            />
-            {(attemptSyncNotice ||
-              selectedAttempts.length > 0 ||
-              actionMemo.trim().length > 0) && (
-              <div
-                role="status"
-                aria-live="polite"
-                className="rounded-lg bg-[#777B61]/8 border border-[#777B61]/20 px-3 py-2.5 space-y-1.5 text-xs"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2 text-[#777B61]">
-                  <span className="inline-flex items-center gap-1.5 font-medium">
-                    <Check className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                    <span>
-                      {attemptSyncNotice ||
-                        '체크한 시도와 메모가 인사이트 노트에 자동 저장되었습니다.'}
-                    </span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleOpenLinkedJournal}
-                    className="inline-flex items-center gap-1 font-medium underline underline-offset-4 hover:text-[#34312D] transition-colors cursor-pointer"
-                  >
-                    <span>인사이트 노트에서 보기</span>
-                    <ArrowRight className="w-3 h-3" aria-hidden="true" />
-                  </button>
-                </div>
-                {selectedAttempts.length > 0 && (
-                  <ul className="space-y-0.5 pl-5 text-[11px] text-[#34312D]/80 list-disc">
-                    {selectedAttempts.map((item, idx) => (
-                      <li key={item.attemptId || `${item.cardId}-${idx}`}>
-                        {item.actionText}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
             )}
           </div>
+          <p className="text-xs leading-relaxed text-[#827B72]">
+            체크한 내용은 인사이트 노트에 기록됩니다.
+          </p>
         </div>
 
-        {/* 3-2. Insight Note Form with Auto-Draft */}
-        <form
-          onSubmit={handleSubmit}
-          className="lg:col-span-6 space-y-4"
-          noValidate
-        >
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+          {personalizedAttempts.map((candidate, idx) => {
+            const checked = isAttemptChecked(candidate);
+
+            return (
               <label
-                htmlFor="reflection-note"
-                className="block text-sm font-medium text-[#34312D]"
+                key={candidate.attemptId || `${candidate.cardId}-${idx}`}
+                className={`flex items-start gap-3 p-3.5 sm:p-4 rounded-xl border cursor-pointer transition-colors ${
+                  checked
+                    ? 'bg-[#777B61]/10 border-[#777B61] ring-1 ring-[#777B61]/25'
+                    : 'bg-[#FFFCF6]/80 border-[#E7E0D5] hover:border-[#777B61]/55'
+                }`}
               >
-                인사이트 노트에 남기기 ({activeCard.nameKo})
-              </label>
-              {note.trim().length > 0 && (
-                <div className="flex items-center gap-2 text-xs text-[#827B72]">
-                  <span>자동 임시 저장됨</span>
-                  <button
-                    type="button"
-                    onClick={() => setNote('')}
-                    className="underline underline-offset-2 hover:text-[#34312D] cursor-pointer"
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => handleToggleAttempt(candidate)}
+                  className="mt-1 w-4 h-4 accent-[#777B61] rounded cursor-pointer shrink-0"
+                />
+                <div className="space-y-1 min-w-0">
+                  {(candidate.categoryLabel || candidate.positionLabel) && (
+                    <p className="text-[11px] font-medium text-[#777B61]">
+                      {[
+                        candidate.categoryLabel,
+                        candidate.positionLabel
+                          ? `${candidate.positionLabel} (${candidate.cardName})`
+                          : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </p>
+                  )}
+                  <span
+                    className={`block text-[14.5px] sm:text-[15px] leading-relaxed ${
+                      checked
+                        ? 'text-[#34312D] font-medium'
+                        : 'text-[#34312D]/90'
+                    }`}
                   >
-                    비우기
-                  </button>
+                    {candidate.actionText}
+                  </span>
                 </div>
-              )}
+              </label>
+            );
+          })}
+        </div>
+
+        {(attemptSyncNotice || selectedAttempts.length > 0) && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="rounded-xl bg-[#777B61]/8 border border-[#777B61]/20 px-4 py-3 space-y-1.5 text-xs"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[#777B61]">
+              <span className="inline-flex items-center gap-1.5 font-medium">
+                <Check className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span>
+                  {attemptSyncNotice ||
+                    `선택한 시도 ${selectedAttempts.length}개가 인사이트 노트에 자동 저장되었습니다.`}
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={handleOpenLinkedJournal}
+                className="inline-flex items-center gap-1 font-medium underline underline-offset-4 hover:text-[#34312D] transition-colors cursor-pointer"
+              >
+                <span>인사이트 노트에서 보기</span>
+                <ArrowRight className="w-3 h-3" aria-hidden="true" />
+              </button>
             </div>
-            <textarea
-              id="reflection-note"
-              name="reflectionNote"
-              rows={4}
-              value={note}
-              onChange={(e) => {
-                setNote(e.target.value);
-                if (feedback) setFeedback(null);
-              }}
-              placeholder="떠오른 생각이나 나에게 남기고 싶은 한 문장을 자유롭게 적어 보세요."
-              className="w-full rounded-xl bg-[#FFFCF6] border border-[#E7E0D5] px-4 py-3.5 text-[15px] leading-relaxed text-[#34312D] placeholder:text-[#827B72]/75 focus:outline-none focus:border-[#777B61] focus:ring-2 focus:ring-[#777B61]/15 transition-colors resize-y"
-            />
+            {selectedAttempts.length > 0 && (
+              <ul className="space-y-0.5 pl-5 text-[11px] text-[#34312D]/80 list-disc">
+                {selectedAttempts.map((item, idx) => (
+                  <li key={item.attemptId || `${item.cardId}-${idx}`}>
+                    {item.actionText}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-
-          {feedback && (
-            <div
-              role="status"
-              aria-live="polite"
-              className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl px-4 py-3 text-sm border ${
-                feedback.type === 'success'
-                  ? 'bg-[#777B61]/10 border-[#777B61]/25 text-[#34312D]'
-                  : 'bg-[#A65D4E]/10 border-[#A65D4E]/25 text-[#7A3B2E]'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                {feedback.type === 'success' ? (
-                  <Check
-                    className="w-4 h-4 text-[#777B61] shrink-0"
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <AlertCircle
-                    className="w-4 h-4 text-[#A65D4E] shrink-0"
-                    aria-hidden="true"
-                  />
-                )}
-                <span>{feedback.message}</span>
-              </div>
-
-              {feedback.type === 'success' && (
-                <button
-                  type="button"
-                  onClick={handleOpenLinkedJournal}
-                  className="inline-flex items-center gap-1 text-sm font-medium text-[#777B61] hover:text-[#34312D] transition-colors self-start sm:self-auto whitespace-nowrap cursor-pointer"
-                >
-                  <span>인사이트 노트 보기</span>
-                  <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-                </button>
-              )}
-            </div>
-          )}
-
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
-            <p className="text-xs text-[#827B72]">
-              기록하지 않고 마음속으로만 머물러도 괜찮습니다.
-            </p>
-            <button
-              type="submit"
-              className="w-full sm:w-auto min-h-[48px] px-7 py-3 rounded-xl bg-[#777B61] hover:bg-[#646850] active:scale-[0.99] text-[#FFFCF6] text-[15px] font-medium transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
-            >
-              인사이트 노트에 저장
-            </button>
-          </div>
-        </form>
+        )}
       </div>
 
       {/* 4. Secondary Content at Bottom: Card Encyclopedia */}

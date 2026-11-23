@@ -65,7 +65,6 @@ export default function App() {
     records,
     storageError,
     syncReadingAttempts,
-    addReflection,
     addFreeformReflection,
     updateReflection,
     addFollowUpNote,
@@ -326,7 +325,6 @@ export default function App() {
             onStartShuffle={handleStartShuffle}
             onSelectCard={handleSelectCard}
             onSyncAttempts={syncReadingAttempts}
-            onSaveReflection={addReflection}
             onStartNewReading={handleStartNewReading}
             onGoHome={handleGoHome}
             savedRecordCount={records.length}

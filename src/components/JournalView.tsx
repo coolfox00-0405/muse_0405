@@ -1238,7 +1238,8 @@ export function JournalView({
                 {/* User Memos (actionMemo + userNote) or Edit Form */}
                 {isEditing ? (
                   <div className="space-y-4 border-t border-[#E7E0D5] pt-5">
-                    {selectedRecord.cardId !== 'freeform' && (
+                    {selectedRecord.cardId !== 'freeform' &&
+                      Boolean(selectedRecord.actionMemo?.trim()) && (
                       <div className="space-y-1.5">
                         <label
                           htmlFor="edit-action-memo"

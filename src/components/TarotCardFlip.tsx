@@ -27,7 +27,7 @@ export function TarotCardFlip({
 
   return (
     <div
-      className={`card-perspective w-[144px] sm:w-[212px] lg:w-[236px] mx-auto select-none ${
+      className={`card-perspective w-[132px] sm:w-[204px] lg:w-[228px] mx-auto select-none ${
         isClickable ? 'cursor-pointer group' : ''
       }`}
       onClick={isClickable ? onCardClick : undefined}
@@ -76,7 +76,7 @@ export function TarotCardFlip({
           )}
         </div>
 
-        {/* Card Front — Unobstructed Artwork (896:1200) + Natural-Height Bottom Title Plate */}
+        {/* Card Front — Unobstructed Artwork (896:1200) + Concise English Title Plate */}
         <div className="card-face card-face-front rounded-[18px] overflow-hidden bg-[#FFFCF6] border border-[#E5DED1] shadow-[0_14px_34px_-16px_rgba(52,49,45,0.22)] flex flex-col">
           <div className="relative w-full aspect-[896/1200] overflow-hidden bg-[#FFFCF6] shrink-0">
             <TarotCardArtwork
@@ -87,14 +87,8 @@ export function TarotCardFlip({
             />
           </div>
 
-          <div className="flex flex-col items-center justify-center px-2 sm:px-3 py-2 sm:py-2.5 bg-[#FFFCF6] border-t border-[#E5DED1] text-center">
-            <p className="font-serif text-[12px] sm:text-[14px] font-medium text-[#34312D] leading-snug break-keep">
-              <span className="font-display text-[10px] sm:text-[11.5px] tracking-[0.08em] text-[#777B61] font-medium mr-1">
-                {card.arcanaNumber}
-              </span>
-              <span>{card.nameKo}</span>
-            </p>
-            <p className="font-display text-[10px] sm:text-[11.5px] tracking-[0.03em] text-[#827B72] leading-snug mt-0.5 break-words max-w-full">
+          <div className="flex items-center justify-center px-2 sm:px-3 py-2 sm:py-2.5 bg-[#FFFCF6] border-t border-[#E5DED1] text-center">
+            <p className="font-display text-[11px] sm:text-[13px] tracking-[0.03em] text-[#34312D] font-medium leading-tight break-words max-w-full">
               {card.nameEn}
             </p>
           </div>
