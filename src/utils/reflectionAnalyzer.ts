@@ -1,5 +1,12 @@
 import { ReflectionRecord } from '../types/reflection';
-import { formatKoreanDate } from '../hooks/useReflections';
+import { formatLocalizedDate } from '../hooks/useReflections';
+import { Language } from '../i18n/types';
+import { UI_TRANSLATIONS } from '../i18n/ui';
+import { getCardById } from '../data/cards';
+import {
+  getLocalizedRecordCardName,
+  getLocalizedRecordQuestion,
+} from '../i18n/cardHelpers';
 
 export type AnalysisRange = 'recent' | 'custom' | 'all';
 
@@ -31,7 +38,8 @@ export interface ReflectionAnalysis {
   closingQuestions: string[];
 }
 
-const KOREAN_STOPWORDS = new Set([
+const STOPWORDS = new Set([
+  // Korean
   '나는', '내가', '나의', '나를', '나에게', '오늘', '지금', '조금', '너무', '정말',
   '그냥', '다시', '계속', '많이', '것을', '것이', '것은', '것이다', '있다', '없다',
   '있는', '없는', '하고', '하는', '해서', '했다', '한다', '싶다', '싶은', '같은',
@@ -40,36 +48,91 @@ const KOREAN_STOPWORDS = new Set([
   '여기', '거기', '가장', '매우', '아주', '좀더', '더욱', '역시', '아직', '이미',
   '마음', '생각', '느낌', '시간', '사람', '정도', '부분', '가지', '경우', '때문',
   '자신', '스스로', '우리', '모두', '하나', '다른', '많은', '좋은', '작은', '큰',
-  '있어', '있고', '없어', '같아', '되는', '된다', '했다', '했어', '보면', '보니',
+  '있어', '있고', '없어', '같아', '되는', '된다', '했어', '보면', '보니',
+  // English
+  'the', 'and', 'for', 'that', 'this', 'with', 'you', 'your', 'not', 'but',
+  'are', 'was', 'were', 'have', 'had', 'has', 'from', 'they', 'their', 'what',
+  'when', 'where', 'which', 'will', 'would', 'could', 'should', 'there', 'here',
+  'about', 'into', 'just', 'like', 'more', 'very', 'also', 'even', 'only',
+  'still', 'much', 'many', 'some', 'today', 'now', 'feel', 'feeling', 'think',
+  'thought', 'thing', 'things', 'myself', 'really', 'little', 'because', 'been',
+  'being', 'them', 'then', 'than', 'over', 'again', 'time', 'card',
+  // Japanese
+  'これ', 'それ', 'あれ', 'この', 'その', 'あの', 'こと', 'もの', 'とき', 'ため',
+  'よう', '今日', '自分', '気持ち', '少し', 'とても', '本当に', 'やはり', 'まだ',
+  'もう', 'ここ', 'そこ', 'どこ', 'なに', 'なぜ', 'どう', '思う', '感じ', '考える',
 ]);
 
-function normalizeToken(raw: string): string {
-  const cleaned = raw.replace(/[^가-힣a-zA-Z0-9]/g, '').trim();
-  if (cleaned.length < 2) return '';
-  const stripped = cleaned.replace(
-    /(에서는|으로는|에게는|까지는|부터는|이라는|에서도|으로도|에게도|은|는|이|가|을|를|에|에서|으로|로|와|과|도|만|의|께|에게|한테|부터|까지)$/,
-    ''
-  );
-  return stripped.length >= 2 ? stripped : cleaned;
+function extractTokens(text: string): string[] {
+  const results: string[] = [];
+
+  // Space-delimited Korean / Latin words
+  const spaceTokens = text.split(/\s+/);
+  for (const raw of spaceTokens) {
+    const cleaned = raw
+      .replace(/[^가-힣a-zA-Z0-9]/g, '')
+      .trim()
+      .toLowerCase();
+    if (cleaned.length < 2) continue;
+    const stripped = cleaned.replace(
+      /(에서는|으로는|에게는|까지는|부터는|이라는|에서도|으로도|에게도|은|는|이|가|을|를|에|에서|으로|로|와|과|도|만|의|께|에게|한테|부터|까지)$/,
+      ''
+    );
+    const norm = stripped.length >= 2 ? stripped : cleaned;
+    if (norm.length >= 2 && !STOPWORDS.has(norm)) {
+      results.push(norm);
+    }
+  }
+
+  // Japanese Kanji & Katakana compounds (2+ chars) for Japanese notes without spaces
+  const jpMatches = text.match(/[\u4E00-\u9FFF]{2,}|[\u30A0-\u30FF]{2,}/g);
+  if (jpMatches) {
+    for (const jp of jpMatches) {
+      if (!STOPWORDS.has(jp)) {
+        results.push(jp);
+      }
+    }
+  }
+
+  return results;
 }
 
 function getCombinedRecordText(rec: ReflectionRecord): string {
   const parts = [
-    rec.userNote,
+    rec.userNote ?? '',
     rec.actionMemo ?? '',
-    ...(rec.followUpNotes?.map((f) => f.note) ?? []),
+    ...(rec.followUpNotes?.map((f) => f.note ?? '') ?? []),
   ]
     .map((p) => p.trim())
     .filter(Boolean);
   return parts.join(' ');
 }
 
-function getRecordPreviewText(rec: ReflectionRecord): string {
+function getRecordPreviewText(
+  rec: ReflectionRecord,
+  language: Language
+): string {
+  const freeformLabel = UI_TRANSLATIONS[language].journal.freeformCardName;
+  const matchedCard =
+    rec.cardId !== 'freeform' ? getCardById(rec.cardId) : undefined;
+  const localizedCardName = getLocalizedRecordCardName(
+    rec.cardId,
+    rec.cardName,
+    matchedCard,
+    language,
+    freeformLabel
+  );
+  const localizedQuestion = getLocalizedRecordQuestion(
+    rec.reflectionQuestion,
+    matchedCard,
+    language
+  );
+
   return (
     getCombinedRecordText(rec) ||
     rec.selectedAction ||
-    rec.reflectionQuestion ||
-    rec.cardName
+    localizedQuestion ||
+    localizedCardName
   );
 }
 
@@ -106,8 +169,10 @@ export function filterRecordsByRange(
 }
 
 export function analyzeReflections(
-  filteredRecords: ReflectionRecord[]
+  filteredRecords: ReflectionRecord[],
+  language: Language = 'ko'
 ): ReflectionAnalysis {
+  const freeformLabel = UI_TRANSLATIONS[language].journal.freeformCardName;
   const chronological = [...filteredRecords].sort(
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
@@ -116,10 +181,22 @@ export function analyzeReflections(
   const last = chronological[chronological.length - 1];
   const dateSpanLabel =
     first.date === last.date
-      ? formatKoreanDate(first.date)
-      : `${formatKoreanDate(first.date)} ~ ${formatKoreanDate(last.date)}`;
+      ? formatLocalizedDate(first.date, language)
+      : `${formatLocalizedDate(first.date, language)} ~ ${formatLocalizedDate(
+          last.date,
+          language
+        )}`;
 
-  // 1. Deduplicated per-record keyword frequency (prevents inflation within a single note)
+  const resolveCardLabel = (rec: ReflectionRecord) =>
+    getLocalizedRecordCardName(
+      rec.cardId,
+      rec.cardName,
+      rec.cardId !== 'freeform' ? getCardById(rec.cardId) : undefined,
+      language,
+      freeformLabel
+    );
+
+  // 1. Deduplicated per-record keyword frequency
   const wordStats = new Map<
     string,
     { recordIds: Set<string>; totalCount: number; evidence: EvidenceSnippet[] }
@@ -127,13 +204,10 @@ export function analyzeReflections(
 
   for (const rec of chronological) {
     const combinedText = getCombinedRecordText(rec);
-    const tokens = combinedText.split(/\s+/);
+    const tokens = extractTokens(combinedText);
     const seenInThisRecord = new Set<string>();
 
-    for (const token of tokens) {
-      const norm = normalizeToken(token);
-      if (!norm || norm.length < 2 || KOREAN_STOPWORDS.has(norm)) continue;
-
+    for (const norm of tokens) {
       let entry = wordStats.get(norm);
       if (!entry) {
         entry = { recordIds: new Set(), totalCount: 0, evidence: [] };
@@ -147,9 +221,9 @@ export function analyzeReflections(
         entry.recordIds.add(rec.id);
         entry.evidence.push({
           id: rec.id,
-          dateLabel: formatKoreanDate(rec.date),
-          cardName: rec.cardName,
-          excerpt: makeExcerpt(getRecordPreviewText(rec), 58),
+          dateLabel: formatLocalizedDate(rec.date, language),
+          cardName: resolveCardLabel(rec),
+          excerpt: makeExcerpt(getRecordPreviewText(rec, language), 58),
         });
       }
     }
@@ -174,27 +248,45 @@ export function analyzeReflections(
   const cardCounts = new Map<string, number>();
   for (const rec of chronological) {
     if (rec.cardId === 'freeform') continue;
-    cardCounts.set(rec.cardName, (cardCounts.get(rec.cardName) ?? 0) + 1);
+    const label = resolveCardLabel(rec);
+    cardCounts.set(label, (cardCounts.get(label) ?? 0) + 1);
   }
   const topCards = Array.from(cardCounts.entries())
     .map(([cardName, count]) => ({ cardName, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 3);
 
-  // Only treat as a recurring theme if it appeared in 2+ DISTINCT records
   const multiRecordKeywords = topKeywords.filter((k) => k.recordCount >= 2);
   const hasClearPattern = multiRecordKeywords.length > 0;
 
   let themeSummary: string;
   if (hasClearPattern) {
-    const wordsText = multiRecordKeywords
-      .slice(0, 3)
-      .map((k) => `‘${k.word}’(${k.recordCount}개 기록)`)
-      .join(', ');
-    themeSummary = `선택한 범위의 여러 기록에서 ${wordsText} 같은 표현이 반복적으로 나타났습니다. 한 기록 안에서의 중복은 제외하고, 서로 다른 기록에 걸쳐 등장한 횟수를 기준으로 정리했습니다.`;
+    if (language === 'en') {
+      const wordsText = multiRecordKeywords
+        .slice(0, 3)
+        .map((k) => `"${k.word}" (${k.recordCount} notes)`)
+        .join(', ');
+      themeSummary = `Words such as ${wordsText} appeared across multiple notes in this range. Repeats within a single note were counted once so only cross-note patterns are shown.`;
+    } else if (language === 'ja') {
+      const wordsText = multiRecordKeywords
+        .slice(0, 3)
+        .map((k) => `「${k.word}」（${k.recordCount}件）`)
+        .join('、');
+      themeSummary = `選んだ範囲の複数の記録で、${wordsText}といった言葉が繰り返し現れました。ひとつの記録内での重複は除き、異なる記録にまたがって登場した回数を基準にまとめています。`;
+    } else {
+      const wordsText = multiRecordKeywords
+        .slice(0, 3)
+        .map((k) => `‘${k.word}’(${k.recordCount}개 기록)`)
+        .join(', ');
+      themeSummary = `선택한 범위의 여러 기록에서 ${wordsText} 같은 표현이 반복적으로 나타났습니다. 한 기록 안에서의 중복은 제외하고, 서로 다른 기록에 걸쳐 등장한 횟수를 기준으로 정리했습니다.`;
+    }
   } else {
     themeSummary =
-      '아직 여러 기록에 걸쳐 뚜렷하게 반복되는 흐름을 판단하기 어렵습니다. 기록마다 서로 다른 이야기가 담겨 있으므로, 조금 더 기록이 쌓인 뒤 다시 살펴보셔도 좋습니다.';
+      language === 'en'
+        ? 'No strong recurring thread stands out across multiple notes yet. Because each entry holds a distinct story, you might revisit this once a few more notes gather.'
+        : language === 'ja'
+        ? 'まだ複数の記録にまたがって大きく繰り返される流れは見当たりません。ひとつひとつの記録に異なる物語が込められているため、もう少し記録が集まってから見返してみてもよさそうです。'
+        : '아직 여러 기록에 걸쳐 뚜렷하게 반복되는 흐름을 판단하기 어렵습니다. 기록마다 서로 다른 이야기가 담겨 있으므로, 조금 더 기록이 쌓인 뒤 다시 살펴보셔도 좋습니다.';
   }
 
   // 2. Chronological flow
@@ -207,31 +299,43 @@ export function analyzeReflections(
     const rec = chronological[idx];
     return {
       id: rec.id,
-      dateLabel: formatKoreanDate(rec.date),
-      cardName: rec.cardName,
-      excerpt: makeExcerpt(getRecordPreviewText(rec), 68),
+      dateLabel: formatLocalizedDate(rec.date, language),
+      cardName: resolveCardLabel(rec),
+      excerpt: makeExcerpt(getRecordPreviewText(rec, language), 68),
     };
   });
 
   const flowSummary =
     chronological.length >= 3
-      ? `총 ${chronological.length}개의 기록 중 처음·중간·최근 기록을 시간순으로 나란히 놓아 보았습니다. 각 항목을 누르면 원본 기록으로 바로 이동해 전체 문맥을 확인할 수 있습니다.`
+      ? language === 'en'
+        ? `Among ${chronological.length} notes, an early, middle, and recent entry are placed side by side in time order. Select any item to reopen its full context.`
+        : language === 'ja'
+        ? `全${chronological.length}件の記録から、最初・中間・最近の記録を時系列で並べてみました。各項目を選ぶと元の記録に移動して全体の流れを確認できます。`
+        : `총 ${chronological.length}개의 기록 중 처음·중간·최근 기록을 시간순으로 나란히 놓아 보았습니다. 각 항목을 누르면 원본 기록으로 바로 이동해 전체 문맥을 확인할 수 있습니다.`
+      : language === 'en'
+      ? `These ${chronological.length} notes are arranged in chronological order. Take a quiet look at what threads connect earlier thoughts to later ones.`
+      : language === 'ja'
+      ? `選んだ範囲の${chronological.length}件の記録を時間順に並べています。前の記録と次の記録のあいだにどんなつながりがあるか確かめてみてください。`
       : `선택한 범위의 ${chronological.length}개 기록을 시간순으로 정리했습니다. 앞선 기록과 다음 기록 사이에 어떤 연결고리가 있는지 직접 확인해 보세요.`;
 
   // 3. Recurring questions with source record links
-  const userQuestions: { question: string; sourceRecordId: string; dateLabel: string }[] = [];
+  const userQuestions: {
+    question: string;
+    sourceRecordId: string;
+    dateLabel: string;
+  }[] = [];
   const seenQ = new Set<string>();
   for (const rec of chronological) {
-    const matches = getCombinedRecordText(rec).match(/[^.!?\n]+\?/g);
+    const matches = getCombinedRecordText(rec).match(/[^.!?\n。！？]+[?？]/g);
     if (matches) {
       for (const q of matches) {
         const trimmed = q.trim();
-        if (trimmed.length >= 5 && !seenQ.has(trimmed)) {
+        if (trimmed.length >= 4 && !seenQ.has(trimmed)) {
           seenQ.add(trimmed);
           userQuestions.push({
             question: trimmed,
             sourceRecordId: rec.id,
-            dateLabel: formatKoreanDate(rec.date),
+            dateLabel: formatLocalizedDate(rec.date, language),
           });
         }
       }
@@ -242,11 +346,16 @@ export function analyzeReflections(
     .filter((r) => r.cardId !== 'freeform' && r.reflectionQuestion)
     .reduce<{ question: string; sourceRecordId: string; dateLabel: string }[]>(
       (acc, r) => {
-        if (!acc.some((item) => item.question === r.reflectionQuestion)) {
+        const localizedQ = getLocalizedRecordQuestion(
+          r.reflectionQuestion,
+          getCardById(r.cardId),
+          language
+        );
+        if (!acc.some((item) => item.question === localizedQ)) {
           acc.push({
-            question: r.reflectionQuestion,
+            question: localizedQ,
             sourceRecordId: r.id,
-            dateLabel: formatKoreanDate(r.date),
+            dateLabel: formatLocalizedDate(r.date, language),
           });
         }
         return acc;
@@ -265,29 +374,60 @@ export function analyzeReflections(
   );
   let newPerspective: string;
   if (topCards.length > 0 && topCards[0].count >= 2) {
-    newPerspective = `선택한 범위에서 ‘${topCards[0].cardName}’ 카드와 연결된 기록이 ${topCards[0].count}건 확인됩니다. 같은 카드 앞에서 서로 다른 시점에 어떤 생각을 남겼는지 비교해 볼 수 있습니다.`;
+    newPerspective =
+      language === 'en'
+        ? `${topCards[0].cardName} appeared in ${topCards[0].count} notes within this range. Comparing what you wrote at different moments beside the same card can be quietly revealing.`
+        : language === 'ja'
+        ? `この範囲では「${topCards[0].cardName}」のカードと結びついた記録が${topCards[0].count}件あります。同じカードの前で異なる時期にどんな想いを残したのか見比べてみるのもよさそうです。`
+        : `선택한 범위에서 ‘${topCards[0].cardName}’ 카드와 연결된 기록이 ${topCards[0].count}건 확인됩니다. 같은 카드 앞에서 서로 다른 시점에 어떤 생각을 남겼는지 비교해 볼 수 있습니다.`;
   } else if (actionsChosen.length > 0) {
-    newPerspective = `기록 중 ${actionsChosen.length}건에서 마음에 남은 시도를 함께 표시하셨습니다. 메모만 남긴 기록과 시도를 선택한 기록을 나란히 읽어 보며 당시의 시선을 돌아볼 수 있습니다.`;
+    newPerspective =
+      language === 'en'
+        ? `In ${actionsChosen.length} of these notes, you also marked gentle reflections to try. Reading notes with and without checked items side by side may show how your focus shifted.`
+        : language === 'ja'
+        ? `記録のうち${actionsChosen.length}件で、心に残った試みを一緒にチェックされています。メモだけの記録と試みを選んだ記録を並べて読み返すと、当時の視点が見えてきます。`
+        : `기록 중 ${actionsChosen.length}건에서 마음에 남은 시도를 함께 표시하셨습니다. 메모만 남긴 기록과 시도를 선택한 기록을 나란히 읽어 보며 당시의 시선을 돌아볼 수 있습니다.`;
   } else if (hasClearPattern) {
-    newPerspective = `서로 다른 기록에서도 ‘${multiRecordKeywords[0].word}’라는 표현이 다시 나타났습니다. 겉으로는 다른 상황처럼 보여도 비슷한 관심사가 이어지고 있었을 가능성이 있습니다.`;
+    newPerspective =
+      language === 'en'
+        ? `The word "${multiRecordKeywords[0].word}" surfaced again across separate notes. Even when situations looked different outside, a similar inner concern may have been present.`
+        : language === 'ja'
+        ? `異なる記録の中でも「${multiRecordKeywords[0].word}」という言葉が再び現れました。外から見れば違う出来事のようでも、似た関心が続いていたのかもしれません。`
+        : `서로 다른 기록에서도 ‘${multiRecordKeywords[0].word}’라는 표현이 다시 나타났습니다. 겉으로는 다른 상황처럼 보여도 비슷한 관심사가 이어지고 있었을 가능성이 있습니다.`;
   } else {
     newPerspective =
-      '기록들이 서로 다른 주제와 카드로 펼쳐져 있습니다. 하나의 패턴으로 묶기보다, 지금 어떤 다양한 생각들이 지나가고 있는지 가볍게 바라보는 참고 자료로 삼아 보세요.';
+      language === 'en'
+        ? 'Your notes spread across varied themes and cards. Rather than forcing them into a single pattern, treat this simply as a gentle view of what passed through your mind.'
+        : language === 'ja'
+        ? '記録はそれぞれ異なるテーマやカードへ広がっています。無理にひとつの型へまとめるより、今どんな想いが通り過ぎていったのかを軽く眺める参考としてご覧ください。'
+        : '기록들이 서로 다른 주제와 카드로 펼쳐져 있습니다. 하나의 패턴으로 묶기보다, 지금 어떤 다양한 생각들이 지나가고 있는지 가볍게 바라보는 참고 자료로 삼아 보세요.';
   }
 
   // 5. Closing reflective questions
   const closingQuestions: string[] = [];
   if (hasClearPattern) {
     closingQuestions.push(
-      `여러 기록에서 반복해 등장한 ‘${multiRecordKeywords[0].word}’는 지금 나에게 어떤 의미로 다가오나요?`
+      language === 'en'
+        ? `What does "${multiRecordKeywords[0].word}"—which surfaced across multiple notes—mean to you right now?`
+        : language === 'ja'
+        ? `複数の記録に繰り返し現れた「${multiRecordKeywords[0].word}」は、今のあなたにとってどんな意味を持っていますか？`
+        : `여러 기록에서 반복해 등장한 ‘${multiRecordKeywords[0].word}’는 지금 나에게 어떤 의미로 다가오나요?`
     );
   } else {
     closingQuestions.push(
-      '이 기록들을 다시 읽어 보았을 때, 지금 가장 마음에 오래 머무는 문장은 무엇인가요?'
+      language === 'en'
+        ? 'Reading back through these entries, which single sentence stays with you longest right now?'
+        : language === 'ja'
+        ? 'これらの記録を読み返してみて、今いちばん長く心に残る一文は何ですか？'
+        : '이 기록들을 다시 읽어 보았을 때, 지금 가장 마음에 오래 머무는 문장은 무엇인가요?'
     );
   }
   closingQuestions.push(
-    '이전 기록과 가장 최근 기록 사이에서 달라진 시선이나 여전히 남아 있는 질문은 무엇인가요?'
+    language === 'en'
+      ? 'Between your earlier notes and your most recent one, what perspective shifted—and what question still quietly remains?'
+      : language === 'ja'
+      ? '以前の記録といちばん最近の記録の間で、変わった視点と今も静かに残っている問いは何ですか？'
+      : '이전 기록과 가장 최근 기록 사이에서 달라진 시선이나 여전히 남아 있는 질문은 무엇인가요?'
   );
 
   return {

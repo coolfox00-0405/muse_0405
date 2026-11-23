@@ -1,8 +1,12 @@
 import { useState, useEffect, useMemo, useCallback, FormEvent } from 'react';
 import { X, Search, ArrowLeft, BookOpen, ArrowUpRight, PenLine, Check, AlertTriangle } from 'lucide-react';
-import { FULL_TAROT_DECK } from '../data/cards';
+import { FULL_TAROT_DECK, getCardById } from '../data/cards';
 import { ReflectionRecord, TarotCard, TarotSuit } from '../types/reflection';
 import { TarotCardArtwork } from './TarotCardArtwork';
+import { useLanguage } from '../i18n/LanguageContext';
+import { getLocalizedCard } from '../i18n/cardHelpers';
+import { resolveLocalizedAttemptItem } from '../utils/attemptGenerator';
+import { formatLocalizedDate } from '../hooks/useReflections';
 
 type FilterCategory = 'all' | 'major' | TarotSuit;
 
@@ -19,22 +23,6 @@ interface DeckEncyclopediaModalProps {
   ) => { ok: boolean; error?: string; record?: ReflectionRecord };
 }
 
-const FILTER_OPTIONS: { id: FilterCategory; label: string; count: number }[] = [
-  { id: 'all', label: '전체', count: 78 },
-  { id: 'major', label: '메이저', count: 22 },
-  { id: 'wands', label: '완드', count: 14 },
-  { id: 'cups', label: '컵', count: 14 },
-  { id: 'swords', label: '소드', count: 14 },
-  { id: 'pentacles', label: '펜타클', count: 14 },
-];
-
-const SUIT_LABEL_KO: Record<TarotSuit, string> = {
-  wands: '완드 (Wands)',
-  cups: '컵 (Cups)',
-  swords: '소드 (Swords)',
-  pentacles: '펜타클 (Pentacles)',
-};
-
 export function DeckEncyclopediaModal({
   isOpen,
   onClose,
@@ -44,6 +32,7 @@ export function DeckEncyclopediaModal({
   onOpenRecord,
   onAddCardReflection,
 }: DeckEncyclopediaModalProps) {
+  const { language, t } = useLanguage();
   const [category, setCategory] = useState<FilterCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCard, setSelectedCard] = useState<TarotCard | null>(() =>
@@ -58,6 +47,15 @@ export function DeckEncyclopediaModal({
     type: 'success' | 'error';
     text: string;
   } | null>(null);
+
+  const filterOptions: { id: FilterCategory; label: string; count: number }[] = [
+    { id: 'all', label: t.encyclopedia.filters.all, count: 78 },
+    { id: 'major', label: t.encyclopedia.filters.major, count: 22 },
+    { id: 'wands', label: t.encyclopedia.filters.wands, count: 14 },
+    { id: 'cups', label: t.encyclopedia.filters.cups, count: 14 },
+    { id: 'swords', label: t.encyclopedia.filters.swords, count: 14 },
+    { id: 'pentacles', label: t.encyclopedia.filters.pentacles, count: 14 },
+  ];
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -101,7 +99,7 @@ export function DeckEncyclopediaModal({
     if (!trimmed) {
       setNoteFeedback({
         type: 'error',
-        text: '남길 생각을 짧게라도 입력해 주세요.',
+        text: t.encyclopedia.noteErrorEmpty,
       });
       return;
     }
@@ -111,12 +109,12 @@ export function DeckEncyclopediaModal({
       setIsWritingNote(false);
       setNoteFeedback({
         type: 'success',
-        text: '인사이트 노트에 기록되었습니다.',
+        text: t.encyclopedia.noteSaved,
       });
     } else {
       setNoteFeedback({
         type: 'error',
-        text: result.error || '기록을 저장하지 못했습니다.',
+        text: result.error || t.encyclopedia.noteSaveError,
       });
     }
   };
@@ -165,11 +163,18 @@ export function DeckEncyclopediaModal({
         return false;
       }
       if (!q) return true;
+      const locEn = getLocalizedCard(card, 'en');
+      const locJa = getLocalizedCard(card, 'ja');
       return (
         card.nameKo.toLowerCase().includes(q) ||
         card.nameEn.toLowerCase().includes(q) ||
+        locEn.displayName.toLowerCase().includes(q) ||
+        locJa.displayName.toLowerCase().includes(q) ||
         card.arcanaNumber.toLowerCase().includes(q) ||
-        card.keywords.some((k) => k.toLowerCase().includes(q))
+        locJa.arcanaNumber.toLowerCase().includes(q) ||
+        card.keywords.some((k) => k.toLowerCase().includes(q)) ||
+        locEn.keywords.some((k) => k.toLowerCase().includes(q)) ||
+        locJa.keywords.some((k) => k.toLowerCase().includes(q))
       );
     });
   }, [category, searchQuery]);
@@ -193,6 +198,10 @@ export function DeckEncyclopediaModal({
 
   if (!isOpen) return null;
 
+  const selectedLoc = selectedCard
+    ? getLocalizedCard(selectedCard, language)
+    : null;
+
   return (
     <div
       role="dialog"
@@ -205,20 +214,20 @@ export function DeckEncyclopediaModal({
         <header className="shrink-0 bg-[#FFFCF6] border-b border-[#E5DED1] px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="font-display text-xs tracking-[0.18em] text-[#827B72]">
-              LUCIDA ARCANA ARCHIVE
+              {t.encyclopedia.archiveSubtitle}
             </p>
             <h2
               id="deck-encyclopedia-title"
               className="font-serif text-lg sm:text-xl font-medium text-[#34312D] truncate"
             >
-              78장 타로 카드 도감
+              {t.encyclopedia.title}
             </h2>
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            aria-label="도감 닫기"
+            aria-label={t.encyclopedia.closeAria}
             className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-xl border border-[#E5DED1] bg-[#F7F3EA] text-[#34312D] hover:bg-[#E5DED1]/50 transition-colors cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" aria-hidden="true" />
@@ -229,14 +238,12 @@ export function DeckEncyclopediaModal({
         {(deckIntegrity.missingCount > 0 || loadStats.failed > 0) && (
           <div className="shrink-0 bg-[#A65D4E]/10 border-b border-[#A65D4E]/25 px-4 sm:px-6 py-2 text-xs text-[#7A3B2E] flex items-center gap-1.5">
             <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-            <span>
-              일부 카드 이미지를 불러오지 못해 기본 카드 화면으로 표시되고 있습니다.
-            </span>
+            <span>{t.encyclopedia.missingImageNotice}</span>
           </div>
         )}
 
         {/* Body: Either Card Detail View OR Filter + 78-Card Grid */}
-        {selectedCard ? (
+        {selectedCard && selectedLoc ? (
           <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-5 sm:py-7">
             <div className="max-w-4xl mx-auto space-y-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -246,7 +253,7 @@ export function DeckEncyclopediaModal({
                   className="inline-flex items-center gap-2 min-h-[44px] px-3.5 py-2 rounded-xl border border-[#E5DED1] bg-[#FFFCF6] text-sm text-[#34312D] hover:bg-[#E5DED1]/45 transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4 text-[#777B61]" aria-hidden="true" />
-                  <span>78장 목록으로</span>
+                  <span>{t.encyclopedia.backToList}</span>
                 </button>
                 {onBackToReading && (
                   <button
@@ -254,7 +261,7 @@ export function DeckEncyclopediaModal({
                     onClick={onBackToReading}
                     className="inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-xl border border-[#E5DED1] bg-[#FFFCF6] text-sm text-[#777B61] hover:text-[#34312D] hover:bg-[#E5DED1]/45 transition-colors cursor-pointer"
                   >
-                    <span>카드 뽑기로 돌아가기</span>
+                    <span>{t.encyclopedia.backToReading}</span>
                     <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
                   </button>
                 )}
@@ -275,81 +282,88 @@ export function DeckEncyclopediaModal({
                     <div className="border-t border-[#E5DED1] bg-[#FFFCF6] px-3 py-2 text-center">
                       <p className="text-[13px] font-serif font-medium text-[#34312D] leading-tight">
                         <span className="font-display text-[11px] text-[#777B61] mr-1.5">
-                          {selectedCard.arcanaNumber}
+                          {selectedLoc.arcanaNumber}
                         </span>
-                        {selectedCard.nameKo}
+                        {selectedLoc.displayName}
                       </p>
-                      <p className="font-display text-[11px] text-[#827B72] leading-tight mt-0.5">
-                        {selectedCard.nameEn}
-                      </p>
+                      {language !== 'en' && (
+                        <p className="font-display text-[11px] text-[#827B72] leading-tight mt-0.5">
+                          {selectedCard.nameEn}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                {/* Details: Separated Traditional Symbolism vs Personal Notes */}
+                {/* Details: Separated Symbolism vs Personal Notes */}
                 <div className="md:col-span-7 space-y-6">
-                  {/* Card Traditional Symbolism & Questions */}
                   <section
-                    aria-label="카드의 전통 상징과 질문"
+                    aria-label={t.encyclopedia.symbolismAria}
                     className="bg-[#FFFCF6] border border-[#E5DED1] rounded-2xl p-5 sm:p-6 space-y-4"
                   >
                     <div className="space-y-1 border-b border-[#E5DED1] pb-4">
                       <p className="text-xs text-[#827B72]">
                         {selectedCard.arcana === 'minor' && selectedCard.suit
-                          ? `마이너 아르카나 · ${SUIT_LABEL_KO[selectedCard.suit]} · ${selectedCard.suitTheme}`
-                          : `메이저 아르카나 · ${selectedCard.arcanaNumber}`}
+                          ? `${t.encyclopedia.categoryMinor} · ${t.encyclopedia.suits[selectedCard.suit]}${
+                              selectedLoc.suitTheme
+                                ? ` · ${selectedLoc.suitTheme}`
+                                : ''
+                            }`
+                          : `${t.encyclopedia.categoryMajor} · ${selectedLoc.arcanaNumber}`}
                       </p>
                       <h3 className="font-serif text-2xl font-medium text-[#34312D]">
-                        {selectedCard.nameKo}{' '}
-                        <span className="text-base font-normal text-[#827B72]">
-                          ({selectedCard.nameEn})
-                        </span>
+                        {selectedLoc.displayName}{' '}
+                        {language !== 'en' && (
+                          <span className="text-base font-normal text-[#827B72]">
+                            ({selectedCard.nameEn})
+                          </span>
+                        )}
                       </h3>
                       <p className="text-xs text-[#777B61]">
-                        {selectedCard.keywords.join(' · ')}
+                        {selectedLoc.keywords.join(' · ')}
                       </p>
                     </div>
 
                     <div className="space-y-3 text-sm leading-relaxed text-[#34312D]/90">
                       <div>
                         <p className="text-xs font-medium text-[#777B61] mb-1">
-                          전통 상징과 의미
+                          {t.encyclopedia.meaningTitle}
                         </p>
-                        <p>{selectedCard.meaningGuide}</p>
+                        <p>{selectedLoc.meaningGuide}</p>
                       </div>
 
                       <div>
                         <p className="text-xs font-medium text-[#777B61] mb-1">
-                          성찰의 시선
+                          {t.encyclopedia.insightTitle}
                         </p>
                         <p className="font-serif text-base text-[#34312D]">
-                          “{selectedCard.insight}”
+                          “{selectedLoc.insight}”
                         </p>
                       </div>
 
                       <div>
                         <p className="text-xs font-medium text-[#777B61] mb-1">
-                          나에게 던져볼 질문
+                          {t.encyclopedia.questionTitle}
                         </p>
                         <p className="font-question text-[16.5px] sm:text-[17.5px] font-normal leading-[1.68] text-[#51483E] break-keep">
-                          {selectedCard.reflectionQuestion}
+                          {selectedLoc.reflectionQuestion}
                         </p>
                       </div>
 
                       <div className="pt-1 border-t border-[#E5DED1]/70">
                         <p className="text-xs font-medium text-[#827B72] mb-1">
-                          작은 시도 제안
+                          {t.encyclopedia.gentleActionTitle}
                         </p>
                         <p className="text-xs sm:text-sm text-[#34312D]/80">
-                          {selectedCard.gentleAction}
+                          {selectedLoc.gentleAction}
                         </p>
                       </div>
                     </div>
                   </section>
 
-                  {/* User Personal Notes for This Card (Visually Separated) */}
+                  {/* User Personal Notes for This Card */}
                   <section
-                    aria-label="이 카드에 남긴 나의 기록"
+                    aria-label={t.encyclopedia.myNotesAria}
                     className="rounded-2xl border border-dashed border-[#B69A70]/60 bg-[#FFFCF6]/65 p-5 sm:p-6 space-y-4"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -358,9 +372,9 @@ export function DeckEncyclopediaModal({
                           className="w-4 h-4 text-[#777B61]"
                           aria-hidden="true"
                         />
-                        <span>이 카드에 남긴 나의 기록</span>
+                        <span>{t.encyclopedia.myNotesTitle}</span>
                         <span className="text-xs font-normal text-[#827B72] tabular-nums ml-1">
-                          {selectedCardNotes.length}건
+                          {t.encyclopedia.countLabel(selectedCardNotes.length)}
                         </span>
                       </h4>
                       {onAddCardReflection && (
@@ -373,7 +387,11 @@ export function DeckEncyclopediaModal({
                           className="inline-flex items-center gap-1.5 min-h-[36px] px-3 py-1.5 rounded-xl border border-[#E5DED1] bg-[#FFFCF6] hover:bg-[#E5DED1]/45 text-xs font-medium text-[#34312D] transition-colors cursor-pointer"
                         >
                           <PenLine className="w-3.5 h-3.5 text-[#777B61]" aria-hidden="true" />
-                          <span>{isWritingNote ? '작성 닫기' : '인사이트 노트에 기록'}</span>
+                          <span>
+                            {isWritingNote
+                              ? t.encyclopedia.writeNoteClose
+                              : t.encyclopedia.writeNoteOpen}
+                          </span>
                         </button>
                       )}
                     </div>
@@ -399,8 +417,8 @@ export function DeckEncyclopediaModal({
                           rows={3}
                           value={cardNoteDraft}
                           onChange={(e) => setCardNoteDraft(e.target.value)}
-                          placeholder={`「${selectedCard.nameKo}」 카드를 바라보며 떠오른 생각을 가볍게 적어 보세요.`}
-                          aria-label="카드 성찰 메모 작성"
+                          placeholder={t.encyclopedia.notePlaceholder(selectedLoc.displayName)}
+                          aria-label={t.encyclopedia.noteTextareaAria}
                           className="w-full rounded-xl bg-[#FFFCF6] border border-[#E5DED1] px-3.5 py-2.5 text-sm leading-relaxed text-[#34312D] placeholder:text-[#827B72]/75 focus:outline-none focus:border-[#777B61]"
                         />
                         <div className="flex items-center justify-end gap-2">
@@ -412,13 +430,13 @@ export function DeckEncyclopediaModal({
                             }}
                             className="min-h-[38px] px-3.5 py-1.5 rounded-lg border border-[#E5DED1] bg-[#FFFCF6] text-xs text-[#827B72] hover:text-[#34312D] cursor-pointer"
                           >
-                            취소
+                            {t.encyclopedia.cancel}
                           </button>
                           <button
                             type="submit"
                             className="min-h-[38px] px-4 py-1.5 rounded-lg bg-[#777B61] hover:bg-[#646850] text-[#FFFCF6] text-xs font-medium cursor-pointer"
                           >
-                            노트에 저장
+                            {t.encyclopedia.saveToNotes}
                           </button>
                         </div>
                       </form>
@@ -426,55 +444,71 @@ export function DeckEncyclopediaModal({
 
                     {selectedCardNotes.length === 0 ? (
                       <p className="text-xs sm:text-sm text-[#827B72] leading-relaxed">
-                        아직 이 카드를 만나 인사이트 노트에 남긴 개인 기록이 없습니다.
+                        {t.encyclopedia.emptyCardNotes}
                       </p>
                     ) : (
                       <ul className="space-y-2.5">
-                        {selectedCardNotes.map((rec) => (
-                          <li key={rec.id}>
-                            {onOpenRecord ? (
-                              <button
-                                type="button"
-                                onClick={() => onOpenRecord(rec.id)}
-                                className="w-full text-left rounded-xl bg-[#FFFCF6] border border-[#E5DED1] hover:border-[#777B61] p-3.5 space-y-1.5 transition-colors group cursor-pointer"
-                              >
-                                <div className="flex items-center justify-between gap-2 text-xs text-[#827B72] tabular-nums">
-                                  <span>{rec.date}</span>
-                                  <span className="inline-flex items-center gap-0.5 text-[#777B61] group-hover:underline">
-                                    기록 열기
-                                    <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
-                                  </span>
+                        {selectedCardNotes.map((rec) => {
+                          const attemptSummary =
+                            rec.selectedActions && rec.selectedActions.length > 0
+                              ? rec.selectedActions
+                                  .map(
+                                    (a) =>
+                                      resolveLocalizedAttemptItem(
+                                        a,
+                                        getCardById,
+                                        language
+                                      ).actionText
+                                  )
+                                  .join(' · ')
+                              : rec.selectedAction;
+
+                          return (
+                            <li key={rec.id}>
+                              {onOpenRecord ? (
+                                <button
+                                  type="button"
+                                  onClick={() => onOpenRecord(rec.id)}
+                                  className="w-full text-left rounded-xl bg-[#FFFCF6] border border-[#E5DED1] hover:border-[#777B61] p-3.5 space-y-1.5 transition-colors group cursor-pointer"
+                                >
+                                  <div className="flex items-center justify-between gap-2 text-xs text-[#827B72] tabular-nums">
+                                    <span>{formatLocalizedDate(rec.date, language)}</span>
+                                    <span className="inline-flex items-center gap-0.5 text-[#777B61] group-hover:underline">
+                                      {t.encyclopedia.openRecord}
+                                      <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
+                                    </span>
+                                  </div>
+                                  {attemptSummary && (
+                                    <p className="text-xs text-[#777B61]">
+                                      {t.encyclopedia.selectedAttemptPrefix(attemptSummary)}
+                                    </p>
+                                  )}
+                                  <p className="text-sm leading-relaxed text-[#34312D] whitespace-pre-wrap">
+                                    {rec.userNote ||
+                                      rec.actionMemo ||
+                                      t.encyclopedia.attemptsOnlyPlaceholder}
+                                  </p>
+                                </button>
+                              ) : (
+                                <div className="rounded-xl bg-[#FFFCF6] border border-[#E5DED1] p-3.5 space-y-1.5">
+                                  <p className="text-xs text-[#827B72] tabular-nums">
+                                    {formatLocalizedDate(rec.date, language)}
+                                  </p>
+                                  {attemptSummary && (
+                                    <p className="text-xs text-[#777B61]">
+                                      {t.encyclopedia.selectedAttemptPrefix(attemptSummary)}
+                                    </p>
+                                  )}
+                                  <p className="text-sm leading-relaxed text-[#34312D] whitespace-pre-wrap">
+                                    {rec.userNote ||
+                                      rec.actionMemo ||
+                                      t.encyclopedia.attemptsOnlyPlaceholder}
+                                  </p>
                                 </div>
-                                {rec.selectedAction && (
-                                  <p className="text-xs text-[#777B61]">
-                                    선택한 시도: {rec.selectedAction}
-                                  </p>
-                                )}
-                                <p className="text-sm leading-relaxed text-[#34312D] whitespace-pre-wrap">
-                                  {rec.userNote ||
-                                    rec.actionMemo ||
-                                    '(선택한 시도만 기록됨)'}
-                                </p>
-                              </button>
-                            ) : (
-                              <div className="rounded-xl bg-[#FFFCF6] border border-[#E5DED1] p-3.5 space-y-1.5">
-                                <p className="text-xs text-[#827B72] tabular-nums">
-                                  {rec.date}
-                                </p>
-                                {rec.selectedAction && (
-                                  <p className="text-xs text-[#777B61]">
-                                    선택한 시도: {rec.selectedAction}
-                                  </p>
-                                )}
-                                <p className="text-sm leading-relaxed text-[#34312D] whitespace-pre-wrap">
-                                  {rec.userNote ||
-                                    rec.actionMemo ||
-                                    '(선택한 시도만 기록됨)'}
-                                </p>
-                              </div>
-                            )}
-                          </li>
-                        ))}
+                              )}
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </section>
@@ -489,10 +523,10 @@ export function DeckEncyclopediaModal({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div
                   role="tablist"
-                  aria-label="카드 구분 필터"
+                  aria-label={t.encyclopedia.filterTabsAria}
                   className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0"
                 >
-                  {FILTER_OPTIONS.map((opt) => {
+                  {filterOptions.map((opt) => {
                     const active = category === opt.id;
                     return (
                       <button
@@ -522,8 +556,8 @@ export function DeckEncyclopediaModal({
                     type="search"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="카드 이름, 영문명, 키워드 검색"
-                    aria-label="78장 타로 카드 검색"
+                    placeholder={t.encyclopedia.searchPlaceholder}
+                    aria-label={t.encyclopedia.searchAria}
                     className="w-full min-h-[42px] pl-9 pr-3 py-2 rounded-xl bg-[#FFFCF6] border border-[#E5DED1] text-sm text-[#34312D] placeholder:text-[#827B72]/75 focus:outline-none focus:border-[#777B61]"
                   />
                 </div>
@@ -535,7 +569,7 @@ export function DeckEncyclopediaModal({
               {filteredCards.length === 0 ? (
                 <div className="py-16 text-center space-y-2">
                   <p className="text-sm text-[#34312D]">
-                    검색 조건에 맞는 카드가 없습니다.
+                    {t.encyclopedia.noCardsFound}
                   </p>
                   <button
                     type="button"
@@ -545,13 +579,14 @@ export function DeckEncyclopediaModal({
                     }}
                     className="min-h-[44px] px-4 py-2 text-xs font-medium text-[#777B61] underline underline-offset-4 cursor-pointer"
                   >
-                    전체 78장 다시 보기
+                    {t.encyclopedia.showAllCards}
                   </button>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 sm:gap-4">
                   {filteredCards.map((card) => {
                     const noteCount = recordCountByCard.get(card.id)?.length ?? 0;
+                    const loc = getLocalizedCard(card, language);
                     return (
                       <button
                         key={card.id}
@@ -570,17 +605,19 @@ export function DeckEncyclopediaModal({
                           <div>
                             <p className="text-xs font-medium text-[#34312D] leading-tight">
                               <span className="font-display text-[11px] text-[#777B61] mr-1">
-                                {card.arcanaNumber}
+                                {loc.arcanaNumber}
                               </span>
-                              {card.nameKo}
+                              {loc.displayName}
                             </p>
-                            <p className="font-display text-[11px] text-[#827B72] leading-tight break-words mt-0.5">
-                              {card.nameEn}
-                            </p>
+                            {language !== 'en' && (
+                              <p className="font-display text-[11px] text-[#827B72] leading-tight break-words mt-0.5">
+                                {card.nameEn}
+                              </p>
+                            )}
                           </div>
                           {noteCount > 0 && (
                             <p className="text-[11px] text-[#777B61] pt-0.5 tabular-nums">
-                              내 기록 {noteCount}건
+                              {t.encyclopedia.myRecordCount(noteCount)}
                             </p>
                           )}
                         </div>

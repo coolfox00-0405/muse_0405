@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Sparkles, BookOpen, Compass, Info } from 'lucide-react';
+import { Sparkles, BookOpen, Compass, Info, X } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ActiveTab, DeckMode, TarotCard } from './types/reflection';
 import { FULL_TAROT_DECK, MAJOR_ARCANA_DECK } from './data/cards';
 import { getUnbiasedRandomInt, shuffleUniqueSpread } from './utils/deckShuffle';
@@ -11,13 +12,8 @@ import { AboutView } from './components/AboutView';
 import { DrawPhase } from './components/CardShuffleSpread';
 import { DeckEncyclopediaModal } from './components/DeckEncyclopediaModal';
 import { PWAInstallButton } from './components/PWAInstallButton';
-
-const NAV_ITEMS: { id: ActiveTab; label: string }[] = [
-  { id: 'today', label: '지금, 나에게' },
-  { id: 'journal', label: '인사이트 노트' },
-  { id: 'read', label: '나를 읽다' },
-  { id: 'about', label: '앱 소개' },
-];
+import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { useLanguage } from './i18n/LanguageContext';
 
 export type ReadingDrawCount = 1 | 3;
 
@@ -29,7 +25,15 @@ function createReadingSessionId(): string {
 }
 
 export default function App() {
+  const { language, t } = useLanguage();
   const [activeTab, setActiveTab] = useState<ActiveTab>('today');
+
+  const navItems: { id: ActiveTab; label: string }[] = [
+    { id: 'today', label: t.nav.today },
+    { id: 'journal', label: t.nav.journal },
+    { id: 'read', label: t.nav.read },
+    { id: 'about', label: t.nav.about },
+  ];
   const [deckMode, setDeckMode] = useState<DeckMode>('full');
   const [drawCount, setDrawCount] = useState<ReadingDrawCount>(1);
   const [allowReversed, setAllowReversed] = useState<boolean>(false);
@@ -60,6 +64,8 @@ export default function App() {
   const [focusedRecordId, setFocusedRecordId] = useState<string | null>(null);
   const [encyclopediaOpen, setEncyclopediaOpen] = useState(false);
   const [encyclopediaCardId, setEncyclopediaCardId] = useState<string | null>(null);
+  const [logoModalOpen, setLogoModalOpen] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
   const shuffleTimerRef = useRef<number | null>(null);
 
   const {
@@ -72,7 +78,7 @@ export default function App() {
     addFollowUpNote,
     deleteReflection,
     importReflections,
-  } = useReflections();
+  } = useReflections(language);
 
   useEffect(() => {
     return () => {
@@ -81,6 +87,25 @@ export default function App() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!logoModalOpen) return undefined;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setLogoModalOpen(false);
+      }
+    };
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [logoModalOpen]);
 
   const getActiveDeck = useCallback(
     (mode: DeckMode = deckMode) =>
@@ -260,10 +285,12 @@ export default function App() {
     <div className="min-h-screen flex flex-col bg-[#F7F3EA] text-[#34312D]">
       {/* Desktop Top Navigation */}
       <header className="hidden md:block sticky top-0 z-30 bg-[#F7F3EA]/90 backdrop-blur-md border-b border-[#E5DED1]">
-        <div className="max-w-5xl mx-auto px-8 h-16 flex items-center justify-between gap-8">
+        <div className="max-w-5xl mx-auto px-8 h-16 flex items-center justify-between gap-6">
           <button
             type="button"
-            onClick={() => setActiveTab('today')}
+            onClick={() => setLogoModalOpen(true)}
+            aria-label={t.nav.logoZoomAria}
+            aria-haspopup="dialog"
             className="inline-flex items-center gap-2 font-display text-lg font-medium tracking-[0.2em] text-[#34312D] whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#777B61]"
           >
             <img
@@ -275,9 +302,9 @@ export default function App() {
             <span>LUCIDA</span>
           </button>
 
-          <div className="flex items-center gap-6">
-            <nav aria-label="주요 메뉴" className="flex items-center gap-8">
-              {NAV_ITEMS.map((item) => {
+          <div className="flex items-center gap-4 lg:gap-5">
+            <nav aria-label={t.nav.primaryNavAria} className="flex items-center gap-6 lg:gap-8">
+              {navItems.map((item) => {
                 const isActive = activeTab === item.id;
                 return (
                   <button
@@ -303,9 +330,15 @@ export default function App() {
               })}
             </nav>
             <PWAInstallButton variant="header" />
+            <LanguageSwitcher />
           </div>
         </div>
       </header>
+
+      {/* Mobile Top-Right Language Bar */}
+      <div className="md:hidden sticky top-0 z-30 bg-[#F7F3EA]/90 backdrop-blur-md border-b border-[#E5DED1]/50 px-4 h-11 flex items-center justify-end">
+        <LanguageSwitcher />
+      </div>
 
       {/* Storage Error Banner if localStorage fails */}
       {storageError && (
@@ -387,11 +420,11 @@ export default function App() {
 
       {/* Mobile Fixed Bottom Navigation */}
       <nav
-        aria-label="하단 메뉴"
+        aria-label={t.nav.mobileNavAria}
         className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#FFFCF6] border-t border-[#E5DED1] shadow-[0_-6px_20px_-10px_rgba(52,49,45,0.12)] pb-[env(safe-area-inset-bottom)]"
       >
         <div className="grid grid-cols-4 h-16 max-w-lg mx-auto">
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const isActive = activeTab === item.id;
             return (
               <button
@@ -399,11 +432,11 @@ export default function App() {
                 type="button"
                 onClick={() => setActiveTab(item.id)}
                 aria-current={isActive ? 'page' : undefined}
-                className="flex flex-col items-center justify-center gap-1 min-h-[48px] focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#777B61] cursor-pointer"
+                className="flex flex-col items-center justify-center gap-1 min-h-[48px] px-1 focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#777B61] cursor-pointer"
               >
                 {renderTabIcon(item.id, isActive)}
                 <span
-                  className={`text-[11px] font-medium whitespace-nowrap ${
+                  className={`text-[10.5px] sm:text-[11px] font-medium whitespace-nowrap truncate max-w-full ${
                     isActive ? 'text-[#34312D]' : 'text-[#827B72]'
                   }`}
                 >
@@ -431,6 +464,52 @@ export default function App() {
         }}
         onAddCardReflection={(card, note) => addReflection(card, note)}
       />
+
+      <AnimatePresence>
+        {logoModalOpen && (
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label={t.nav.logoModalAria}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{
+              duration: prefersReducedMotion ? 0.08 : 0.2,
+              ease: 'easeOut',
+            }}
+            onClick={() => setLogoModalOpen(false)}
+            className="fixed inset-0 z-50 flex items-center justify-center p-5 sm:p-8 bg-[#1E1C19]/70 backdrop-blur-[2px] cursor-pointer"
+          >
+            <motion.div
+              initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
+              animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
+              exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
+              transition={{
+                duration: prefersReducedMotion ? 0.08 : 0.2,
+                ease: 'easeOut',
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-[min(86vw,440px)] max-h-[82dvh] rounded-2xl bg-[#FFFCF6] border border-[#E5DED1] p-5 sm:p-7 shadow-[0_24px_64px_-14px_rgba(18,16,14,0.55)] flex items-center justify-center cursor-default"
+            >
+              <button
+                type="button"
+                onClick={() => setLogoModalOpen(false)}
+                aria-label={t.nav.logoModalCloseAria}
+                className="absolute top-3 right-3 sm:top-3.5 sm:right-3.5 w-9 h-9 rounded-full bg-[#F7F3EA]/90 hover:bg-[#E5DED1]/70 border border-[#E5DED1] text-[#34312D] flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61]"
+              >
+                <X className="w-4 h-4" aria-hidden="true" />
+              </button>
+
+              <img
+                src="/brand/lucida-symbol.png"
+                alt={t.nav.logoAlt}
+                className="w-full h-auto max-h-[68dvh] object-contain mix-blend-multiply select-none pointer-events-none"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

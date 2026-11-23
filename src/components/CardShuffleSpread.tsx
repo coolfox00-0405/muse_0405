@@ -4,6 +4,7 @@ import { TarotCard } from '../types/reflection';
 import { TAROT_CARD_BACK_IMAGE } from '../data/cards';
 import { preloadCardImages } from '../utils/cardImagePreloader';
 import { dedupeDeck } from '../utils/deckShuffle';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export type DrawPhase = 'idle' | 'shuffling' | 'selecting' | 'revealed';
 
@@ -25,6 +26,7 @@ export function CardShuffleSpread({
   onStartShuffle,
   onSelectCard,
 }: CardShuffleSpreadProps) {
+  const { t } = useLanguage();
   const prefersReducedMotion = useReducedMotion();
 
   const cardsToRender = useMemo(
@@ -106,11 +108,11 @@ export function CardShuffleSpread({
             aria-label={
               isSelecting
                 ? isAlreadySelected
-                  ? `${index + 1}번째 카드 (${selectedOrder}번째로 선택됨)`
-                  : `${index + 1}번째 타로 카드 선택하기`
+                  ? t.shuffleSpread.selectingPickedAria(index + 1, selectedOrder)
+                  : t.shuffleSpread.selectingPickAria(index + 1)
                 : isIdle
-                ? '타로 카드 덱. 눌러서 카드를 셔플하세요.'
-                : '카드를 섞고 있습니다'
+                ? t.shuffleSpread.idleAria
+                : t.shuffleSpread.shufflingAria
             }
             initial={false}
             animate={animateProps}

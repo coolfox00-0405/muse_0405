@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { TarotCard } from '../types/reflection';
 import { TarotCardArtwork } from './TarotCardArtwork';
 import { TAROT_CARD_BACK_IMAGE } from '../data/cards';
+import { useLanguage } from '../i18n/LanguageContext';
+import { getLocalizedCard } from '../i18n/cardHelpers';
 
 interface TarotCardFlipProps {
   card: TarotCard;
@@ -16,6 +18,8 @@ export function TarotCardFlip({
   isReversed = false,
   onCardClick,
 }: TarotCardFlipProps) {
+  const { language, t } = useLanguage();
+  const loc = getLocalizedCard(card, language);
   const [backError, setBackError] = useState(false);
 
   useEffect(() => {
@@ -35,8 +39,8 @@ export function TarotCardFlip({
       tabIndex={isClickable ? 0 : undefined}
       aria-label={
         isClickable
-          ? '타로 카드 뒷면. 눌러서 카드를 섞어 보세요.'
-          : `${card.nameKo} (${card.nameEn}) 카드`
+          ? t.cardFlip.backClickableAria
+          : t.cardFlip.frontCardAria(loc.displayName, card.nameEn)
       }
       onKeyDown={(e) => {
         if (isClickable && (e.key === 'Enter' || e.key === ' ')) {
@@ -59,7 +63,7 @@ export function TarotCardFlip({
           {!backError ? (
             <img
               src={backSrc}
-              alt="LUCIDA 타로 카드 뒷면 일러스트"
+              alt={t.cardFlip.backImageAlt}
               referrerPolicy="no-referrer"
               decoding="async"
               onError={() => setBackError(true)}
@@ -107,7 +111,7 @@ export function TarotCardFlip({
 
           <div className="flex items-center justify-center px-2 sm:px-3 py-2 sm:py-2.5 bg-[#FFFCF6] border-t border-[#E5DED1] text-center">
             <p className="font-display text-[11px] sm:text-[13px] tracking-[0.03em] text-[#34312D] font-medium leading-tight break-words max-w-full">
-              {card.nameEn}
+              {language === 'ko' ? card.nameEn : loc.displayName}
             </p>
           </div>
         </div>

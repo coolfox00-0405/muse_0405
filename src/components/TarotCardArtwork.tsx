@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { TarotCard } from '../types/reflection';
+import { useLanguage } from '../i18n/LanguageContext';
+import { getLocalizedCard } from '../i18n/cardHelpers';
 
 interface TarotCardArtworkProps {
   card: TarotCard;
@@ -16,6 +18,8 @@ export function TarotCardArtwork({
   isReversed = false,
   onStatusChange,
 }: TarotCardArtworkProps) {
+  const { language, t } = useLanguage();
+  const loc = getLocalizedCard(card, language);
   const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
@@ -29,7 +33,7 @@ export function TarotCardArtwork({
     return (
       <img
         src={card.frontImageUrl}
-        alt={`${card.nameKo} (${card.nameEn}) 카드 일러스트`}
+        alt={t.cardArtwork.imageAlt(loc.displayName, card.nameEn)}
         referrerPolicy="no-referrer"
         loading={priority ? 'eager' : 'lazy'}
         decoding="async"
@@ -49,20 +53,20 @@ export function TarotCardArtwork({
   return (
     <div
       role="img"
-      aria-label={`${card.nameKo} (${card.nameEn}) 카드 대체 화면`}
+      aria-label={t.cardArtwork.fallbackAria(loc.displayName, card.nameEn)}
       className="w-full h-full bg-[#F7F3EA] flex flex-col items-center justify-center p-3 text-center"
     >
       <div className="w-full h-full rounded-[8px] border border-[#E5DED1] bg-[#FFFCF6] flex flex-col items-center justify-center gap-1.5 px-2">
         <span className="font-display text-[11px] tracking-[0.18em] text-[#777B61]">
-          {card.arcanaNumber}
+          {loc.arcanaNumber}
         </span>
         {size === 'full' && (
           <>
             <span className="font-serif text-sm font-medium text-[#34312D]">
-              {card.nameKo}
+              {loc.displayName}
             </span>
             <span className="text-[11px] text-[#827B72]">
-              이미지를 불러올 수 없습니다
+              {t.cardArtwork.imageLoadFailed}
             </span>
           </>
         )}

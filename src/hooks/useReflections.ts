@@ -6,6 +6,9 @@ import {
   SpreadCardSnapshot,
   TarotCard,
 } from '../types/reflection';
+import { Language } from '../i18n/types';
+import { UI_TRANSLATIONS } from '../i18n/ui';
+import { getLocalizedCard } from '../i18n/cardHelpers';
 
 const STORAGE_KEY = 'am_tarot_reflections_v1';
 
@@ -16,26 +19,58 @@ export function getLocalDateString(date: Date = new Date()): string {
   return `${year}-${month}-${day}`;
 }
 
-export function formatKoreanDate(dateStr: string): string {
+export function formatLocalizedDate(
+  dateStr: string,
+  language: Language = 'ko'
+): string {
   const parts = dateStr.split('-').map(Number);
   if (parts.length !== 3 || parts.some(Number.isNaN)) {
     return dateStr;
   }
   const [year, month, day] = parts;
   const dateObj = new Date(year, month - 1, day);
+
+  if (language === 'en') {
+    return dateObj.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      weekday: 'short',
+    });
+  }
+
+  if (language === 'ja') {
+    const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+    const weekday = weekdays[dateObj.getDay()];
+    return `${year}年${month}月${day}日 (${weekday})`;
+  }
+
   const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
   const weekday = weekdays[dateObj.getDay()];
   return `${year}년 ${month}월 ${day}일 (${weekday})`;
 }
 
-export function formatKoreanTime(isoString: string): string {
+export function formatLocalizedTime(
+  isoString: string,
+  language: Language = 'ko'
+): string {
   const date = new Date(isoString);
   if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleTimeString('ko-KR', {
+  const locale =
+    language === 'en' ? 'en-US' : language === 'ja' ? 'ja-JP' : 'ko-KR';
+  return date.toLocaleTimeString(locale, {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: true,
+    hour12: language !== 'ja',
   });
+}
+
+export function formatKoreanDate(dateStr: string): string {
+  return formatLocalizedDate(dateStr, 'ko');
+}
+
+export function formatKoreanTime(isoString: string): string {
+  return formatLocalizedTime(isoString, 'ko');
 }
 
 function createRecordId(): string {
@@ -62,7 +97,7 @@ export interface ReadingSyncPayload {
   actionMemo?: string;
 }
 
-export function useReflections() {
+export function useReflections(language: Language = 'ko') {
   const [records, setRecords] = useState<ReflectionRecord[]>(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -79,7 +114,17 @@ export function useReflections() {
   });
 
   const recordsRef = useRef<ReflectionRecord[]>(records);
-  const [storageError, setStorageError] = useState<string | null>(null);
+  const [storageErrorCode, setStorageErrorCode] = useState<
+    'persist' | 'restore' | null
+  >(null);
+
+  const msg = UI_TRANSLATIONS[language];
+  const storageError =
+    storageErrorCode === 'persist'
+      ? msg.errors.storagePersist
+      : storageErrorCode === 'restore'
+      ? msg.errors.storageRestoreError
+      : null;
 
   useEffect(() => {
     recordsRef.current = records;
@@ -91,19 +136,17 @@ export function useReflections() {
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
         recordsRef.current = next;
         setRecords(next);
-        setStorageError(null);
+        setStorageErrorCode(null);
         return true;
       } catch {
-        setStorageError(
-          '기록을 저장하는 중 문제가 발생했습니다. 브라우저 저장 설정을 확인해 주세요.'
-        );
+        setStorageErrorCode('persist');
         return false;
       }
     },
     []
   );
 
-  // Sync checked "선택 가능한 시도" items & optional attempt memo with one reading record
+  // Sync checked attempts & optional attempt memo with one reading record
   const syncReadingAttempts = useCallback(
     ({
       readingSessionId,
@@ -114,6 +157,7 @@ export function useReflections() {
       selectedActions,
       actionMemo,
     }: ReadingSyncPayload): { ok: boolean; recordId?: string; error?: string } => {
+      const errs = UI_TRANSLATIONS[language].errors;
       const prev = recordsRef.current;
       const cleanMemo = actionMemo?.trim() || undefined;
       const cleanOverall = overallMessage?.trim() || undefined;
@@ -126,25 +170,25 @@ export function useReflections() {
       );
 
       if (existingIndex === -1) {
-        // Do not create an empty record if nothing is checked and no memo was written
         if (selectedActions.length === 0 && !cleanMemo) {
           return { ok: true };
         }
 
         const now = new Date();
         const newId = createRecordId();
+        const locCard = getLocalizedCard(card, language);
         const newRecord: ReflectionRecord = {
           id: newId,
           readingSessionId,
           date: getLocalDateString(now),
           cardId: card.id,
-          cardName: card.nameKo,
+          cardName: locCard.displayName,
           cardNameEn: card.nameEn,
           orientation,
           readingType: hasMultiSpread ? 'three' : 'single',
           spreadCards: hasMultiSpread ? spreadCards : undefined,
           overallMessage: cleanOverall,
-          reflectionQuestion: card.reflectionQuestion,
+          reflectionQuestion: locCard.reflectionQuestion,
           selectedAction: summaryAction,
           selectedActions: selectedActions.length > 0 ? selectedActions : undefined,
           actionMemo: cleanMemo,
@@ -156,7 +200,7 @@ export function useReflections() {
         const ok = persistRecords(next);
         return ok
           ? { ok: true, recordId: newId }
-          : { ok: false, error: '기록을 저장하는 중 문제가 발생했습니다.' };
+          : { ok: false, error: errs.storageSaveGeneric };
       }
 
       const existing = prev[existingIndex];
@@ -167,7 +211,6 @@ export function useReflections() {
       const preservedMemo =
         actionMemo !== undefined ? cleanMemo : existing.actionMemo;
 
-      // If everything on this auto-synced record is empty, remove cleanly
       if (
         selectedActions.length === 0 &&
         !preservedMemo &&
@@ -178,7 +221,7 @@ export function useReflections() {
         const ok = persistRecords(next);
         return ok
           ? { ok: true }
-          : { ok: false, error: '기록을 정리하는 중 문제가 발생했습니다.' };
+          : { ok: false, error: errs.storageCleanupGeneric };
       }
 
       const updated: ReflectionRecord = {
@@ -195,9 +238,9 @@ export function useReflections() {
       const ok = persistRecords(next);
       return ok
         ? { ok: true, recordId: existing.id }
-        : { ok: false, error: '기록을 저장하는 중 문제가 발생했습니다.' };
+        : { ok: false, error: errs.storageSaveGeneric };
     },
-    [persistRecords]
+    [language, persistRecords]
   );
 
   const addReflection = useCallback(
@@ -214,6 +257,7 @@ export function useReflections() {
         actionMemo?: string;
       }
     ): { ok: boolean; error?: string; record?: ReflectionRecord } => {
+      const errs = UI_TRANSLATIONS[language].errors;
       const trimmed = note.trim();
       const readingSessionId = options?.readingSessionId;
       const selectedActions = options?.selectedActions;
@@ -227,7 +271,7 @@ export function useReflections() {
       );
 
       if (!trimmed && !cleanMemo && !hasAttempts) {
-        return { ok: false, error: '저장할 내용을 먼저 입력하거나 시도를 선택해 주세요.' };
+        return { ok: false, error: errs.storageEmptyInputOrAttempt };
       }
 
       const prev = recordsRef.current;
@@ -278,18 +322,19 @@ export function useReflections() {
           idx === existingIndex ? updated : item
         );
       } else {
+        const locCard = getLocalizedCard(card, language);
         const newRecord: ReflectionRecord = {
           id: createRecordId(),
           readingSessionId,
           date: getLocalDateString(now),
           cardId: card.id,
-          cardName: card.nameKo,
+          cardName: locCard.displayName,
           cardNameEn: card.nameEn,
           orientation,
           readingType: hasMultiSpread ? 'three' : 'single',
           spreadCards: hasMultiSpread ? spreadCards : undefined,
           overallMessage: cleanOverall,
-          reflectionQuestion: card.reflectionQuestion,
+          reflectionQuestion: locCard.reflectionQuestion,
           selectedAction: summaryAction,
           selectedActions:
             selectedActions && selectedActions.length > 0
@@ -308,13 +353,12 @@ export function useReflections() {
       if (!ok) {
         return {
           ok: false,
-          error:
-            '기록을 저장하는 중 문제가 발생했습니다. 브라우저 저장 설정을 확인해 주세요.',
+          error: errs.storagePersist,
         };
       }
       return { ok: true, record: savedRecord };
     },
-    [persistRecords]
+    [language, persistRecords]
   );
 
   const addFreeformReflection = useCallback(
@@ -322,9 +366,10 @@ export function useReflections() {
       note: string,
       customQuestion?: string
     ): { ok: boolean; error?: string; record?: ReflectionRecord } => {
+      const ui = UI_TRANSLATIONS[language];
       const trimmed = note.trim();
       if (!trimmed) {
-        return { ok: false, error: '저장할 내용을 먼저 입력해 주세요.' };
+        return { ok: false, error: ui.errors.storageEmptyNote };
       }
 
       const now = new Date();
@@ -333,11 +378,10 @@ export function useReflections() {
         id: createRecordId(),
         date: getLocalDateString(now),
         cardId: 'freeform',
-        cardName: '자유 기록',
+        cardName: ui.journal.freeformCardName,
         cardNameEn: 'Personal Note',
         reflectionQuestion:
-          customQuestion?.trim() ||
-          '마음에 남은 생각이나 나에게 남기고 싶은 문장',
+          customQuestion?.trim() || ui.journal.freeformDefaultQuestion,
         userNote: trimmed,
         createdAt: iso,
         updatedAt: iso,
@@ -347,13 +391,12 @@ export function useReflections() {
       if (!ok) {
         return {
           ok: false,
-          error:
-            '기록을 저장하는 중 문제가 발생했습니다. 브라우저 저장 설정을 확인해 주세요.',
+          error: ui.errors.storagePersist,
         };
       }
       return { ok: true, record: newRecord };
     },
-    [persistRecords]
+    [language, persistRecords]
   );
 
   const updateReflection = useCallback(
@@ -362,6 +405,7 @@ export function useReflections() {
       updatedNote: string,
       updatedActionMemo?: string
     ): { ok: boolean; error?: string } => {
+      const errs = UI_TRANSLATIONS[language].errors;
       const prev = recordsRef.current;
       const trimmedNote = updatedNote.trim();
       const trimmedActionMemo =
@@ -369,7 +413,7 @@ export function useReflections() {
 
       const target = prev.find((item) => item.id === id);
       if (!target) {
-        return { ok: false, error: '수정할 기록을 찾을 수 없습니다.' };
+        return { ok: false, error: errs.storageEditNotFound };
       }
 
       const hasActions = Boolean(
@@ -381,7 +425,7 @@ export function useReflections() {
           ? trimmedActionMemo
           : target.actionMemo || '';
       if (!trimmedNote && !effectiveMemo && !hasActions) {
-        return { ok: false, error: '내용을 비워둘 수 없습니다.' };
+        return { ok: false, error: errs.storageEmptyUpdate };
       }
 
       const nowIso = new Date().toISOString();
@@ -402,9 +446,9 @@ export function useReflections() {
       const ok = persistRecords(next);
       return ok
         ? { ok: true }
-        : { ok: false, error: '기록을 수정하는 중 문제가 발생했습니다.' };
+        : { ok: false, error: errs.storageUpdateError };
     },
-    [persistRecords]
+    [language, persistRecords]
   );
 
   const addFollowUpNote = useCallback(
@@ -413,14 +457,15 @@ export function useReflections() {
       note: string,
       prompt?: string
     ): { ok: boolean; error?: string } => {
+      const errs = UI_TRANSLATIONS[language].errors;
       const trimmed = note.trim();
       if (!trimmed) {
-        return { ok: false, error: '추가할 생각을 먼저 입력해 주세요.' };
+        return { ok: false, error: errs.storageEmptyFollowUp };
       }
 
       const prev = recordsRef.current;
       if (!prev.some((item) => item.id === recordId)) {
-        return { ok: false, error: '연결할 기록을 찾을 수 없습니다.' };
+        return { ok: false, error: errs.storageFollowUpTargetMissing };
       }
 
       const nowIso = new Date().toISOString();
@@ -444,20 +489,21 @@ export function useReflections() {
       const ok = persistRecords(next);
       return ok
         ? { ok: true }
-        : { ok: false, error: '돌아본 기록을 저장하는 중 문제가 발생했습니다.' };
+        : { ok: false, error: errs.storageFollowUpSaveError };
     },
-    [persistRecords]
+    [language, persistRecords]
   );
 
   const deleteReflection = useCallback(
     (id: string): { ok: boolean; error?: string } => {
+      const errs = UI_TRANSLATIONS[language].errors;
       const next = recordsRef.current.filter((item) => item.id !== id);
       const ok = persistRecords(next);
       return ok
         ? { ok: true }
-        : { ok: false, error: '기록을 삭제하는 중 문제가 발생했습니다.' };
+        : { ok: false, error: errs.storageDeleteError };
     },
-    [persistRecords]
+    [language, persistRecords]
   );
 
   const importReflections = useCallback(
@@ -465,6 +511,7 @@ export function useReflections() {
       incoming: ReflectionRecord[],
       mode: 'merge' | 'replace'
     ): { ok: boolean; addedCount: number; totalCount: number; error?: string } => {
+      const errs = UI_TRANSLATIONS[language].errors;
       const prev = recordsRef.current;
       try {
         let next: ReflectionRecord[];
@@ -500,15 +547,19 @@ export function useReflections() {
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
         recordsRef.current = next;
         setRecords(next);
-        setStorageError(null);
+        setStorageErrorCode(null);
         return { ok: true, addedCount, totalCount: next.length };
       } catch {
-        const message = '백업 데이터를 복원하는 중 저장 오류가 발생했습니다.';
-        setStorageError(message);
-        return { ok: false, addedCount: 0, totalCount: prev.length, error: message };
+        setStorageErrorCode('restore');
+        return {
+          ok: false,
+          addedCount: 0,
+          totalCount: prev.length,
+          error: errs.storageRestoreError,
+        };
       }
     },
-    []
+    [language]
   );
 
   return {
@@ -542,14 +593,18 @@ export function createBackupPayload(records: ReflectionRecord[]): string {
   return JSON.stringify(payload, null, 2);
 }
 
-export function validateBackupJson(rawText: string): BackupValidationResult {
+export function validateBackupJson(
+  rawText: string,
+  language: Language = 'ko'
+): BackupValidationResult {
+  const errs = UI_TRANSLATIONS[language].errors;
   let parsed: unknown;
   try {
     parsed = JSON.parse(rawText);
   } catch {
     return {
       ok: false,
-      error: '올바른 JSON 형식의 파일이 아닙니다. 기존 기록은 안전하게 유지됩니다.',
+      error: errs.invalidJsonFile,
     };
   }
 
@@ -574,7 +629,7 @@ export function validateBackupJson(rawText: string): BackupValidationResult {
   if (!Array.isArray(candidateArray)) {
     return {
       ok: false,
-      error: 'LUCIDA 백업 파일 구조와 일치하지 않습니다. 기존 기록은 변경되지 않았습니다.',
+      error: errs.invalidBackupStructure,
     };
   }
 
@@ -583,7 +638,7 @@ export function validateBackupJson(rawText: string): BackupValidationResult {
     if (!item || typeof item !== 'object') {
       return {
         ok: false,
-        error: '백업 파일 안에 손상된 기록 항목이 포함되어 있어 복원을 중단했습니다.',
+        error: errs.corruptedBackupEntry,
       };
     }
     const r = item as Record<string, unknown>;
@@ -597,7 +652,7 @@ export function validateBackupJson(rawText: string): BackupValidationResult {
     ) {
       return {
         ok: false,
-        error: '필수 항목(id, date, cardName, userNote, createdAt)이 누락된 기록이 있어 복원을 중단했습니다.',
+        error: errs.missingRequiredBackupFields,
       };
     }
 

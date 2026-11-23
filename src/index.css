@@ -11,10 +11,10 @@
 }
 
 @theme {
-  --font-display: "Cormorant Garamond", "Noto Serif KR", Georgia, serif;
-  --font-serif: "Noto Serif KR", Georgia, serif;
-  --font-question: "MaruBuri", "Noto Serif KR", Georgia, serif;
-  --font-sans: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+  --font-display: "Cormorant Garamond", "Noto Serif KR", "Noto Serif JP", Georgia, serif;
+  --font-serif: "Noto Serif KR", "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", Georgia, serif;
+  --font-question: "MaruBuri", "Noto Serif KR", "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", Georgia, serif;
+  --font-sans: "Pretendard Variable", "Pretendard", "Hiragino Kaku Gothic ProN", "Yu Gothic", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
 
   --color-canvas: #F7F3EA;
   --color-surface: #FFFCF6;
@@ -36,6 +36,17 @@
     word-break: keep-all;
     scroll-padding-top: 5rem;
     scroll-padding-bottom: 6rem;
+  }
+
+  html[lang="ja"],
+  html[lang="en"] {
+    word-break: normal;
+    overflow-wrap: break-word;
+  }
+
+  html[lang="ja"] .break-keep,
+  html[lang="en"] .break-keep {
+    word-break: normal;
   }
 
   h1, h2, h3 {

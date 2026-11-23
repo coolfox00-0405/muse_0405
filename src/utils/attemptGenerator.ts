@@ -1,4 +1,7 @@
 import { SelectedAttemptItem, TarotCard, TarotSuit } from '../types/reflection';
+import { Language } from '../i18n/types';
+import { getLocalizedCard } from '../i18n/cardHelpers';
+import { CARD_SPECIFIC_ANGLES_I18N } from '../i18n/cardAngles';
 
 export type AttemptCategory =
   | '감정 알아차리기'
@@ -7,6 +10,53 @@ export type AttemptCategory =
   | '관계와 자기 돌봄'
   | '새로운 관점'
   | '내면의 질문';
+
+export type AttemptCategoryKey =
+  | 'emotion'
+  | 'thought'
+  | 'action'
+  | 'relationship'
+  | 'perspective'
+  | 'question';
+
+const CATEGORY_LABELS: Record<Language, Record<AttemptCategoryKey, string>> = {
+  ko: {
+    emotion: '감정 알아차리기',
+    thought: '생각 정리하기',
+    action: '작은 행동 시도하기',
+    relationship: '관계와 자기 돌봄',
+    perspective: '새로운 관점',
+    question: '내면의 질문',
+  },
+  en: {
+    emotion: 'Noticing Feelings',
+    thought: 'Clearing Thoughts',
+    action: 'A Gentle Step',
+    relationship: 'Care & Connection',
+    perspective: 'Fresh Perspective',
+    question: 'Inner Question',
+  },
+  ja: {
+    emotion: '感情に気づく',
+    thought: '考えを整理する',
+    action: '小さな行動を試す',
+    relationship: 'つながりと自己ケア',
+    perspective: '新しい視点',
+    question: '内なる問い',
+  },
+};
+
+const THREE_CARD_POSITIONS_BY_LANG: Record<Language, [string, string, string]> = {
+  ko: ['지금의 마음', '바라볼 시선', '작은 걸음'],
+  en: ['Present Heart', 'A Fresh Lens', 'A Gentle Step'],
+  ja: ['今の心', '見つめる視点', '小さな一歩'],
+};
+
+const OVERALL_FLOW_LABEL: Record<Language, string> = {
+  ko: '전체 흐름',
+  en: 'Overall Flow',
+  ja: '全体の流れ',
+};
 
 interface CardAngle {
   emotion: string;
@@ -19,8 +69,6 @@ interface CardAngle {
   reversedPerspective: string;
   reversedSelfCare: string;
 }
-
-const THREE_CARD_POSITIONS = ['지금의 마음', '바라볼 시선', '작은 걸음'] as const;
 
 function hasBatchim(word: string): boolean {
   const trimmed = word.trim();
@@ -41,7 +89,7 @@ function particle(
   return b ? `${word}과` : `${word}와`;
 }
 
-// Card-specific nuanced reflections across Major Arcana & key Minor Arcana
+// Card-specific nuanced reflections across Major Arcana & key Minor Arcana (Korean base)
 const CARD_SPECIFIC_ANGLES: Record<string, Partial<CardAngle>> = {
   'major-00-fool': {
     emotion: '새로운 출발 앞에서 설렘과 망설임이 어느 비율로 섞여 있는지 느껴보기',
@@ -222,7 +270,6 @@ const CARD_SPECIFIC_ANGLES: Record<string, Partial<CardAngle>> = {
     selfCare: '한 매듭을 지은 나에게 조용하고 근사한 휴식 시간 선물하기',
     question: '지금까지 걸어온 시간을 하나의 이야기로 묶는다면, 어떤 이름을 붙여주고 싶나요?',
   },
-  // Specific Minor Arcana mentioned or iconic
   'minor-swords-02': {
     emotion: '결정을 내리지 못한 채 마음이 팽팽하게 맞서 있을 때의 피로감 알아차리기',
     thought: '양쪽 선택지가 각각 내게 지켜주려는 것이 무엇인지 한 단어씩 나란히 적어 보기',
@@ -252,145 +299,427 @@ const CARD_SPECIFIC_ANGLES: Record<string, Partial<CardAngle>> = {
   },
 };
 
-const SUIT_PROFILES: Record<
-  TarotSuit,
-  {
-    themeWord: string;
-    emotion: (card: TarotCard, isRev: boolean) => string;
-    thought: (card: TarotCard, isRev: boolean) => string;
-    relationship: (card: TarotCard, isRev: boolean) => string;
-    perspective: (card: TarotCard, isRev: boolean) => string;
-    selfCare: (card: TarotCard, isRev: boolean) => string;
-    question: (card: TarotCard, isRev: boolean) => string;
-  }
+type SuitProfileFn = (
+  cardName: string,
+  kw0: string,
+  kw1: string,
+  question: string,
+  isRev: boolean
+) => string;
+
+interface SuitProfileSet {
+  emotion: SuitProfileFn;
+  thought: SuitProfileFn;
+  relationship: SuitProfileFn;
+  perspective: SuitProfileFn;
+  selfCare: SuitProfileFn;
+  question: SuitProfileFn;
+}
+
+const SUIT_PROFILES_BY_LANG: Record<
+  Language,
+  Record<TarotSuit, SuitProfileSet>
 > = {
-  wands: {
-    themeWord: '열정과 의지',
-    emotion: (c, isRev) =>
-      isRev
-        ? `‘${c.keywords[0]}’ 앞에서 주춤거리거나 지쳐 있는 내 마음의 온도를 다정하게 살펴보기`
-        : `‘${c.keywords[0]}’과 관련해 지금 내 안에 올라오는 의욕이나 설렘의 크기를 느껴보기`,
-    thought: (c, isRev) =>
-      isRev
-        ? `「${c.nameKo}」가 비추는 ‘${c.keywords[0]}’의 부담을 줄이고, ‘지금은 속도 조절 중’이라 적어 보기`
-        : `「${c.nameKo}」가 비추는 ${particle(c.keywords[0], '을/를')} 떠올리며 해보고 싶은 작은 시도 한 문장 정리하기`,
-    relationship: (c, isRev) =>
-      isRev
-        ? `타인의 속도에 흔들리지 않고 ‘${c.keywords[1] || c.keywords[0]}’에 관한 내 호흡과 거리감 살펴보기`
-        : `‘${c.keywords[1] || c.keywords[0]}’과 관련해 나에게 긍정적인 자극이나 응원을 준 사람의 말 떠올려 보기`,
-    perspective: (c, isRev) =>
-      isRev
-        ? `‘${c.keywords[0]}’의 불씨가 꺼진 것이 아니라 다시 모으기 위해 잠시 쉬어가는 시기일 수 있음을 바라보기`
-        : `크게 완성해야 한다는 부담을 내려놓고, ‘${c.keywords[1] || c.keywords[0]}’처럼 작게 시작할 수 있는 면 찾아보기`,
-    selfCare: (c, isRev) =>
-      isRev
-        ? `‘${c.keywords[0]}’을 향한 조급함을 내려놓고 15분 정도 아무것도 하지 않는 충전의 여백 두기`
-        : `몸을 가볍게 움직이거나 기지개를 켜며 ‘${c.keywords[0]}’의 답답한 에너지 풀어주기`,
-    question: (c, isRev) =>
-      isRev
-        ? `지금 내가 억지로 애쓰고 있는 ‘${c.keywords[0]}’ 중, 잠시 내려놓아도 괜찮은 짐은 무엇인가요?`
-        : c.reflectionQuestion,
+  ko: {
+    wands: {
+      emotion: (_n, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `‘${kw0}’ 앞에서 주춤거리거나 지쳐 있는 내 마음의 온도를 다정하게 살펴보기`
+          : `‘${kw0}’과 관련해 지금 내 안에 올라오는 의욕이나 설렘의 크기를 느껴보기`,
+      thought: (name, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `「${name}」가 비추는 ‘${kw0}’의 부담을 줄이고, ‘지금은 속도 조절 중’이라 적어 보기`
+          : `「${name}」가 비추는 ${particle(kw0, '을/를')} 떠올리며 해보고 싶은 작은 시도 한 문장 정리하기`,
+      relationship: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `타인의 속도에 흔들리지 않고 ‘${kw1}’에 관한 내 호흡과 거리감 살펴보기`
+          : `‘${kw1}’과 관련해 나에게 긍정적인 자극이나 응원을 준 사람의 말 떠올려 보기`,
+      perspective: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `‘${kw0}’의 불씨가 꺼진 것이 아니라 다시 모으기 위해 잠시 쉬어가는 시기일 수 있음을 바라보기`
+          : `크게 완성해야 한다는 부담을 내려놓고, ‘${kw1}’처럼 작게 시작할 수 있는 면 찾아보기`,
+      selfCare: (_n, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `‘${kw0}’을 향한 조급함을 내려놓고 15분 정도 아무것도 하지 않는 충전의 여백 두기`
+          : `몸을 가볍게 움직이거나 기지개를 켜며 ‘${kw0}’의 답답한 에너지 풀어주기`,
+      question: (_n, kw0, _kw1, q, isRev) =>
+        isRev
+          ? `지금 내가 억지로 애쓰고 있는 ‘${kw0}’ 중, 잠시 내려놓아도 괜찮은 짐은 무엇인가요?`
+          : q,
+    },
+    cups: {
+      emotion: (_n, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `겉으로는 괜찮아 보이지만 속으로 눌러두었던 ${particle(kw0, '과/와')} 관련된 감정 알아차리기`
+          : `지금 내 마음에 흐르고 있는 ${particle(kw0, '을/를')} 판단 없이 있는 그대로 느껴보기`,
+      thought: (name, _kw0, kw1, _q, isRev) =>
+        isRev
+          ? `「${name}」처럼 마음이 예민하거나 서운했던 순간을 한 문장으로 적어 감정에 이름 붙여 보기`
+          : `‘${kw1}’이 가장 편안하고 따뜻하게 머물렀던 기억 하나를 짧게 적어 보기`,
+      relationship: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `‘${kw0}’ 때문에 다른 사람의 감정을 대신 짊어지느라 내 마음을 놓쳤는지 돌아보기`
+          : `‘${kw1}’의 온기를 나누고 싶은 사람이나 고마운 마음 하나 떠올려 보기`,
+      perspective: (_n, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `‘${kw0}’ 앞에서 마음이 흔들리는 순간을 약함이 아니라 소중한 신호로 바라보기`
+          : `합리적 이유만으로 설명되지 않는 ‘${kw0}’의 마음결도 충분히 존중할 가치가 있음을 떠올리기`,
+      selfCare: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `‘${kw0}’으로 지친 나를 위해 따뜻한 물이나 포근한 휴식으로 마음의 그릇 비워주기`
+          : `좋아하는 음악을 들으며 ‘${kw1}’을 품고 수고한 내 마음에 다정한 말 건네기`,
+      question: (_n, kw0, _kw1, q, isRev) =>
+        isRev
+          ? `지금 ‘${kw0}’과 관련해 나 자신에게 먼저 건네고 싶은 위로는 무엇인가요?`
+          : q,
+    },
+    swords: {
+      emotion: (_n, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `‘${kw0}’ 때문에 생각이 많아져 머리가 무겁거나 날이 서 있던 마음 가만히 살피기`
+          : `‘${kw0}’이라는 주제 앞에서 지금 내 안에 드는 솔직한 긴장감이나 개운함 느끼기`,
+      thought: (name, _kw0, kw1, _q, isRev) =>
+        isRev
+          ? `「${name}」가 비추는 걱정을 종이나 메모에 꺼내어 사실과 추측으로 한 줄씩 나누어 보기`
+          : `‘${kw1}’을 두고 복잡하게 얽힌 생각을 덜어낸 핵심 한 문장 추려 적어 보기`,
+      relationship: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `‘${kw0}’으로 거리를 두고 싶었던 대화에서 내가 진짜 원했던 배려 살펴보기`
+          : `‘${kw1}’과 관련해 상대의 말 이면에 담긴 진짜 의도를 차분히 헤아려 보기`,
+      perspective: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `‘${kw0}’을 반드시 흑백으로 결론 내리지 않고, 회색의 여백을 둔 채 지켜보는 시선 가져보기`
+          : `감정에 휩쓸리기보다 ‘${kw1}’을 한 발짝 떨어져 바라보는 관찰자의 시선 빌려오기`,
+      selfCare: (name, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `‘${kw0}’으로 이어지는 생각의 소음을 잠시 멈추고 창밖을 보며 천천히 숨 내쉬기`
+          : `「${name}」의 복잡한 생각에서 잠깐 벗어나 단순한 집안일이나 짧은 산책으로 머리 식히기`,
+      question: (_n, kw0, _kw1, q, isRev) =>
+        isRev
+          ? `‘${kw0}’ 앞에서 내가 스스로에게 너무 엄격한 잣대를 들이대고 있지는 않은가요?`
+          : q,
+    },
+    pentacles: {
+      emotion: (_n, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `‘${kw0}’에 대한 조바심 때문에 지금 누릴 수 있는 평온을 놓치고 있지는 않은지 살피기`
+          : `‘${kw0}’ 속에서 내가 느끼는 현실적인 든든함이나 작은 부담감 알아차리기`,
+      thought: (name, _kw0, kw1, _q, isRev) =>
+        isRev
+          ? `「${name}」의 무게를 덜어 오늘 할 몫과 내일로 미룰 몫을 가볍게 나누어 적어 보기`
+          : `일상 속에서 ‘${kw1}’과 관련해 내가 묵묵히 쌓아온 작은 결실 한 줄 기록하기`,
+      relationship: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `‘${kw0}’을 혼자 다 해내야 한다는 부담을 내려놓고, 의지할 수 있는 곁 떠올려 보기`
+          : `‘${kw1}’의 일상을 함께 지탱해 주거나 실용적 도움을 준 사람에게 고마움 느끼기`,
+      perspective: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `빠른 변화가 보이지 않더라도 ‘${kw0}’의 자리에서 조용히 뿌리를 다지는 시간일 수 있음을 믿어보기`
+          : `큰 도약보다 매일 반복되는 ‘${kw1}’의 소소한 돌봄이 나를 지키는 힘임을 바라보기`,
+      selfCare: (name, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `‘${kw0}’에 매달리느라 미룬 식사, 수면, 휴식 중 하나를 오늘 우선 챙기기`
+          : `「${name}」의 기운처럼 내 책상이나 방 한쪽을 정돈하고, 몸이 편안해지는 따뜻한 한 끼 챙겨 먹기`,
+      question: (_n, kw0, _kw1, q, isRev) =>
+        isRev
+          ? `지금 내 일상의 균형과 ‘${kw0}’을 지키기 위해 가장 먼저 속도를 늦추고 싶은 부분은 어디인가요?`
+          : q,
+    },
   },
-  cups: {
-    themeWord: '감정과 관계',
-    emotion: (c, isRev) =>
-      isRev
-        ? `겉으로는 괜찮아 보이지만 속으로 눌러두었던 ${particle(c.keywords[0], '과/와')} 관련된 감정 알아차리기`
-        : `지금 내 마음에 흐르고 있는 ${particle(c.keywords[0], '을/를')} 판단 없이 있는 그대로 느껴보기`,
-    thought: (c, isRev) =>
-      isRev
-        ? `「${c.nameKo}」처럼 마음이 예민하거나 서운했던 순간을 한 문장으로 적어 감정에 이름 붙여 보기`
-        : `‘${c.keywords[1] || c.keywords[0]}’이 가장 편안하고 따뜻하게 머물렀던 기억 하나를 짧게 적어 보기`,
-    relationship: (c, isRev) =>
-      isRev
-        ? `‘${c.keywords[0]}’ 때문에 다른 사람의 감정을 대신 짊어지느라 내 마음을 놓쳤는지 돌아보기`
-        : `‘${c.keywords[1] || c.keywords[0]}’의 온기를 나누고 싶은 사람이나 고마운 마음 하나 떠올려 보기`,
-    perspective: (c, isRev) =>
-      isRev
-        ? `‘${c.keywords[0]}’ 앞에서 마음이 흔들리는 순간을 약함이 아니라 소중한 신호로 바라보기`
-        : `합리적 이유만으로 설명되지 않는 ‘${c.keywords[0]}’의 마음결도 충분히 존중할 가치가 있음을 떠올리기`,
-    selfCare: (c, isRev) =>
-      isRev
-        ? `‘${c.keywords[0]}’으로 지친 나를 위해 따뜻한 물이나 포근한 휴식으로 마음의 그릇 비워주기`
-        : `좋아하는 음악을 들으며 ‘${c.keywords[1] || c.keywords[0]}’을 품고 수고한 내 마음에 다정한 말 건네기`,
-    question: (c, isRev) =>
-      isRev
-        ? `지금 ‘${c.keywords[0]}’과 관련해 나 자신에게 먼저 건네고 싶은 위로는 무엇인가요?`
-        : c.reflectionQuestion,
+  en: {
+    wands: {
+      emotion: (_n, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `Notice gently where you feel hesitant or weary around "${kw0}" right now`
+          : `Sense how much spark or quiet eagerness is rising inside you around "${kw0}"`,
+      thought: (name, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `Ease the weight of "${kw0}" shown in ${name} by writing: "Right now I am adjusting my pace"`
+          : `With ${name} illuminating "${kw0}", write one short line about a small step you feel curious to try`,
+      relationship: (_n, _kw0, kw1, _q, isRev) =>
+        isRev
+          ? `Notice your own breathing room and distance around "${kw1}" instead of rushing to match others’ speed`
+          : `Recall one encouraging word or spark someone shared with you around "${kw1}"`,
+      perspective: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `Remember the ember of "${kw0}" has not gone out—it may simply be gathering warmth in quiet rest`
+          : `Drop the pressure to finish everything big and look for a tiny way to start with "${kw1}"`,
+      selfCare: (_n, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `Set aside urgency around "${kw0}" and claim 15 minutes of unscheduled rest to recharge`
+          : `Stretch gently or move around lightly to loosen pent-up tension around "${kw0}"`,
+      question: (_n, kw0, _kw1, q, isRev) =>
+        isRev
+          ? `Around "${kw0}" where you have been pushing hard, what weight could you safely set down for a while?`
+          : q,
+    },
+    cups: {
+      emotion: (_n, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `Notice quietly what feelings around "${kw0}" you have been smoothing over on the surface`
+          : `Feel whatever quiet tide of "${kw0}" is moving through your heart right now without judging it`,
+      thought: (name, _kw0, kw1, _q, isRev) =>
+        isRev
+          ? `Name one moment that felt tender or bruised—as reflected in ${name}—in a single honest sentence`
+          : `Write down one warm memory where "${kw1}" felt especially safe and effortless`,
+      relationship: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `Check whether carrying someone else’s mood around "${kw0}" left your own heart unattended`
+          : `Bring to mind someone with whom you want to share warmth or gratitude around "${kw1}"`,
+      perspective: (_n, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `View a moment of emotional wavering before "${kw0}" not as weakness, but as an honest signal`
+          : `Honor feelings around "${kw0}" as worthy of care even when logic cannot neatly explain them`,
+      selfCare: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `Pour a glass of warm water or rest comfortably to soothe a heart worn thin by "${kw0}"`
+          : `Listen to comforting music and offer yourself a gentle word for carrying "${kw1}"`,
+      question: (_n, kw0, _kw1, q, isRev) =>
+        isRev
+          ? `Regarding "${kw0}", what kind reassurance would you like to offer yourself first right now?`
+          : q,
+    },
+    swords: {
+      emotion: (_n, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `Notice gently if overthinking around "${kw0}" has left your head heavy or on edge`
+          : `Feel the honest tension or crisp relief surfacing around "${kw0}" right now`,
+      thought: (name, _kw0, kw1, _q, isRev) =>
+        isRev
+          ? `Put the worries stirred by ${name} onto paper in two brief lines: known facts vs. guesses`
+          : `Distill tangled thoughts around "${kw1}" into one clear, plain sentence`,
+      relationship: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `In a conversation you wanted to step back from around "${kw0}", look at what care you truly needed`
+          : `Consider calmly the quiet intention behind someone’s words around "${kw1}"`,
+      perspective: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `Instead of forcing "${kw0}" into strict black-and-white today, allow room for gray nuances`
+          : `Borrow a calm observer’s distance to look at "${kw1}" from one step back`,
+      selfCare: (name, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `Pause the mental chatter around "${kw0}", look out a window, and exhale slowly`
+          : `Step out of ${name}’s heavy thoughts for a moment with a simple chore or short walk`,
+      question: (_n, kw0, _kw1, q, isRev) =>
+        isRev
+          ? `Facing "${kw0}", have you been holding yourself to an overly harsh standard lately?`
+          : q,
+    },
+    pentacles: {
+      emotion: (_n, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `Check if impatience over "${kw0}" has kept you from noticing the calm already here`
+          : `Notice the quiet steadiness—or small practical weight—you feel inside "${kw0}"`,
+      thought: (name, _kw0, kw1, _q, isRev) =>
+        isRev
+          ? `Lighten the load of ${name} by separating what belongs to today from what can wait until tomorrow`
+          : `Jot down one small everyday fruit you have steadily nurtured around "${kw1}"`,
+      relationship: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `Release the pressure to handle "${kw0}" solo and think of one person or place you can lean on`
+          : `Notice quiet gratitude for someone who steadies your day or helps practically with "${kw1}"`,
+      perspective: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `Even without rapid results visible yet, trust this season of quietly putting down roots in "${kw0}"`
+          : `See that steady daily tending around "${kw1}" protects you more than dramatic leaps`,
+      selfCare: (name, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `Prioritize one basic need—a proper meal, sleep, or rest—you postponed while chasing "${kw0}"`
+          : `In the grounded spirit of ${name}, tidy one corner of your desk and nourish yourself warmly`,
+      question: (_n, kw0, _kw1, q, isRev) =>
+        isRev
+          ? `To protect your daily rhythm and "${kw0}", where would slowing down first help the most?`
+          : q,
+    },
   },
-  swords: {
-    themeWord: '생각과 명료함',
-    emotion: (c, isRev) =>
-      isRev
-        ? `‘${c.keywords[0]}’ 때문에 생각이 많아져 머리가 무겁거나 날이 서 있던 마음 가만히 살피기`
-        : `‘${c.keywords[0]}’이라는 주제 앞에서 지금 내 안에 드는 솔직한 긴장감이나 개운함 느끼기`,
-    thought: (c, isRev) =>
-      isRev
-        ? `「${c.nameKo}」가 비추는 걱정을 종이나 메모에 꺼내어 사실과 추측으로 한 줄씩 나누어 보기`
-        : `‘${c.keywords[1] || c.keywords[0]}’을 두고 복잡하게 얽힌 생각을 덜어낸 핵심 한 문장 추려 적어 보기`,
-    relationship: (c, isRev) =>
-      isRev
-        ? `‘${c.keywords[0]}’으로 거리를 두고 싶었던 대화에서 내가 진짜 원했던 배려 살펴보기`
-        : `‘${c.keywords[1] || c.keywords[0]}’과 관련해 상대의 말 이면에 담긴 진짜 의도를 차분히 헤아려 보기`,
-    perspective: (c, isRev) =>
-      isRev
-        ? `‘${c.keywords[0]}’을 반드시 흑백으로 결론 내리지 않고, 회색의 여백을 둔 채 지켜보는 시선 가져보기`
-        : `감정에 휩쓸리기보다 ‘${c.keywords[1] || c.keywords[0]}’을 한 발짝 떨어져 바라보는 관찰자의 시선 빌려오기`,
-    selfCare: (c, isRev) =>
-      isRev
-        ? `‘${c.keywords[0]}’으로 이어지는 생각의 소음을 잠시 멈추고 창밖을 보며 천천히 숨 내쉬기`
-        : `「${c.nameKo}」의 복잡한 생각에서 잠깐 벗어나 단순한 집안일이나 짧은 산책으로 머리 식히기`,
-    question: (c, isRev) =>
-      isRev
-        ? `‘${c.keywords[0]}’ 앞에서 내가 스스로에게 너무 엄격한 잣대를 들이대고 있지는 않은가요?`
-        : c.reflectionQuestion,
-  },
-  pentacles: {
-    themeWord: '일상과 돌봄',
-    emotion: (c, isRev) =>
-      isRev
-        ? `‘${c.keywords[0]}’에 대한 조바심 때문에 지금 누릴 수 있는 평온을 놓치고 있지는 않은지 살피기`
-        : `‘${c.keywords[0]}’ 속에서 내가 느끼는 현실적인 든든함이나 작은 부담감 알아차리기`,
-    thought: (c, isRev) =>
-      isRev
-        ? `「${c.nameKo}」의 무게를 덜어 오늘 할 몫과 내일로 미룰 몫을 가볍게 나누어 적어 보기`
-        : `일상 속에서 ‘${c.keywords[1] || c.keywords[0]}’과 관련해 내가 묵묵히 쌓아온 작은 결실 한 줄 기록하기`,
-    relationship: (c, isRev) =>
-      isRev
-        ? `‘${c.keywords[0]}’을 혼자 다 해내야 한다는 부담을 내려놓고, 의지할 수 있는 곁 떠올려 보기`
-        : `‘${c.keywords[1] || c.keywords[0]}’의 일상을 함께 지탱해 주거나 실용적 도움을 준 사람에게 고마움 느끼기`,
-    perspective: (c, isRev) =>
-      isRev
-        ? `빠른 변화가 보이지 않더라도 ‘${c.keywords[0]}’의 자리에서 조용히 뿌리를 다지는 시간일 수 있음을 믿어보기`
-        : `큰 도약보다 매일 반복되는 ‘${c.keywords[1] || c.keywords[0]}’의 소소한 돌봄이 나를 지키는 힘임을 바라보기`,
-    selfCare: (c, isRev) =>
-      isRev
-        ? `‘${c.keywords[0]}’에 매달리느라 미룬 식사, 수면, 휴식 중 하나를 오늘 우선 챙기기`
-        : `「${c.nameKo}」의 기운처럼 내 책상이나 방 한쪽을 정돈하고, 몸이 편안해지는 따뜻한 한 끼 챙겨 먹기`,
-    question: (c, isRev) =>
-      isRev
-        ? `지금 내 일상의 균형과 ‘${c.keywords[0]}’을 지키기 위해 가장 먼저 속도를 늦추고 싶은 부분은 어디인가요?`
-        : c.reflectionQuestion,
+  ja: {
+    wands: {
+      emotion: (_n, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `「${kw0}」を前にためらったり少し疲れたりしている心の温度を、やさしく確かめてみる`
+          : `「${kw0}」に関して、今自分の中に湧いてくる意欲やときめきの大きさを感じてみる`,
+      thought: (name, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `「${name}」が映す「${kw0}」の気負いを緩め、「今はペース調整中」と書いてみる`
+          : `「${name}」が照らす「${kw0}」を思い浮かべ、試してみたい小さな一歩を一文にまとめてみる`,
+      relationship: (_n, _kw0, kw1, _q, isRev) =>
+        isRev
+          ? `他人の速さに揺さぶられず、「${kw1}」に関する自分の呼吸と距離感を確かめてみる`
+          : `「${kw1}」について、自分に心地よい刺激や応援をくれた人の言葉を思い出してみる`,
+      perspective: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `「${kw0}」の火が消えたのではなく、再び力を集めるために少し休む時期なのかもしれないと見つめてみる`
+          : `立派にやり遂げる重荷をおろし、「${kw1}」のように小さく始められる面を探してみる`,
+      selfCare: (_n, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `「${kw0}」への焦りをいったんおろし、15分ほど何もしない充電の余白をつくる`
+          : `軽く体を動かしたり伸びをしたりして、「${kw0}」の滞った空気をほぐしてみる`,
+      question: (_n, kw0, _kw1, q, isRev) =>
+        isRev
+          ? `今あなたが無理して力を入れている「${kw0}」の中で、少し手放しても大丈夫な重荷は何ですか？`
+          : q,
+    },
+    cups: {
+      emotion: (_n, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `表向きは平気そうに見えても、心の奥に押し込めていた「${kw0}」にまつわる感情に気づいてみる`
+          : `今あなたの心に流れている「${kw0}」という感覚を、評価せずそのまま感じてみる`,
+      thought: (name, _kw0, kw1, _q, isRev) =>
+        isRev
+          ? `「${name}」のように心が敏感になったり寂しかったりした瞬間を一文で書き、感情に名前をつけてみる`
+          : `「${kw1}」がいちばん心地よく温かく息づいていた記憶をひとつ短く書いてみる`,
+      relationship: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `「${kw0}」のせいで誰かの感情まで代わりに背負い込み、自分の心を置き去りにしていないか振り返る`
+          : `「${kw1}」の温もりを分かち合いたい人や、感謝を向けたい相手をひとり思い浮かべてみる`,
+      perspective: (_n, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `「${kw0}」の前で心が揺れる瞬間を弱さではなく、大切なサインとして眺めてみる`
+          : `理屈だけでは説明しきれない「${kw0}」の心の揺れも、十分に敬う価値があると思い出してみる`,
+      selfCare: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `「${kw0}」で疲れた自分のために、温かい飲み物や穏やかな休息で心の器を空けてあげる`
+          : `好きな音楽を聴きながら、「${kw1}」を抱えてよくやってきた自分へやさしい言葉をかけてみる`,
+      question: (_n, kw0, _kw1, q, isRev) =>
+        isRev
+          ? `今「${kw0}」に関して、自分自身にまずかけてあげたい慰めの言葉は何ですか？`
+          : q,
+    },
+    swords: {
+      emotion: (_n, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `「${kw0}」のことで考えすぎて頭が重くなったり尖っていたりした心をそっと見つめてみる`
+          : `「${kw0}」というテーマを前に、今自分の中に浮かぶ正直な緊張感やすっきり感を感じてみる`,
+      thought: (name, _kw0, kw1, _q, isRev) =>
+        isRev
+          ? `「${name}」が映す心配を紙やメモに出し、事実と推測で一行ずつ分けてみる`
+          : `「${kw1}」をめぐって絡まっていた考えをほどき、核心の一文だけを書き出してみる`,
+      relationship: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `「${kw0}」で距離を置きたくなった会話の中で、自分が本当に望んでいた配慮は何だったか見つめる`
+          : `「${kw1}」に関して、相手の言葉の裏にある本当の意図を落ち着いて汲み取ってみる`,
+      perspective: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `「${kw0}」を白黒はっきり結論づけず、灰色の余白を残したまま見守るまなざしを持ってみる`
+          : `感情に巻き込まれるより、「${kw1}」を一歩離れて眺める観察者の視点を借りてみる`,
+      selfCare: (name, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `「${kw0}」へと続く思考の雑音を少し止め、窓の外を眺めながらゆっくり息を吐く`
+          : `「${name}」の複雑な思考から少し離れ、簡単な片づけや短い散歩で頭を冷やしてみる`,
+      question: (_n, kw0, _kw1, q, isRev) =>
+        isRev
+          ? `「${kw0}」を前にして、自分自身に厳しすぎる物差しを当ててはいませんか？`
+          : q,
+    },
+    pentacles: {
+      emotion: (_n, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `「${kw0}」への焦りのせいで、今味わえるはずの穏やかさを見逃していないか確かめてみる`
+          : `「${kw0}」の中で自分が感じている現実的な安心感や小さな負担に気づいてみる`,
+      thought: (name, _kw0, kw1, _q, isRev) =>
+        isRev
+          ? `「${name}」の重みを軽くするために、今日やることと明日に回すことを分けて書いてみる`
+          : `日々の中で「${kw1}」に関して自分が静かに積み上げてきた小さな実りを一行残してみる`,
+      relationship: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `「${kw0}」をひとりで全部抱えなければという重荷をおろし、頼れるそばの人を思い浮かべてみる`
+          : `「${kw1}」の日々を一緒に支えてくれたり、実務的に助けてくれたりした人へ感謝を感じてみる`,
+      perspective: (_n, kw0, kw1, _q, isRev) =>
+        isRev
+          ? `すぐ目に見える変化がなくても、「${kw0}」の場所で静かに根を張る時間なのかもしれないと信じてみる`
+          : `大きな飛躍よりも、毎日続く「${kw1}」のささやかなケアが自分を守る力だと見つめてみる`,
+      selfCare: (name, kw0, _kw1, _q, isRev) =>
+        isRev
+          ? `「${kw0}」に追われて後回しにしていた食事・睡眠・休息のうちひとつを今日優先して整える`
+          : `「${name}」の落ち着きのように机や部屋の片隅を整え、身体がほっとする温かな一食をとる`,
+      question: (_n, kw0, _kw1, q, isRev) =>
+        isRev
+          ? `今の日常のバランスと「${kw0}」を守るために、いちばん先にペースを落としたいところはどこですか？`
+          : q,
+    },
   },
 };
 
+function getCustomAngle(cardId: string, language: Language): Partial<CardAngle> | undefined {
+  if (language === 'ko') {
+    return CARD_SPECIFIC_ANGLES[cardId];
+  }
+  return CARD_SPECIFIC_ANGLES_I18N[cardId]?.[language];
+}
+
 function getMajorDefaultAngle(
   card: TarotCard,
-  isRev: boolean
+  isRev: boolean,
+  language: Language
 ): Omit<CardAngle, 'action' | 'reversedPerspective' | 'reversedSelfCare'> {
-  const custom = CARD_SPECIFIC_ANGLES[card.id];
-  const kw0 = card.keywords[0] || card.nameKo;
-  const kw1 = card.keywords[1] || kw0;
+  const custom = getCustomAngle(card.id, language);
+  const loc = getLocalizedCard(card, language);
+  const kw0 = loc.keywords[0] || loc.displayName;
+  const kw1 = loc.keywords[1] || kw0;
+
+  if (language === 'en') {
+    return {
+      emotion:
+        custom?.emotion ??
+        (isRev
+          ? `Notice slowly what hesitation or quiet resonance "${kw0}" of ${loc.displayName} stirs inside you`
+          : `Notice what feeling surfaces right now in front of "${kw0} · ${kw1}" from ${loc.displayName}`),
+      thought:
+        custom?.thought ??
+        `Write one brief line naming the first thought or word that surfaced while reading ${loc.displayName}`,
+      relationship:
+        custom?.relationship ??
+        `Bring to mind one recent moment with people around you that felt touched by "${kw0}"`,
+      perspective:
+        (isRev ? custom?.reversedPerspective : undefined) ??
+        custom?.perspective ??
+        (isRev
+          ? `Step back a pace from pushing outward and check your own inner speed again`
+          : `Look once more at a familiar situation through the fresh lens of "${kw1}"`),
+      selfCare:
+        (isRev ? custom?.reversedSelfCare : undefined) ??
+        custom?.selfCare ??
+        `Set aside just five unhurried minutes today to breathe steadily without rushing yourself`,
+      question: custom?.question ?? loc.reflectionQuestion,
+    };
+  }
+
+  if (language === 'ja') {
+    return {
+      emotion:
+        custom?.emotion ??
+        (isRev
+          ? `「${loc.displayName}」の「${kw0}」が、心の中でどんなためらいや余韻として響いているかゆっくり確かめてみる`
+          : `「${loc.displayName}」が映す「${kw0} · ${kw1}」の前で、今心の中に浮かんでくる感情に気づいてみる`),
+      thought:
+        custom?.thought ??
+        `「${loc.displayName}」のメッセージを読みながら最初に浮かんだ考えや言葉を、一文で整理してみる`,
+      relationship:
+        custom?.relationship ??
+        `周囲の人との関わりの中で、「${kw0}」に関して最近心に残っていた場面をひとつ思い出してみる`,
+      perspective:
+        (isRev ? custom?.reversedPerspective : undefined) ??
+        custom?.perspective ??
+        (isRev
+          ? `すぐに外へ押し進めようとせず、一歩引いて自分の中のペースをもう一度見つめ直してみる`
+          : `見慣れた状況を、「${kw1}」という新しいレンズを通してもっと静かに眺め直してみる`),
+      selfCare:
+        (isRev ? custom?.reversedSelfCare : undefined) ??
+        custom?.selfCare ??
+        `今日一日の中で5分だけでも自分を急かさず、心地よく息を整える時間をつくってみる`,
+      question: custom?.question ?? loc.reflectionQuestion,
+    };
+  }
 
   return {
     emotion:
       custom?.emotion ??
       (isRev
-        ? `「${card.nameKo}」의 ${particle(kw0, '이/가')} 내 안에서 어떤 망설임이나 여운으로 느껴지는지 천천히 살피기`
-        : `「${card.nameKo}」가 비추는 ‘${kw0} · ${kw1}’ 앞에서 지금 내 마음에 올라오는 감정 알아차리기`),
+        ? `「${loc.displayName}」의 ${particle(kw0, '이/가')} 내 안에서 어떤 망설임이나 여운으로 느껴지는지 천천히 살피기`
+        : `「${loc.displayName}」가 비추는 ‘${kw0} · ${kw1}’ 앞에서 지금 내 마음에 올라오는 감정 알아차리기`),
     thought:
       custom?.thought ??
-      `「${card.nameKo}」의 메시지를 읽으며 가장 먼저 떠오른 생각이나 단어를 한 문장으로 정리해 보기`,
+      `「${loc.displayName}」의 메시지를 읽으며 가장 먼저 떠오른 생각이나 단어를 한 문장으로 정리해 보기`,
     relationship:
       custom?.relationship ??
       `주변 사람들과의 관계 속에서 ‘${kw0}’과 관련해 요즘 마음 쓰였던 장면 하나 떠올려 보기`,
@@ -404,31 +733,55 @@ function getMajorDefaultAngle(
       (isRev ? custom?.reversedSelfCare : undefined) ??
       custom?.selfCare ??
       `오늘 하루 중 5분만이라도 나를 재촉하지 않고 편안하게 숨 고르는 시간 마련하기`,
-    question: custom?.question ?? card.reflectionQuestion,
+    question: custom?.question ?? loc.reflectionQuestion,
   };
 }
 
 function getSuitAngle(
   card: TarotCard,
-  isRev: boolean
+  isRev: boolean,
+  language: Language
 ): Omit<CardAngle, 'action' | 'reversedPerspective' | 'reversedSelfCare'> {
-  const custom = CARD_SPECIFIC_ANGLES[card.id];
+  const custom = getCustomAngle(card.id, language);
+  const loc = getLocalizedCard(card, language);
   const suit: TarotSuit = card.suit ?? 'pentacles';
-  const profile = SUIT_PROFILES[suit];
+  const profile = SUIT_PROFILES_BY_LANG[language][suit];
+  const kw0 = loc.keywords[0] || loc.displayName;
+  const kw1 = loc.keywords[1] || kw0;
 
   return {
-    emotion: custom?.emotion ?? profile.emotion(card, isRev),
-    thought: custom?.thought ?? profile.thought(card, isRev),
-    relationship: custom?.relationship ?? profile.relationship(card, isRev),
+    emotion:
+      custom?.emotion ??
+      profile.emotion(loc.displayName, kw0, kw1, loc.reflectionQuestion, isRev),
+    thought:
+      custom?.thought ??
+      profile.thought(loc.displayName, kw0, kw1, loc.reflectionQuestion, isRev),
+    relationship:
+      custom?.relationship ??
+      profile.relationship(
+        loc.displayName,
+        kw0,
+        kw1,
+        loc.reflectionQuestion,
+        isRev
+      ),
     perspective:
       (isRev ? custom?.reversedPerspective : undefined) ??
       custom?.perspective ??
-      profile.perspective(card, isRev),
+      profile.perspective(
+        loc.displayName,
+        kw0,
+        kw1,
+        loc.reflectionQuestion,
+        isRev
+      ),
     selfCare:
       (isRev ? custom?.reversedSelfCare : undefined) ??
       custom?.selfCare ??
-      profile.selfCare(card, isRev),
-    question: custom?.question ?? profile.question(card, isRev),
+      profile.selfCare(loc.displayName, kw0, kw1, loc.reflectionQuestion, isRev),
+    question:
+      custom?.question ??
+      profile.question(loc.displayName, kw0, kw1, loc.reflectionQuestion, isRev),
   };
 }
 
@@ -450,7 +803,6 @@ type AngleKey =
   | 'selfcare'
   | 'question';
 
-// Varied 4-slot selection patterns so cards & orientations never follow one rigid template
 const SINGLE_CARD_PATTERNS: Record<string, AngleKey[][]> = {
   cups: [
     ['emotion', 'relationship', 'thought', 'selfcare'],
@@ -485,6 +837,80 @@ const SINGLE_CARD_PATTERNS: Record<string, AngleKey[][]> = {
   ],
 };
 
+function formatPrimaryAction(
+  card: TarotCard,
+  isRev: boolean,
+  language: Language
+): string {
+  const loc = getLocalizedCard(card, language);
+  const custom = getCustomAngle(card.id, language);
+  if (!isRev) {
+    return custom?.action || loc.gentleAction;
+  }
+
+  const kw0 = loc.keywords[0] || loc.displayName;
+  if (language === 'en') {
+    return `Rather than rushing, recall "${kw0}" from ${loc.displayName} and pause briefly to steady your breath`;
+  }
+  if (language === 'ja') {
+    return `急ぐよりも、「${loc.displayName}」が映す「${kw0}」の意味を思い浮かべながら少し立ち止まって呼吸を整える`;
+  }
+  return `서두르기보다 「${loc.displayName}」가 비추는 ‘${kw0}’의 의미를 떠올리며 잠깐 멈춰 숨 고르기`;
+}
+
+function formatQuestionAttempt(questionText: string, language: Language): string {
+  if (language === 'en') {
+    return `Sit quietly for a moment asking yourself: "${questionText}"`;
+  }
+  if (language === 'ja') {
+    return `「${questionText}」と自分自身にそっと問いかけて少し留まってみる`;
+  }
+  return `“${questionText}” 스스로에게 묻고 잠깐 머물러 보기`;
+}
+
+function buildSingleCardPool(
+  card: TarotCard,
+  isRev: boolean,
+  language: Language
+): Record<AngleKey, { categoryLabel: string; actionText: string }> {
+  const angle =
+    card.arcana === 'minor'
+      ? getSuitAngle(card, isRev, language)
+      : getMajorDefaultAngle(card, isRev, language);
+  const labels = CATEGORY_LABELS[language];
+
+  return {
+    emotion: {
+      categoryLabel: labels.emotion,
+      actionText: angle.emotion,
+    },
+    thought: {
+      categoryLabel: labels.thought,
+      actionText: angle.thought,
+    },
+    perspective: {
+      categoryLabel: labels.perspective,
+      actionText: angle.perspective,
+    },
+    action: {
+      categoryLabel: labels.action,
+      actionText: formatPrimaryAction(card, isRev, language),
+    },
+    relationship: {
+      categoryLabel: labels.relationship,
+      actionText: angle.relationship,
+    },
+    selfcare: {
+      categoryLabel: labels.relationship,
+      actionText: angle.selfCare,
+    },
+    question: {
+      categoryLabel: labels.question,
+      actionText: formatQuestionAttempt(angle.question, language),
+    },
+  };
+}
+
 /**
  * Generate exactly 4 personalized, non-prescriptive selectable attempts tailored to
  * the drawn card(s), upright/reversed orientations, card symbolism, and overall synthesis.
@@ -492,59 +918,17 @@ const SINGLE_CARD_PATTERNS: Record<string, AngleKey[][]> = {
 export function generatePersonalizedAttempts(
   cards: TarotCard[],
   orientations: ('upright' | 'reversed')[],
-  overallMessage?: string
+  overallMessage?: string,
+  language: Language = 'ko'
 ): SelectedAttemptItem[] {
   if (cards.length === 0) return [];
 
-  // Single-card reading: 4 tailored, non-overlapping items matching card theme & orientation
   if (cards.length === 1) {
     const card = cards[0];
+    const loc = getLocalizedCard(card, language);
     const isRev = orientations[0] === 'reversed';
     const orientKey = isRev ? 'rev' : 'up';
-    const custom = CARD_SPECIFIC_ANGLES[card.id];
-    const angle =
-      card.arcana === 'minor'
-        ? getSuitAngle(card, isRev)
-        : getMajorDefaultAngle(card, isRev);
-
-    const primaryActionText =
-      isRev
-        ? `서두르기보다 「${card.nameKo}」가 비추는 ‘${card.keywords[0]}’의 의미를 떠올리며 잠깐 멈춰 숨 고르기`
-        : custom?.action || card.gentleAction;
-
-    const pool: Record<
-      AngleKey,
-      { categoryLabel: AttemptCategory; actionText: string }
-    > = {
-      emotion: {
-        categoryLabel: '감정 알아차리기',
-        actionText: angle.emotion,
-      },
-      thought: {
-        categoryLabel: '생각 정리하기',
-        actionText: angle.thought,
-      },
-      perspective: {
-        categoryLabel: '새로운 관점',
-        actionText: angle.perspective,
-      },
-      action: {
-        categoryLabel: '작은 행동 시도하기',
-        actionText: primaryActionText,
-      },
-      relationship: {
-        categoryLabel: '관계와 자기 돌봄',
-        actionText: angle.relationship,
-      },
-      selfcare: {
-        categoryLabel: '관계와 자기 돌봄',
-        actionText: angle.selfCare,
-      },
-      question: {
-        categoryLabel: '내면의 질문',
-        actionText: `“${angle.question}” 스스로에게 묻고 잠깐 머물러 보기`,
-      },
-    };
+    const pool = buildSingleCardPool(card, isRev, language);
 
     const patternGroup = isRev
       ? SINGLE_CARD_PATTERNS.reversed
@@ -555,7 +939,6 @@ export function generatePersonalizedAttempts(
     const seed = hashSeed(`${card.id}:${orientKey}`);
     const chosenKeys = patternGroup[seed % patternGroup.length];
 
-    // Deduplicate in the rare case custom text overlaps, filling from fallback order
     const fallbackOrder: AngleKey[] = [
       'emotion',
       'thought',
@@ -567,13 +950,12 @@ export function generatePersonalizedAttempts(
     ];
     const picked: AngleKey[] = [];
     const seenText = new Set<string>();
-    const seenCategories = new Set<AttemptCategory>();
+    const seenCategories = new Set<string>();
 
     for (const k of [...chosenKeys, ...fallbackOrder]) {
       if (picked.length >= 4) break;
       const entry = pool[k];
       if (seenText.has(entry.actionText)) continue;
-      // Prefer distinct categories unless filling remaining slot
       if (seenCategories.has(entry.categoryLabel) && picked.length < 3) continue;
       picked.push(k);
       seenText.add(entry.actionText);
@@ -586,13 +968,13 @@ export function generatePersonalizedAttempts(
         attemptId: `${card.id}::${orientKey}::${key}::${idx}`,
         categoryLabel: entry.categoryLabel,
         cardId: card.id,
-        cardName: card.nameKo,
+        cardName: loc.displayName,
         actionText: entry.actionText,
       };
     });
   }
 
-  // Multi-card (3-card) reading: 4 personalized items weaving individual positions & overall flow
+  // Multi-card (3-card) reading
   const c0 = cards[0];
   const c1 = cards[1] ?? cards[0];
   const c2 = cards[2] ?? cards[0];
@@ -600,34 +982,47 @@ export function generatePersonalizedAttempts(
   const rev1 = orientations[1] === 'reversed';
   const rev2 = orientations[2] === 'reversed';
 
+  const loc0 = getLocalizedCard(c0, language);
+  const loc1 = getLocalizedCard(c1, language);
+  const loc2 = getLocalizedCard(c2, language);
+
   const angle0 =
-    c0.arcana === 'minor' ? getSuitAngle(c0, rev0) : getMajorDefaultAngle(c0, rev0);
+    c0.arcana === 'minor'
+      ? getSuitAngle(c0, rev0, language)
+      : getMajorDefaultAngle(c0, rev0, language);
   const angle1 =
-    c1.arcana === 'minor' ? getSuitAngle(c1, rev1) : getMajorDefaultAngle(c1, rev1);
+    c1.arcana === 'minor'
+      ? getSuitAngle(c1, rev1, language)
+      : getMajorDefaultAngle(c1, rev1, language);
   const angle2 =
-    c2.arcana === 'minor' ? getSuitAngle(c2, rev2) : getMajorDefaultAngle(c2, rev2);
+    c2.arcana === 'minor'
+      ? getSuitAngle(c2, rev2, language)
+      : getMajorDefaultAngle(c2, rev2, language);
 
   const flowSeed = hashSeed(
     cards.map((c, i) => `${c.id}:${orientations[i] ?? 'upright'}`).join('|')
   );
 
-  // Vary the 4 items organically based on spread combination & orientations
+  const labels = CATEGORY_LABELS[language];
+  const positions = THREE_CARD_POSITIONS_BY_LANG[language];
+  const overallLabel = OVERALL_FLOW_LABEL[language];
+
   const firstItem: SelectedAttemptItem =
     flowSeed % 2 === 0
       ? {
           attemptId: `spread::0::emotion::${c0.id}::${rev0 ? 'rev' : 'up'}`,
-          categoryLabel: '감정 알아차리기',
+          categoryLabel: labels.emotion,
           cardId: c0.id,
-          cardName: c0.nameKo,
-          positionLabel: THREE_CARD_POSITIONS[0],
+          cardName: loc0.displayName,
+          positionLabel: positions[0],
           actionText: angle0.emotion,
         }
       : {
           attemptId: `spread::0::thought::${c0.id}::${rev0 ? 'rev' : 'up'}`,
-          categoryLabel: '감정 알아차리기',
+          categoryLabel: labels.emotion,
           cardId: c0.id,
-          cardName: c0.nameKo,
-          positionLabel: THREE_CARD_POSITIONS[0],
+          cardName: loc0.displayName,
+          positionLabel: positions[0],
           actionText: angle0.thought,
         };
 
@@ -635,58 +1030,173 @@ export function generatePersonalizedAttempts(
     rev1 || flowSeed % 3 === 1
       ? {
           attemptId: `spread::1::perspective::${c1.id}::${rev1 ? 'rev' : 'up'}`,
-          categoryLabel: '생각 정리하기',
+          categoryLabel: labels.thought,
           cardId: c1.id,
-          cardName: c1.nameKo,
-          positionLabel: THREE_CARD_POSITIONS[1],
+          cardName: loc1.displayName,
+          positionLabel: positions[1],
           actionText: angle1.perspective,
         }
       : {
           attemptId: `spread::1::relationship::${c1.id}::${rev1 ? 'rev' : 'up'}`,
-          categoryLabel: '관계와 자기 돌봄',
+          categoryLabel: labels.relationship,
           cardId: c1.id,
-          cardName: c1.nameKo,
-          positionLabel: THREE_CARD_POSITIONS[1],
+          cardName: loc1.displayName,
+          positionLabel: positions[1],
           actionText: angle1.relationship,
         };
 
   const thirdItem: SelectedAttemptItem = rev2
     ? {
         attemptId: `spread::2::selfcare::${c2.id}::rev`,
-        categoryLabel: '관계와 자기 돌봄',
+        categoryLabel: labels.relationship,
         cardId: c2.id,
-        cardName: c2.nameKo,
-        positionLabel: THREE_CARD_POSITIONS[2],
+        cardName: loc2.displayName,
+        positionLabel: positions[2],
         actionText: angle2.selfCare,
       }
     : {
         attemptId: `spread::2::action::${c2.id}::up`,
-        categoryLabel: '작은 행동 시도하기',
+        categoryLabel: labels.action,
         cardId: c2.id,
-        cardName: c2.nameKo,
-        positionLabel: THREE_CARD_POSITIONS[2],
-        actionText: CARD_SPECIFIC_ANGLES[c2.id]?.action || c2.gentleAction,
+        cardName: loc2.displayName,
+        positionLabel: positions[2],
+        actionText: getCustomAngle(c2.id, language)?.action || loc2.gentleAction,
       };
 
   const hasOverallContext = Boolean(overallMessage?.trim());
-  const synthesisItem: SelectedAttemptItem =
-    flowSeed % 2 === 0
-      ? {
-          attemptId: `spread::synthesis::flow::${c0.id}::${c1.id}::${c2.id}`,
-          categoryLabel: hasOverallContext ? '생각 정리하기' : '내면의 질문',
-          cardId: c0.id,
-          cardName: `${c0.nameKo} → ${c2.nameKo}`,
-          positionLabel: '전체 흐름',
-          actionText: `「${c0.nameKo}」(${c0.keywords[0]})에서 「${c1.nameKo}」(${c1.keywords[0]})을 지나 「${c2.nameKo}」(${c2.keywords[0]})로 이어지는 흐름 중, 오늘 가장 마음에 남는 지점 한 줄 적어 보기`,
-        }
-      : {
-          attemptId: `spread::synthesis::question::${c0.id}::${c1.id}::${c2.id}`,
-          categoryLabel: '내면의 질문',
-          cardId: c1.id,
-          cardName: `${c0.nameKo} · ${c1.nameKo} · ${c2.nameKo}`,
-          positionLabel: '전체 흐름',
-          actionText: `세 카드(‘${c0.keywords[0]}’ · ‘${c1.keywords[0]}’ · ‘${c2.keywords[0]}’)가 함께 건네는 이야기 중, 지금 내 상황에 가장 가까운 질문 하나에만 가볍게 답해 보기`,
-        };
+  const synthesisItem = buildSynthesisAttemptItem(
+    flowSeed % 2 === 0 ? 'flow' : 'question',
+    c0,
+    c1,
+    c2,
+    hasOverallContext,
+    language
+  );
 
   return [firstItem, secondItem, thirdItem, synthesisItem];
+}
+
+function buildSynthesisAttemptItem(
+  kind: 'flow' | 'question',
+  c0: TarotCard,
+  c1: TarotCard,
+  c2: TarotCard,
+  hasOverallContext: boolean,
+  language: Language
+): SelectedAttemptItem {
+  const loc0 = getLocalizedCard(c0, language);
+  const loc1 = getLocalizedCard(c1, language);
+  const loc2 = getLocalizedCard(c2, language);
+  const labels = CATEGORY_LABELS[language];
+  const overallLabel = OVERALL_FLOW_LABEL[language];
+
+  const kw0 = loc0.keywords[0] || loc0.displayName;
+  const kw1 = loc1.keywords[0] || loc1.displayName;
+  const kw2 = loc2.keywords[0] || loc2.displayName;
+
+  if (kind === 'flow') {
+    const synthesisFlowText =
+      language === 'en'
+        ? `Across the flow from ${loc0.displayName} (${kw0}) through ${loc1.displayName} (${kw1}) toward ${loc2.displayName} (${kw2}), write one short line on which moment stays with you most today`
+        : language === 'ja'
+        ? `「${loc0.displayName}」（${kw0}）から「${loc1.displayName}」（${kw1}）を経て「${loc2.displayName}」（${kw2}）へ続く流れの中で、今日いちばん心に残る地点を一行書いてみる`
+        : `「${loc0.displayName}」(${kw0})에서 「${loc1.displayName}」(${kw1})을 지나 「${loc2.displayName}」(${kw2})로 이어지는 흐름 중, 오늘 가장 마음에 남는 지점 한 줄 적어 보기`;
+
+    return {
+      attemptId: `spread::synthesis::flow::${c0.id}::${c1.id}::${c2.id}`,
+      categoryLabel: hasOverallContext ? labels.thought : labels.question,
+      cardId: c0.id,
+      cardName: `${loc0.displayName} → ${loc2.displayName}`,
+      positionLabel: overallLabel,
+      actionText: synthesisFlowText,
+    };
+  }
+
+  const synthesisQuestionText =
+    language === 'en'
+      ? `Among the questions from these three cards ("${kw0}" · "${kw1}" · "${kw2}"), gently answer whichever single question feels closest to your day`
+      : language === 'ja'
+      ? `3枚のカード（「${kw0}」·「${kw1}」·「${kw2}」）が差し出す言葉の中で、今の自分の状況にいちばん近い問いにひとつだけ軽く答えてみる`
+      : `세 카드(‘${kw0}’ · ‘${kw1}’ · ‘${kw2}’)가 함께 건네는 이야기 중, 지금 내 상황에 가장 가까운 질문 하나에만 가볍게 답해 보기`;
+
+  return {
+    attemptId: `spread::synthesis::question::${c0.id}::${c1.id}::${c2.id}`,
+    categoryLabel: labels.question,
+    cardId: c1.id,
+    cardName: `${loc0.displayName} · ${loc1.displayName} · ${loc2.displayName}`,
+    positionLabel: overallLabel,
+    actionText: synthesisQuestionText,
+  };
+}
+
+/**
+ * Re-resolve a stored SelectedAttemptItem in the current UI language using its attemptId.
+ * Falls back cleanly to stored fields for legacy records without attemptId.
+ */
+export function resolveLocalizedAttemptItem(
+  item: SelectedAttemptItem,
+  getCardByIdFn: (id: string) => TarotCard | undefined,
+  language: Language
+): SelectedAttemptItem {
+  if (!item.attemptId) return item;
+
+  const parts = item.attemptId.split('::');
+  if (parts[0] === 'spread') {
+    if (parts[1] === 'synthesis' && parts.length >= 6) {
+      const kind = parts[2] === 'flow' ? 'flow' : 'question';
+      const c0 = getCardByIdFn(parts[3]);
+      const c1 = getCardByIdFn(parts[4]);
+      const c2 = getCardByIdFn(parts[5]);
+      if (c0 && c1 && c2) {
+        return buildSynthesisAttemptItem(kind, c0, c1, c2, true, language);
+      }
+      return item;
+    }
+
+    // spread::<slotIdx>::<angleKey>::<cardId>::<up|rev>
+    if (parts.length >= 5) {
+      const slotIdx = Number(parts[1]);
+      const angleKey = parts[2] as AngleKey;
+      const card = getCardByIdFn(parts[3]);
+      const isRev = parts[4] === 'rev';
+      if (card && !Number.isNaN(slotIdx)) {
+        const loc = getLocalizedCard(card, language);
+        const pool = buildSingleCardPool(card, isRev, language);
+        const resolved = pool[angleKey];
+        if (resolved) {
+          return {
+            ...item,
+            categoryLabel: resolved.categoryLabel,
+            cardName: loc.displayName,
+            positionLabel:
+              THREE_CARD_POSITIONS_BY_LANG[language][slotIdx] ?? item.positionLabel,
+            actionText: resolved.actionText,
+          };
+        }
+      }
+    }
+    return item;
+  }
+
+  // Single card format: <cardId>::<up|rev>::<angleKey>::<idx>
+  if (parts.length >= 3) {
+    const card = getCardByIdFn(parts[0]);
+    const isRev = parts[1] === 'rev';
+    const angleKey = parts[2] as AngleKey;
+    if (card) {
+      const loc = getLocalizedCard(card, language);
+      const pool = buildSingleCardPool(card, isRev, language);
+      const resolved = pool[angleKey];
+      if (resolved) {
+        return {
+          ...item,
+          categoryLabel: resolved.categoryLabel,
+          cardName: loc.displayName,
+          actionText: resolved.actionText,
+        };
+      }
+    }
+  }
+
+  return item;
 }

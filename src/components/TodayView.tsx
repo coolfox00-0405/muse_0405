@@ -3,7 +3,6 @@ import {
   Shuffle,
   Check,
   ArrowRight,
-  ArrowDown,
   ChevronDown,
   ChevronUp,
   BookOpen,
@@ -18,15 +17,20 @@ import {
   TarotCard,
 } from '../types/reflection';
 import type { ReadingSyncPayload } from '../hooks/useReflections';
-import { generatePersonalizedAttempts } from '../utils/attemptGenerator';
+import {
+  generatePersonalizedAttempts,
+  resolveLocalizedAttemptItem,
+} from '../utils/attemptGenerator';
+import { getCardById } from '../data/cards';
 import { TarotCardFlip } from './TarotCardFlip';
 import { TarotCardArtwork } from './TarotCardArtwork';
 import { CardShuffleSpread, DrawPhase } from './CardShuffleSpread';
 import { LucidaBrandMark } from './LucidaBrandMark';
 import type { ReadingDrawCount } from '../App';
+import { useLanguage } from '../i18n/LanguageContext';
+import { getLocalizedCard } from '../i18n/cardHelpers';
 
 const ONBOARDING_KEY = 'lucida_onboarding_dismissed';
-const THREE_CARD_POSITIONS = ['지금의 마음', '바라볼 시선', '작은 걸음'] as const;
 
 interface TodayViewProps {
   phase: DrawPhase;
@@ -87,6 +91,8 @@ export function TodayView({
   savedRecordCount = 0,
   onGoToJournal,
 }: TodayViewProps) {
+  const { language, t } = useLanguage();
+
   const [onboardingDismissed, setOnboardingDismissed] = useState<boolean>(() => {
     try {
       return window.localStorage.getItem(ONBOARDING_KEY) === 'true';
@@ -104,7 +110,7 @@ export function TodayView({
       return existing?.selectedActions ?? [];
     }
   );
-  const [attemptSyncNotice, setAttemptSyncNotice] = useState<string | null>(null);
+  const [hasSyncedAttemptNotice, setHasSyncedAttemptNotice] = useState(false);
   const lastSyncedRecordIdRef = useRef<string | undefined>(
     records.find((r) => r.readingSessionId === readingSessionId)?.id
   );
@@ -112,7 +118,8 @@ export function TodayView({
   const [noteDraft, setNoteDraft] = useState('');
   const [noteFeedback, setNoteFeedback] = useState<{
     type: 'success' | 'error';
-    text: string;
+    code?: 'empty' | 'saved' | 'error';
+    text?: string;
   } | null>(null);
 
   const [cardFlipped, setCardFlipped] = useState(false);
@@ -136,7 +143,7 @@ export function TodayView({
     const nextAttempts = existing?.selectedActions ?? [];
     lastSyncedRecordIdRef.current = existing?.id;
     setSelectedAttempts(nextAttempts);
-    setAttemptSyncNotice(null);
+    setHasSyncedAttemptNotice(false);
     setNoteDraft('');
     setNoteFeedback(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -165,34 +172,35 @@ export function TodayView({
       cardName: c.nameKo,
       cardNameEn: c.nameEn,
       orientation: selectedOrientations[idx] ?? 'upright',
-      positionLabel: THREE_CARD_POSITIONS[idx],
+      positionLabel: t.today.threeCardPositions[idx],
     }));
   };
 
   const computeOverallMessage = (): string => {
     if (selectedCards.length > 1) {
-      const first = selectedCards[0];
-      const second = selectedCards[1];
-      const third = selectedCards[2];
-      return `지금의 마음을 비추는 「${first.nameKo}」(${first.keywords[0]})에서 시작해, 「${
-        second?.nameKo ?? first.nameKo
-      }」(${second?.keywords[0] ?? first.keywords[0]})의 시선으로 상황을 살피고, 「${
-        third?.nameKo ?? first.nameKo
-      }」(${third?.keywords[0] ?? first.keywords[0]})가 건네는 작은 걸음으로 오늘의 호흡을 이어가는 흐름입니다. 세 장 중 지금 가장 시선이 머무는 카드의 질문부터 천천히 답해 보세요.`;
+      const l0 = getLocalizedCard(selectedCards[0], language);
+      const l1 = getLocalizedCard(selectedCards[1] ?? selectedCards[0], language);
+      const l2 = getLocalizedCard(selectedCards[2] ?? selectedCards[0], language);
+      return t.today.synthesisThreeCard(
+        l0.displayName,
+        l0.keywords[0],
+        l1.displayName,
+        l1.keywords[0],
+        l2.displayName,
+        l2.keywords[0]
+      );
     }
 
     const card = selectedCards[0];
     if (!card) return '';
+    const loc = getLocalizedCard(card, language);
     const orient = selectedOrientations[0] ?? 'upright';
+    const joined = loc.keywords.join(' · ');
     if (orient === 'reversed') {
-      return `「${card.nameKo}」 카드는 지금의 나에게 ‘${card.keywords.join(
-        ' · '
-      )}’이라는 주제를 평소와 조금 다른 각도에서 천천히 들여다보게 합니다. 서둘러 결론을 내리기보다 지금 내 마음에 조용히 걸리는 지점을 담담히 살펴보세요.`;
+      return t.today.synthesisSingleReversed(loc.displayName, joined);
     }
 
-    return `「${card.nameKo}」 카드는 지금의 나에게 ‘${card.keywords.join(
-      ' · '
-    )}’의 시선을 조용히 비추고 있습니다. 모든 문장을 다 기억하려 하기보다, 지금 가장 마음에 남는 질문 하나만 가볍게 간직해 보세요.`;
+    return t.today.synthesisSingleUpright(loc.displayName, joined);
   };
 
   const overallSynthesisSnapshot = computeOverallMessage();
@@ -202,9 +210,10 @@ export function TodayView({
       generatePersonalizedAttempts(
         selectedCards,
         selectedOrientations,
-        overallSynthesisSnapshot
+        overallSynthesisSnapshot,
+        language
       ),
-    [selectedCards, selectedOrientations, overallSynthesisSnapshot]
+    [selectedCards, selectedOrientations, overallSynthesisSnapshot, language]
   );
 
   const syncCurrentAttempts = (nextAttempts: SelectedAttemptItem[]) => {
@@ -223,13 +232,7 @@ export function TodayView({
 
     if (result.ok) {
       lastSyncedRecordIdRef.current = result.recordId;
-      if (nextAttempts.length > 0) {
-        setAttemptSyncNotice(
-          `선택한 시도 ${nextAttempts.length}개가 인사이트 노트에 자동 저장되었습니다.`
-        );
-      } else {
-        setAttemptSyncNotice(null);
-      }
+      setHasSyncedAttemptNotice(nextAttempts.length > 0);
     }
   };
 
@@ -270,7 +273,7 @@ export function TodayView({
     if (!trimmed) {
       setNoteFeedback({
         type: 'error',
-        text: '인사이트 노트에 남길 생각을 먼저 입력해 주세요.',
+        code: 'empty',
       });
       return;
     }
@@ -299,19 +302,20 @@ export function TodayView({
       setNoteDraft('');
       setNoteFeedback({
         type: 'success',
-        text: '인사이트 노트에 저장되었습니다.',
+        code: 'saved',
       });
     } else {
       setNoteFeedback({
         type: 'error',
-        text: result.error || '기록을 저장하는 중 문제가 발생했습니다.',
+        code: 'error',
+        text: result.error,
       });
     }
   };
 
   const resetReadingTransientState = () => {
     lastSyncedRecordIdRef.current = undefined;
-    setAttemptSyncNotice(null);
+    setHasSyncedAttemptNotice(false);
     setSelectedAttempts([]);
     setNoteDraft('');
     setNoteFeedback(null);
@@ -337,13 +341,13 @@ export function TodayView({
   if (phase !== 'revealed' || !activeCard) {
     return (
       <section
-        aria-label="지금, 나에게 — 카드 섞기 및 선택"
-        className="w-full max-w-2xl mx-auto px-5 sm:px-8 pt-4 sm:pt-7 pb-8 flex flex-col items-center text-center"
+        aria-label={t.today.sectionShuffleAria}
+        className="w-full max-w-2xl mx-auto px-5 sm:px-8 pt-2 sm:pt-7 pb-8 flex flex-col items-center text-center"
       >
         {/* Collapsible First-Visit Onboarding Card */}
         {!onboardingDismissed && (
           <aside
-            aria-label="LUCIDA 첫 방문 안내"
+            aria-label={t.today.onboardingAsideAria}
             className="w-full mb-5 sm:mb-6 rounded-2xl bg-[#FFFCF6] border border-[#E5DED1] px-4 py-3 text-left"
           >
             <div className="flex items-center justify-between gap-3">
@@ -351,39 +355,29 @@ export function TodayView({
                 type="button"
                 onClick={() => setOnboardingOpen((prev) => !prev)}
                 aria-expanded={onboardingOpen}
-                className="inline-flex items-center gap-2 text-xs font-medium text-[#777B61] cursor-pointer min-h-[32px]"
+                className="inline-flex items-center gap-2 text-xs font-medium text-[#777B61] cursor-pointer min-h-[32px] text-left"
               >
-                <span>처음 오셨나요? LUCIDA 이용 안내</span>
+                <span>{t.today.onboardingToggle}</span>
                 {onboardingOpen ? (
-                  <ChevronUp className="w-3.5 h-3.5" aria-hidden="true" />
+                  <ChevronUp className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 ) : (
-                  <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
+                  <ChevronDown className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 )}
               </button>
               <button
                 type="button"
                 onClick={handleDismissOnboarding}
-                className="text-xs text-[#827B72] hover:text-[#34312D] underline underline-offset-2 whitespace-nowrap cursor-pointer min-h-[32px]"
+                className="text-xs text-[#827B72] hover:text-[#34312D] underline underline-offset-2 whitespace-nowrap cursor-pointer min-h-[32px] shrink-0"
               >
-                다시 보지 않기
+                {t.today.onboardingDismiss}
               </button>
             </div>
 
             {onboardingOpen && (
               <ul className="mt-2.5 space-y-1.5 text-xs sm:text-[13px] leading-relaxed text-[#34312D]/85 border-t border-[#E5DED1] pt-2.5">
-                <li>
-                  • LUCIDA는 미래를 예언하지 않고, 카드를 통해 지금의 나를
-                  돌아보는 자기성찰 도구입니다.
-                </li>
-                <li>
-                  • 특정 시간에 얽매이지 않고 원할 때 언제든 카드를 섞고 뽑아
-                  질문을 만날 수 있습니다.
-                </li>
-                <li>
-                  • 기록은 선택사항이며, 작성한 내용은 현재 브라우저에만
-                  저장되므로 필요 시 인사이트 노트에서 JSON으로 백업할 수
-                  있습니다.
-                </li>
+                {t.today.onboardingBullets.map((line, idx) => (
+                  <li key={idx}>{line}</li>
+                ))}
               </ul>
             )}
           </aside>
@@ -398,14 +392,14 @@ export function TodayView({
         >
           <LucidaBrandMark
             variant="hero"
-            subtitle={phase === 'idle' ? 'NOW, LOOK WITHIN' : undefined}
+            subtitle={phase === 'idle' ? t.today.heroSubtitle : undefined}
           />
           <div className="space-y-1.5 sm:space-y-2">
             <h1 className="font-serif text-[28px] sm:text-4xl font-medium text-[#34312D]">
-              지금, 나에게
+              {t.today.heroTitle}
             </h1>
             <p className="text-sm sm:text-[15px] leading-relaxed text-[#827B72] max-w-md mx-auto">
-              잠시 멈추어 내 마음을 바라보는 시간
+              {t.today.heroLead}
             </p>
           </div>
         </header>
@@ -429,7 +423,7 @@ export function TodayView({
               <div className="flex flex-wrap items-center justify-center gap-2">
                 <div
                   role="group"
-                  aria-label="덱 구성 선택"
+                  aria-label={t.today.deckGroupAria}
                   className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#FFFCF6] border border-[#E7E0D5]"
                 >
                   <button
@@ -442,7 +436,7 @@ export function TodayView({
                         : 'text-[#827B72] hover:text-[#34312D]'
                     }`}
                   >
-                    전체 78장
+                    {t.today.deckFull}
                   </button>
                   <button
                     type="button"
@@ -454,13 +448,13 @@ export function TodayView({
                         : 'text-[#827B72] hover:text-[#34312D]'
                     }`}
                   >
-                    핵심 22장
+                    {t.today.deckMajor}
                   </button>
                 </div>
 
                 <div
                   role="group"
-                  aria-label="뽑기 장수 선택"
+                  aria-label={t.today.drawCountGroupAria}
                   className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#FFFCF6] border border-[#E7E0D5]"
                 >
                   <button
@@ -473,7 +467,7 @@ export function TodayView({
                         : 'text-[#827B72] hover:text-[#34312D]'
                     }`}
                   >
-                    한 장 성찰
+                    {t.today.drawOne}
                   </button>
                   <button
                     type="button"
@@ -485,13 +479,13 @@ export function TodayView({
                         : 'text-[#827B72] hover:text-[#34312D]'
                     }`}
                   >
-                    세 장 흐름
+                    {t.today.drawThree}
                   </button>
                 </div>
 
                 <div
                   role="group"
-                  aria-label="해석 시선 설정"
+                  aria-label={t.today.perspectiveGroupAria}
                   className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#FFFCF6] border border-[#E7E0D5]"
                 >
                   <button
@@ -504,7 +498,7 @@ export function TodayView({
                         : 'text-[#827B72] hover:text-[#34312D]'
                     }`}
                   >
-                    기본 시선
+                    {t.today.perspectiveStandard}
                   </button>
                   <button
                     type="button"
@@ -516,13 +510,13 @@ export function TodayView({
                         : 'text-[#827B72] hover:text-[#34312D]'
                     }`}
                   >
-                    열린 시선
+                    {t.today.perspectiveOpen}
                   </button>
                 </div>
               </div>
 
               <p className="text-[15px] leading-relaxed text-[#34312D]/85">
-                마음이 머무는 순간, 카드를 통해 나를 바라보세요.
+                {t.today.idlePrompt}
               </p>
               <button
                 type="button"
@@ -530,10 +524,10 @@ export function TodayView({
                 className="w-[72%] sm:w-full sm:max-w-[280px] mx-auto min-h-[40px] sm:min-h-[42px] inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-[#777B61] hover:bg-[#646850] active:scale-[0.995] text-[#FFFCF6] text-[14.5px] sm:text-[15px] font-medium shadow-xs transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
               >
                 <Shuffle className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>카드 섞기</span>
+                <span>{t.today.shuffleButton}</span>
               </button>
               <p className="text-xs leading-relaxed text-[#827B72]">
-                정답을 찾기보다 지금 떠오르는 생각에 귀 기울여 보세요.
+                {t.today.idleSubHint}
               </p>
               {savedRecordCount > 0 && (
                 <p className="text-xs text-[#777B61] pt-1">
@@ -542,9 +536,7 @@ export function TodayView({
                     onClick={() => onGoToJournal()}
                     className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-[#34312D] transition-colors cursor-pointer"
                   >
-                    <span>
-                      저장된 인사이트 노트 {savedRecordCount}건 보존 중 · 기록 보기
-                    </span>
+                    <span>{t.today.savedNotesBanner(savedRecordCount)}</span>
                     <ArrowRight className="w-3 h-3" aria-hidden="true" />
                   </button>
                 </p>
@@ -558,7 +550,7 @@ export function TodayView({
               aria-live="polite"
               className="text-[15px] leading-relaxed text-[#777B61] py-3"
             >
-              카드를 천천히 섞고 있습니다...
+              {t.today.shufflingStatus}
             </p>
           )}
 
@@ -570,17 +562,17 @@ export function TodayView({
                 className="text-[15px] leading-relaxed text-[#34312D]/90"
               >
                 {drawCount === 1
-                  ? '마음이 이끄는 카드 한 장을 직접 선택해 주세요.'
-                  : `마음이 이끄는 카드 3장을 중복 없이 차례로 선택해 주세요 (${selectedCards.length}/3).`}
+                  ? t.today.selectingSinglePrompt
+                  : t.today.selectingThreePrompt(selectedCards.length)}
               </p>
 
               {drawCount === 3 && (
                 <div className="grid grid-cols-3 gap-2 pt-1 text-left">
-                  {THREE_CARD_POSITIONS.map((label, idx) => {
+                  {t.today.threeCardPositions.map((label, idx) => {
                     const picked = Boolean(selectedCards[idx]);
                     return (
                       <div
-                        key={label}
+                        key={idx}
                         className={`rounded-xl border px-3 py-2 text-xs transition-colors ${
                           picked
                             ? 'bg-[#777B61]/10 border-[#777B61]/40 text-[#34312D]'
@@ -590,9 +582,9 @@ export function TodayView({
                         <p className="font-display text-[11px] text-[#777B61]">
                           0{idx + 1}.
                         </p>
-                        <p className="font-medium mt-0.5">{label}</p>
+                        <p className="font-medium mt-0.5 leading-snug">{label}</p>
                         <p className="text-[11px] mt-0.5">
-                          {picked ? '선택됨' : '선택 대기'}
+                          {picked ? t.today.slotPicked : t.today.slotWaiting}
                         </p>
                       </div>
                     );
@@ -606,101 +598,87 @@ export function TodayView({
                 className="inline-flex items-center justify-center gap-2 min-h-[44px] px-5 py-2.5 rounded-xl border border-[#E5DED1] bg-[#FFFCF6] hover:bg-[#E5DED1]/45 text-sm text-[#827B72] hover:text-[#34312D] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
               >
                 <Shuffle className="w-4 h-4" aria-hidden="true" />
-                <span>다시 섞기</span>
+                <span>{t.today.reshuffleButton}</span>
               </button>
             </>
           )}
         </div>
 
-        {/* Gentle below-the-fold guide preview so scrollability is naturally visible */}
+        {/* Gentle below-the-fold guide preview */}
         <div className="w-full mt-7 sm:mt-9 pt-6 border-t border-[#E5DED1] text-left space-y-4">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="font-serif text-base sm:text-lg font-medium text-[#34312D]">
-              LUCIDA와 머무는 흐름
-            </h2>
-            <span className="text-xs text-[#827B72] inline-flex items-center gap-1">
-              <span>아래로 이어짐</span>
-              <ArrowDown className="w-3.5 h-3.5 text-[#777B61]" aria-hidden="true" />
-            </span>
-          </div>
+          <h2 className="font-serif text-base sm:text-lg font-medium text-[#34312D]">
+            {t.today.guideTitle}
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="rounded-xl bg-[#FFFCF6] border border-[#E5DED1] p-4 space-y-1">
-              <p className="font-display text-xs font-medium tracking-[0.14em] text-[#777B61]">
-                01.
-              </p>
-              <p className="text-sm font-medium text-[#34312D]">
-                질문 떠올리기
-              </p>
-              <p className="text-xs leading-relaxed text-[#827B72]">
-                지금 마음에 머무는 생각이나 감정을 가볍게 떠올립니다.
-              </p>
-            </div>
-            <div className="rounded-xl bg-[#FFFCF6] border border-[#E5DED1] p-4 space-y-1">
-              <p className="font-display text-xs font-medium tracking-[0.14em] text-[#777B61]">
-                02.
-              </p>
-              <p className="text-sm font-medium text-[#34312D]">
-                카드와 질문 만나기
-              </p>
-              <p className="text-xs leading-relaxed text-[#827B72]">
-                정답이 아닌 새로운 시선을 건네는 메시지에 잠시 머뭅니다.
-              </p>
-            </div>
-            <div className="rounded-xl bg-[#FFFCF6] border border-[#E5DED1] p-4 space-y-1">
-              <p className="font-display text-xs font-medium tracking-[0.14em] text-[#777B61]">
-                03.
-              </p>
-              <p className="text-sm font-medium text-[#34312D]">
-                원하면 한 줄 기록
-              </p>
-              <p className="text-xs leading-relaxed text-[#827B72]">
-                떠오른 생각만 인사이트 노트에 남기거나 기록 없이 마쳐도 좋습니다.
-              </p>
-            </div>
+            {t.today.guideSteps.map((step) => (
+              <div
+                key={step.num}
+                className="rounded-xl bg-[#FFFCF6] border border-[#E5DED1] p-4 space-y-1"
+              >
+                <p className="font-display text-xs font-medium tracking-[0.14em] text-[#777B61]">
+                  {step.num}
+                </p>
+                <p className="text-sm font-medium text-[#34312D]">{step.title}</p>
+                <p className="text-xs leading-relaxed text-[#827B72]">
+                  {step.body}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
     );
   }
 
+  const activeLoc = getLocalizedCard(activeCard, language);
+
   const getOverallSynthesisMessage = () => {
     if (selectedCards.length > 1) {
-      const first = selectedCards[0];
-      const second = selectedCards[1];
-      const third = selectedCards[2];
-      return `지금의 마음을 비추는 「${first.nameKo}」(${first.keywords[0]})에서 시작해, 「${
-        second?.nameKo ?? first.nameKo
-      }」(${second?.keywords[0] ?? first.keywords[0]})의 시선으로 상황을 살피고, 「${
-        third?.nameKo ?? first.nameKo
-      }」(${third?.keywords[0] ?? first.keywords[0]})가 건네는 작은 걸음으로 오늘의 호흡을 이어가는 흐름입니다. 세 장 중 지금 가장 시선이 머무는 카드의 질문부터 천천히 답해 보세요.`;
+      const l0 = getLocalizedCard(selectedCards[0], language);
+      const l1 = getLocalizedCard(selectedCards[1] ?? selectedCards[0], language);
+      const l2 = getLocalizedCard(selectedCards[2] ?? selectedCards[0], language);
+      return t.today.synthesisThreeCard(
+        l0.displayName,
+        l0.keywords[0],
+        l1.displayName,
+        l1.keywords[0],
+        l2.displayName,
+        l2.keywords[0]
+      );
     }
 
+    const joined = activeLoc.keywords.join(' · ');
     if (activeOrientation === 'reversed') {
-      return `「${activeCard.nameKo}」 카드는 지금의 나에게 ‘${activeCard.keywords.join(
-        ' · '
-      )}’이라는 주제를 평소와 조금 다른 각도에서 천천히 들여다보게 합니다. 서둘러 결론을 내리기보다 지금 내 마음에 조용히 걸리는 지점을 담담히 살펴보세요.`;
+      return t.today.synthesisSingleReversed(activeLoc.displayName, joined);
     }
 
-    return `「${activeCard.nameKo}」 카드는 지금의 나에게 ‘${activeCard.keywords.join(
-      ' · '
-    )}’의 시선을 조용히 비추고 있습니다. 모든 문장을 다 기억하려 하기보다, 지금 가장 마음에 남는 질문 하나만 가볍게 간직해 보세요.`;
+    return t.today.synthesisSingleUpright(activeLoc.displayName, joined);
   };
+
+  const resolvedNoteFeedbackText = noteFeedback
+    ? noteFeedback.code === 'empty'
+      ? t.today.noteErrorEmpty
+      : noteFeedback.code === 'saved'
+      ? t.today.noteSavedFeedback
+      : noteFeedback.text || t.today.noteSaveErrorFallback
+    : null;
 
   return (
     <section
-      aria-label="나에게 온 메시지"
+      aria-label={t.today.sectionResultAria}
       className="w-full max-w-5xl mx-auto px-4 sm:px-8 pt-2 sm:pt-7 pb-8"
     >
       {/* Multi-card spread selector when 3 cards are drawn */}
       {selectedCards.length > 1 && (
         <div
-          aria-label="뽑은 세 장의 카드 흐름"
+          aria-label={t.today.spreadSelectorAria}
           className="mb-3.5 sm:mb-6 grid grid-cols-3 gap-2 sm:gap-4"
         >
           {selectedCards.map((card, idx) => {
             const isActive = idx === activeRevealIndex;
+            const loc = getLocalizedCard(card, language);
             const positionLabel =
-              THREE_CARD_POSITIONS[idx] || `${idx + 1}번째 카드`;
+              t.today.threeCardPositions[idx] || t.today.positionFallback(idx);
             return (
               <button
                 key={card.id}
@@ -727,11 +705,13 @@ export function TodayView({
                     0{idx + 1}. {positionLabel}
                   </p>
                   <p className="font-serif text-xs sm:text-sm font-medium text-[#34312D] leading-snug break-keep mt-0.5">
-                    {card.nameKo}
+                    {loc.displayName}
                   </p>
-                  <p className="hidden sm:block font-display text-[11px] text-[#827B72] leading-tight break-words mt-0.5">
-                    {card.nameEn}
-                  </p>
+                  {language !== 'en' && (
+                    <p className="hidden sm:block font-display text-[11px] text-[#827B72] leading-tight break-words mt-0.5">
+                      {card.nameEn}
+                    </p>
+                  )}
                 </div>
               </button>
             );
@@ -741,7 +721,7 @@ export function TodayView({
 
       {/* 1. Main Reading Result: Card Artwork + Interpretation + Overall Synthesis */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-7 lg:gap-9 items-start">
-        {/* 1-1. Selected Card & Card Title (side-by-side w/ insight on mobile for compact first screen) */}
+        {/* 1-1. Selected Card & Card Title */}
         <div className="lg:col-span-5 flex flex-row sm:flex-col items-start sm:items-center gap-3.5 sm:gap-0 w-full">
           <div className="shrink-0">
             <TarotCardFlip
@@ -755,9 +735,9 @@ export function TodayView({
             {(() => {
               const metaParts = [
                 selectedCards.length > 1
-                  ? THREE_CARD_POSITIONS[activeRevealIndex]
+                  ? t.today.threeCardPositions[activeRevealIndex]
                   : null,
-                activeCard.suitTheme || null,
+                activeLoc.suitTheme || null,
               ].filter(Boolean);
               if (metaParts.length === 0) return null;
               return (
@@ -767,13 +747,13 @@ export function TodayView({
               );
             })()}
             <h1 className="font-serif text-lg sm:text-[24px] font-medium text-[#34312D] leading-snug">
-              {activeCard.nameKo}
+              {activeLoc.displayName}
             </h1>
             <p className="text-[11px] sm:text-xs text-[#777B61]">
-              {activeCard.keywords.join(' · ')}
+              {activeLoc.keywords.join(' · ')}
             </p>
             <blockquote className="sm:hidden pt-1.5 mt-1 border-t border-[#E5DED1] font-serif text-[14px] leading-[1.45] text-[#34312D]">
-              “{activeCard.insight}”
+              “{activeLoc.insight}”
             </blockquote>
           </div>
         </div>
@@ -783,24 +763,24 @@ export function TodayView({
           <div className="bg-[#FFFCF6] border border-[#E5DED1] rounded-2xl p-3 sm:p-6 space-y-1.5 sm:space-y-3.5">
             <div className="hidden sm:flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs font-medium tracking-wide text-[#777B61]">
-                나에게 온 메시지
+                {t.today.messageHeading}
               </p>
               <p className="text-xs text-[#827B72]">
-                {activeCard.keywords.join(' · ')}
+                {activeLoc.keywords.join(' · ')}
               </p>
             </div>
             <blockquote className="hidden sm:block font-serif text-[21px] leading-[1.55] text-[#34312D]">
-              “{activeCard.insight}”
+              “{activeLoc.insight}”
             </blockquote>
             <p className="text-[13px] sm:text-[15px] leading-[1.55] sm:leading-[1.65] text-[#34312D]/85">
-              {activeCard.meaningGuide}
+              {activeLoc.meaningGuide}
             </p>
             <div className="pt-3 sm:pt-4 pb-1 sm:pb-1.5 border-t border-[#E7E0D5]/80 space-y-1.5 sm:space-y-2">
               <h2 className="text-[11px] font-medium tracking-wide text-[#777B61]">
-                나에게 던져볼 질문
+                {t.today.questionHeading}
               </h2>
               <p className="font-question text-[18px] sm:text-[21px] font-normal leading-[1.68] sm:leading-[1.72] text-[#51483E] break-keep">
-                {activeCard.reflectionQuestion}
+                {activeLoc.reflectionQuestion}
               </p>
             </div>
             {(() => {
@@ -814,14 +794,17 @@ export function TodayView({
               return (
                 <div className="pt-1.5 border-t border-[#E7E0D5]/70 flex flex-wrap items-center justify-between gap-2 text-xs">
                   <span className="text-[#827B72]">
-                    이전에 「{activeCard.nameKo}」 카드를 만났던 기록 {pastMatches.length}건
+                    {t.today.pastRecordNotice(
+                      activeLoc.displayName,
+                      pastMatches.length
+                    )}
                   </span>
                   <button
                     type="button"
                     onClick={() => onGoToJournal(pastMatches[0].id)}
                     className="inline-flex items-center gap-1 font-medium text-[#777B61] hover:text-[#34312D] underline underline-offset-4 cursor-pointer"
                   >
-                    <span>이전 기록 이어서 보기</span>
+                    <span>{t.today.pastRecordButton}</span>
                     <ArrowRight className="w-3 h-3" aria-hidden="true" />
                   </button>
                 </div>
@@ -830,27 +813,30 @@ export function TodayView({
           </div>
 
           <aside
-            aria-label="리딩 종합 메시지"
+            aria-label={t.today.synthesisAria}
             className="rounded-2xl bg-[#FFFCF6] border border-[#E5DED1] p-3 sm:p-5 space-y-1 sm:space-y-2"
           >
             <p className="text-[11px] sm:text-xs font-medium tracking-wide text-[#777B61]">
-              리딩 종합 메시지
+              {t.today.synthesisHeading}
             </p>
             {selectedCards.length > 1 && (
               <div className="hidden sm:grid sm:grid-cols-3 gap-2 text-xs">
-                {selectedCards.map((card, idx) => (
-                  <div
-                    key={`${card.id}-summary`}
-                    className="rounded-xl bg-[#F7F3EA]/80 border border-[#E5DED1]/80 px-3 py-2"
-                  >
-                    <p className="text-[11px] font-medium text-[#777B61]">
-                      0{idx + 1}. {THREE_CARD_POSITIONS[idx]}
-                    </p>
-                    <p className="font-serif text-sm text-[#34312D] mt-0.5">
-                      {card.nameKo}
-                    </p>
-                  </div>
-                ))}
+                {selectedCards.map((card, idx) => {
+                  const loc = getLocalizedCard(card, language);
+                  return (
+                    <div
+                      key={`${card.id}-summary`}
+                      className="rounded-xl bg-[#F7F3EA]/80 border border-[#E5DED1]/80 px-3 py-2"
+                    >
+                      <p className="text-[11px] font-medium text-[#777B61]">
+                        0{idx + 1}. {t.today.threeCardPositions[idx]}
+                      </p>
+                      <p className="font-serif text-sm text-[#34312D] mt-0.5">
+                        {loc.displayName}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
             )}
             <p className="text-[12.5px] sm:text-[15px] leading-[1.52] sm:leading-[1.65] text-[#34312D]/90">
@@ -860,9 +846,9 @@ export function TodayView({
         </div>
       </div>
 
-      {/* 2. Primary CTA ('새 리딩 시작') & Compact Secondary Pair ('다시 섞기' / '처음 화면으로') */}
+      {/* 2. Primary CTA & Compact Secondary Pair */}
       <div
-        aria-label="리딩 다음 행동"
+        aria-label={t.today.nextActionsAria}
         className="mt-3.5 sm:mt-6 flex flex-col items-center space-y-2"
       >
         <button
@@ -871,52 +857,52 @@ export function TodayView({
           className="w-[72%] sm:w-full sm:max-w-[280px] mx-auto min-h-[40px] sm:min-h-[42px] inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-[#777B61] hover:bg-[#646850] active:scale-[0.995] text-[#FFFCF6] text-[14.5px] sm:text-[15px] font-medium shadow-xs transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
         >
           <Sparkles className="w-4 h-4 shrink-0" aria-hidden="true" />
-          <span>새 리딩 시작</span>
+          <span>{t.today.newReadingButton}</span>
         </button>
 
-        <div className="w-[80%] sm:w-full sm:max-w-[280px] mx-auto grid grid-cols-2 gap-2">
+        <div className="w-[88%] sm:w-full sm:max-w-[300px] mx-auto grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={handleReshuffle}
-            className="min-w-0 min-h-[36px] sm:min-h-[38px] inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#E5DED1] bg-[#FFFCF6]/75 hover:bg-[#E5DED1]/40 text-xs font-medium text-[#6B645C] hover:text-[#34312D] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
+            className="min-w-0 min-h-[36px] sm:min-h-[38px] inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#E5DED1] bg-[#FFFCF6]/75 hover:bg-[#E5DED1]/40 text-[11.5px] sm:text-xs font-medium text-[#6B645C] hover:text-[#34312D] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
           >
             <Shuffle className="w-3.5 h-3.5 text-[#777B61] shrink-0" aria-hidden="true" />
-            <span>다시 섞기</span>
+            <span>{t.today.reshuffleButton}</span>
           </button>
 
           <button
             type="button"
             onClick={handleGoHomeClick}
-            className="min-w-0 min-h-[36px] sm:min-h-[38px] inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#E5DED1] bg-[#FFFCF6]/75 hover:bg-[#E5DED1]/40 text-xs font-medium text-[#6B645C] hover:text-[#34312D] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
+            className="min-w-0 min-h-[36px] sm:min-h-[38px] inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#E5DED1] bg-[#FFFCF6]/75 hover:bg-[#E5DED1]/40 text-[11.5px] sm:text-xs font-medium text-[#6B645C] hover:text-[#34312D] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
           >
             <Home className="w-3.5 h-3.5 text-[#777B61] shrink-0" aria-hidden="true" />
-            <span>처음 화면으로</span>
+            <span>{t.today.goHomeButton}</span>
           </button>
         </div>
 
         <p className="text-[11px] sm:text-xs leading-relaxed text-[#827B72] text-center pt-0.5">
-          새로운 리딩을 시작해도 저장된 인사이트 노트는 그대로 보존됩니다.
+          {t.today.preserveNotesHint}
         </p>
       </div>
 
       {/* 3. Selectable Attempts (4 personalized items, auto-synced to Insight Note) */}
       <div
-        aria-label="선택 가능한 시도"
+        aria-label={t.today.attemptsAria}
         className="mt-7 sm:mt-9 pt-6 border-t border-[#E5DED1] space-y-4"
       >
         <div className="space-y-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-xs font-medium tracking-wide text-[#777B61]">
-              선택 가능한 시도
+              {t.today.attemptsHeading}
             </h2>
             {selectedAttempts.length > 0 && (
               <span className="text-xs font-medium text-[#777B61] tabular-nums">
-                {selectedAttempts.length}개 선택 · 자동 저장됨
+                {t.today.attemptsSelectedBadge(selectedAttempts.length)}
               </span>
             )}
           </div>
           <p className="text-xs leading-relaxed text-[#827B72]">
-            체크한 내용은 인사이트 노트에 기록됩니다.
+            {t.today.attemptsHint}
           </p>
         </div>
 
@@ -967,7 +953,7 @@ export function TodayView({
           })}
         </div>
 
-        {(attemptSyncNotice || selectedAttempts.length > 0) && (
+        {(hasSyncedAttemptNotice || selectedAttempts.length > 0) && (
           <div
             role="status"
             aria-live="polite"
@@ -976,27 +962,32 @@ export function TodayView({
             <div className="flex flex-wrap items-center justify-between gap-2 text-[#777B61]">
               <span className="inline-flex items-center gap-1.5 font-medium">
                 <Check className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                <span>
-                  {attemptSyncNotice ||
-                    `선택한 시도 ${selectedAttempts.length}개가 인사이트 노트에 자동 저장되었습니다.`}
-                </span>
+                <span>{t.today.attemptsSyncedNotice(selectedAttempts.length)}</span>
               </span>
               <button
                 type="button"
                 onClick={handleOpenLinkedJournal}
                 className="inline-flex items-center gap-1 font-medium underline underline-offset-4 hover:text-[#34312D] transition-colors cursor-pointer"
               >
-                <span>인사이트 노트에서 보기</span>
+                <span>{t.today.viewInJournal}</span>
                 <ArrowRight className="w-3 h-3" aria-hidden="true" />
               </button>
             </div>
             {selectedAttempts.length > 0 && (
               <ul className="space-y-0.5 pl-5 text-[11px] text-[#34312D]/80 list-disc">
-                {selectedAttempts.map((item, idx) => (
-                  <li key={item.attemptId || `${item.cardId}-${idx}`}>
-                    {item.actionText}
-                  </li>
-                ))}
+                {selectedAttempts.map((item, idx) => {
+                  const matchedLive = personalizedAttempts.find(
+                    (p) => p.attemptId && p.attemptId === item.attemptId
+                  );
+                  const resolved =
+                    matchedLive ??
+                    resolveLocalizedAttemptItem(item, getCardById, language);
+                  return (
+                    <li key={item.attemptId || `${item.cardId}-${idx}`}>
+                      {resolved.actionText}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
@@ -1005,13 +996,13 @@ export function TodayView({
 
       {/* 4. Insight Note Direct Input Space */}
       <div
-        aria-label="인사이트 노트 작성"
+        aria-label={t.today.noteSectionAria}
         className="mt-7 sm:mt-9 pt-6 border-t border-[#E5DED1] space-y-3.5"
       >
         <div className="space-y-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-xs font-medium tracking-wide text-[#777B61]">
-              인사이트 노트
+              {t.today.noteHeading}
             </h2>
             {currentSessionRecord?.userNote?.trim() && (
               <button
@@ -1019,20 +1010,20 @@ export function TodayView({
                 onClick={() => onGoToJournal(currentSessionRecord.id)}
                 className="inline-flex items-center gap-1 text-xs font-medium text-[#777B61] hover:text-[#34312D] underline underline-offset-4 cursor-pointer"
               >
-                <span>인사이트 노트에서 보기</span>
+                <span>{t.today.viewInJournal}</span>
                 <ArrowRight className="w-3 h-3" aria-hidden="true" />
               </button>
             )}
           </div>
           <p className="text-xs leading-relaxed text-[#827B72]">
-            리딩을 보며 떠오른 생각이나 느낀 점을 기록해 두면 인사이트 노트에 보관됩니다.
+            {t.today.noteSectionHint}
           </p>
         </div>
 
         {currentSessionRecord?.userNote?.trim() && (
           <div className="rounded-xl bg-[#FFFCF6]/85 border border-[#E5DED1] px-4 py-3 space-y-1.5">
             <p className="text-[11px] font-medium text-[#777B61]">
-              이번 리딩에 저장된 기록
+              {t.today.savedReadingNoteLabel}
             </p>
             <p className="text-sm leading-relaxed text-[#34312D] whitespace-pre-wrap">
               {currentSessionRecord.userNote}
@@ -1043,7 +1034,7 @@ export function TodayView({
         <form onSubmit={handleSaveInsightNote} className="space-y-3">
           <textarea
             id="reading-insight-note"
-            aria-label="인사이트 노트 입력"
+            aria-label={t.today.noteInputAria}
             rows={4}
             value={noteDraft}
             onChange={(e) => {
@@ -1052,15 +1043,15 @@ export function TodayView({
             }}
             placeholder={
               currentSessionRecord?.userNote?.trim()
-                ? '이어서 남기고 싶은 생각이 있다면 추가로 적어 보세요.'
-                : '카드를 보며 떠오른 생각이나 마음에 남은 문장을 자유롭게 적어 보세요.'
+                ? t.today.notePlaceholderFollowUp
+                : t.today.notePlaceholderEmpty
             }
             className="w-full rounded-xl border border-[#E5DED1] bg-[#FFFCF6] px-4 py-3 text-[14.5px] sm:text-[15px] leading-relaxed text-[#34312D] placeholder:text-[#827B72]/75 focus:outline-none focus:border-[#777B61] focus:ring-1 focus:ring-[#777B61]/30 resize-y"
           />
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="min-h-[20px]">
-              {noteFeedback && (
+              {noteFeedback && resolvedNoteFeedbackText && (
                 <p
                   role="status"
                   aria-live="polite"
@@ -1073,7 +1064,7 @@ export function TodayView({
                   {noteFeedback.type === 'success' && (
                     <Check className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                   )}
-                  <span>{noteFeedback.text}</span>
+                  <span>{resolvedNoteFeedbackText}</span>
                 </p>
               )}
             </div>
@@ -1083,7 +1074,7 @@ export function TodayView({
               disabled={!noteDraft.trim()}
               className="inline-flex items-center justify-center gap-1.5 min-h-[42px] px-5 py-2 rounded-xl bg-[#777B61] hover:bg-[#646850] disabled:opacity-45 disabled:cursor-not-allowed text-[#FFFCF6] text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
             >
-              <span>인사이트 노트에 저장</span>
+              <span>{t.today.noteSaveButton}</span>
             </button>
           </div>
         </form>

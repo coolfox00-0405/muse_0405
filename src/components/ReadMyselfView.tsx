@@ -6,8 +6,12 @@ import {
   filterRecordsByRange,
   analyzeReflections,
 } from '../utils/reflectionAnalyzer';
-import { formatKoreanDate } from '../hooks/useReflections';
+import { formatLocalizedDate } from '../hooks/useReflections';
 import { LucidaBrandMark } from './LucidaBrandMark';
+import { useLanguage } from '../i18n/LanguageContext';
+import { getCardById } from '../data/cards';
+import { getLocalizedRecordCardName } from '../i18n/cardHelpers';
+import { resolveLocalizedAttemptItem } from '../utils/attemptGenerator';
 
 interface ReadMyselfViewProps {
   records: ReflectionRecord[];
@@ -16,22 +20,23 @@ interface ReadMyselfViewProps {
   onOpenRecord: (recordId: string) => void;
 }
 
-const RANGE_OPTIONS: { id: AnalysisRange; label: string }[] = [
-  { id: 'recent', label: '최근 기록' },
-  { id: 'custom', label: '기간 직접 선택' },
-  { id: 'all', label: '전체 기록' },
-];
-
 export function ReadMyselfView({
   records,
   onGoToToday,
   onGoToJournal,
   onOpenRecord,
 }: ReadMyselfViewProps) {
+  const { language, t } = useLanguage();
   const [range, setRange] = useState<AnalysisRange>('recent');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [flaggedRanges, setFlaggedRanges] = useState<Record<string, boolean>>({});
+
+  const rangeOptions: { id: AnalysisRange; label: string }[] = [
+    { id: 'recent', label: t.readMyself.ranges.recent },
+    { id: 'custom', label: t.readMyself.ranges.custom },
+    { id: 'all', label: t.readMyself.ranges.all },
+  ];
 
   const filteredRecords = useMemo(
     () => filterRecordsByRange(records, range, startDate, endDate),
@@ -43,27 +48,26 @@ export function ReadMyselfView({
 
   const analysis = useMemo(() => {
     if (filteredRecords.length < 2) return null;
-    return analyzeReflections(filteredRecords);
-  }, [filteredRecords]);
+    return analyzeReflections(filteredRecords, language);
+  }, [filteredRecords, language]);
 
   return (
     <section
-      aria-label="나를 읽다"
-      className="w-full max-w-4xl mx-auto px-5 sm:px-8 pt-4 sm:pt-6 pb-12 space-y-8"
+      aria-label={t.readMyself.sectionAria}
+      className="w-full max-w-4xl mx-auto px-5 sm:px-8 pt-2 sm:pt-6 pb-12 space-y-8"
     >
       <div>
         <LucidaBrandMark variant="compact" className="mb-3 sm:mb-4" />
         <header className="space-y-2 border-b border-[#E7E0D5] pb-6">
-        <p className="font-serif text-sm tracking-[0.14em] text-[#827B72]">
-          Read Myself
-        </p>
-        <h1 className="font-serif text-2xl sm:text-3xl font-medium text-[#34312D]">
-          나를 읽다
-        </h1>
-        <p className="text-sm sm:text-[15px] leading-relaxed text-[#827B72]">
-          인사이트 노트에 쌓인 기록을 원하는 범위로 모아, 생각과 관심사의
-          흐름을 차분히 살펴봅니다.
-        </p>
+          <p className="font-serif text-sm tracking-[0.14em] text-[#827B72]">
+            {t.readMyself.subtitle}
+          </p>
+          <h1 className="font-serif text-2xl sm:text-3xl font-medium text-[#34312D]">
+            {t.readMyself.title}
+          </h1>
+          <p className="text-sm sm:text-[15px] leading-relaxed text-[#827B72]">
+            {t.readMyself.description}
+          </p>
         </header>
       </div>
 
@@ -71,10 +75,10 @@ export function ReadMyselfView({
       <div className="space-y-4">
         <div
           role="group"
-          aria-label="분석 범위 선택"
+          aria-label={t.readMyself.rangeGroupAria}
           className="inline-flex flex-wrap items-center gap-1.5 p-1.5 rounded-xl bg-[#FFFCF6] border border-[#E7E0D5]"
         >
-          {RANGE_OPTIONS.map((opt) => {
+          {rangeOptions.map((opt) => {
             const isActive = range === opt.id;
             return (
               <button
@@ -101,7 +105,7 @@ export function ReadMyselfView({
                 htmlFor="analysis-start-date"
                 className="text-xs text-[#827B72] whitespace-nowrap"
               >
-                시작일
+                {t.readMyself.startDateLabel}
               </label>
               <input
                 id="analysis-start-date"
@@ -119,7 +123,7 @@ export function ReadMyselfView({
                 htmlFor="analysis-end-date"
                 className="text-xs text-[#827B72] whitespace-nowrap"
               >
-                종료일
+                {t.readMyself.endDateLabel}
               </label>
               <input
                 id="analysis-end-date"
@@ -138,7 +142,7 @@ export function ReadMyselfView({
                 }}
                 className="text-xs text-[#827B72] hover:text-[#34312D] underline underline-offset-2 ml-auto cursor-pointer"
               >
-                기간 초기화
+                {t.readMyself.resetRange}
               </button>
             )}
           </div>
@@ -153,11 +157,10 @@ export function ReadMyselfView({
           </div>
           <div className="space-y-2">
             <h2 className="font-serif text-xl text-[#34312D]">
-              아직 살펴볼 기록이 없습니다
+              {t.readMyself.emptyTitle}
             </h2>
             <p className="text-[15px] leading-relaxed text-[#827B72] max-w-md mx-auto">
-              인사이트 노트에 기록이 쌓이면 이곳에서 자주 등장하는 주제와
-              생각의 흐름을 천천히 돌아볼 수 있습니다.
+              {t.readMyself.emptyBody}
             </p>
           </div>
           <div className="pt-1 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -166,14 +169,14 @@ export function ReadMyselfView({
               onClick={onGoToToday}
               className="w-full sm:w-auto min-h-[44px] px-6 py-2.5 rounded-xl bg-[#777B61] hover:bg-[#646850] text-[#FFFCF6] text-sm font-medium transition-colors whitespace-nowrap cursor-pointer"
             >
-              지금, 나에게로 이동
+              {t.readMyself.goTodayButton}
             </button>
             <button
               type="button"
               onClick={onGoToJournal}
               className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl border border-[#E7E0D5] bg-[#FFFCF6] hover:bg-[#F7F3EA] text-[#34312D] text-sm font-medium transition-colors whitespace-nowrap cursor-pointer"
             >
-              인사이트 노트 보기
+              {t.readMyself.goJournalButton}
             </button>
           </div>
         </div>
@@ -183,55 +186,69 @@ export function ReadMyselfView({
       {records.length > 0 && filteredRecords.length === 0 && (
         <div className="bg-[#FFFCF6] border border-[#E7E0D5] rounded-2xl px-6 py-12 text-center space-y-3">
           <p className="font-serif text-lg text-[#34312D]">
-            선택한 기간에 해당하는 기록이 없습니다
+            {t.readMyself.noRangeRecordsTitle}
           </p>
           <p className="text-sm text-[#827B72]">
-            다른 기간을 선택하거나 ‘전체 기록’으로 범위를 넓혀 살펴보세요.
+            {t.readMyself.noRangeRecordsBody}
           </p>
         </div>
       )}
 
       {/* State 3: Only 1 record in range */}
-      {filteredRecords.length === 1 && (
-        <div className="bg-[#FFFCF6] border border-[#E7E0D5] rounded-2xl p-6 sm:p-8 space-y-5">
-          <div className="flex items-center gap-3 text-[#777B61]">
-            <BookOpen className="w-5 h-5 shrink-0" aria-hidden="true" />
-            <h2 className="font-serif text-xl text-[#34312D]">
-              기록이 조금 더 쌓이면 흐름을 읽어볼 수 있어요
-            </h2>
+      {filteredRecords.length === 1 && (() => {
+        const singleRec = filteredRecords[0];
+        const card =
+          singleRec.cardId !== 'freeform'
+            ? getCardById(singleRec.cardId)
+            : undefined;
+        const displayCardName = getLocalizedRecordCardName(
+          singleRec.cardId,
+          singleRec.cardName,
+          card,
+          language,
+          t.journal.freeformCardName
+        );
+        const singlePreview =
+          singleRec.userNote.trim() ||
+          singleRec.actionMemo?.trim() ||
+          singleRec.selectedActions
+            ?.map((a) => resolveLocalizedAttemptItem(a, getCardById, language).actionText)
+            .join(' · ') ||
+          singleRec.selectedAction ||
+          '';
+
+        return (
+          <div className="bg-[#FFFCF6] border border-[#E7E0D5] rounded-2xl p-6 sm:p-8 space-y-5">
+            <div className="flex items-center gap-3 text-[#777B61]">
+              <BookOpen className="w-5 h-5 shrink-0" aria-hidden="true" />
+              <h2 className="font-serif text-xl text-[#34312D]">
+                {t.readMyself.oneRecordTitle}
+              </h2>
+            </div>
+            <p className="text-[15px] leading-relaxed text-[#34312D]/85">
+              {t.readMyself.oneRecordBody}
+            </p>
+            <button
+              type="button"
+              onClick={() => onOpenRecord(singleRec.id)}
+              className="w-full text-left border-t border-[#E7E0D5] pt-4 space-y-1.5 group cursor-pointer"
+            >
+              <p className="text-xs text-[#827B72] tabular-nums flex items-center justify-between gap-2">
+                <span>
+                  {formatLocalizedDate(singleRec.date, language)} · {displayCardName}
+                </span>
+                <span className="inline-flex items-center gap-1 text-[#777B61] group-hover:underline shrink-0">
+                  {t.readMyself.viewOriginal}
+                  <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
+                </span>
+              </p>
+              <p className="text-sm leading-relaxed text-[#34312D]/90">
+                {singlePreview}
+              </p>
+            </button>
           </div>
-          <p className="text-[15px] leading-relaxed text-[#34312D]/85">
-            현재 선택한 범위에는 1개의 기록이 있습니다. 억지로 해석을 만들기보다
-            2개 이상의 기록이 모였을 때 반복되는 주제와 생각의 변화를 함께
-            살펴보는 편이 더 정확합니다.
-          </p>
-          <button
-            type="button"
-            onClick={() => onOpenRecord(filteredRecords[0].id)}
-            className="w-full text-left border-t border-[#E7E0D5] pt-4 space-y-1.5 group cursor-pointer"
-          >
-            <p className="text-xs text-[#827B72] tabular-nums flex items-center justify-between">
-              <span>
-                {formatKoreanDate(filteredRecords[0].date)} ·{' '}
-                {filteredRecords[0].cardName}
-              </span>
-              <span className="inline-flex items-center gap-1 text-[#777B61] group-hover:underline">
-                원본 보기
-                <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
-              </span>
-            </p>
-            <p className="text-sm leading-relaxed text-[#34312D]/90">
-              {filteredRecords[0].userNote.trim() ||
-                filteredRecords[0].actionMemo?.trim() ||
-                filteredRecords[0].selectedActions
-                  ?.map((a) => a.actionText)
-                  .join(' · ') ||
-                filteredRecords[0].selectedAction ||
-                ''}
-            </p>
-          </button>
-        </div>
-      )}
+        );
+      })()}
 
       {/* State 4: Full Observational Analysis (2+ records) */}
       {analysis && (
@@ -239,7 +256,7 @@ export function ReadMyselfView({
           {/* Scope Summary Line */}
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#827B72] px-1">
             <span className="tabular-nums">
-              분석 대상: {analysis.recordCount}개의 기록 (로컬 규칙 기반 요약)
+              {t.readMyself.scopeSummary(analysis.recordCount)}
             </span>
             <span className="tabular-nums">{analysis.dateSpanLabel}</span>
           </div>
@@ -247,7 +264,7 @@ export function ReadMyselfView({
           {/* 1. Frequent Themes & Keywords with Evidence */}
           <article className="bg-[#FFFCF6] border border-[#E7E0D5] rounded-2xl p-6 sm:p-8 space-y-4">
             <h2 className="text-xs font-medium tracking-wide text-[#777B61]">
-              자주 등장한 주제와 단어
+              {t.readMyself.themesTitle}
             </h2>
             <p className="text-[15px] sm:text-base leading-[1.75] text-[#34312D]">
               {analysis.themeSummary}
@@ -262,7 +279,7 @@ export function ReadMyselfView({
                       <p className="text-sm font-medium text-[#34312D]">
                         {kw.word}
                         <span className="ml-2 text-xs font-normal text-[#827B72] tabular-nums">
-                          {kw.recordCount}개 기록에서 등장
+                          {t.readMyself.keywordCountLabel(kw.recordCount)}
                         </span>
                       </p>
                       <ul className="space-y-1.5 pl-3 border-l border-[#E7E0D5]">
@@ -290,7 +307,7 @@ export function ReadMyselfView({
           {/* 2. Flow of Thoughts (clickable to original note) */}
           <article className="bg-[#FFFCF6] border border-[#E7E0D5] rounded-2xl p-6 sm:p-8 space-y-5">
             <h2 className="text-xs font-medium tracking-wide text-[#777B61]">
-              이전과 최근 기록의 흐름
+              {t.readMyself.flowTitle}
             </h2>
             <p className="text-[15px] leading-relaxed text-[#34312D]/85">
               {analysis.flowSummary}
@@ -307,8 +324,8 @@ export function ReadMyselfView({
                       <span>
                         {item.dateLabel} · {item.cardName}
                       </span>
-                      <span className="inline-flex items-center gap-0.5 text-[#777B61] opacity-80 group-hover:opacity-100">
-                        원본
+                      <span className="inline-flex items-center gap-0.5 text-[#777B61] opacity-80 group-hover:opacity-100 shrink-0">
+                        {t.readMyself.originalShort}
                         <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
                       </span>
                     </p>
@@ -325,7 +342,7 @@ export function ReadMyselfView({
           {analysis.recurringQuestions.length > 0 && (
             <article className="bg-[#FFFCF6] border border-[#E7E0D5] rounded-2xl p-6 sm:p-8 space-y-4">
               <h2 className="text-xs font-medium tracking-wide text-[#777B61]">
-                반복해서 마음에 남긴 질문
+                {t.readMyself.recurringQuestionsTitle}
               </h2>
               <ul className="space-y-3">
                 {analysis.recurringQuestions.map((item, idx) => (
@@ -339,7 +356,7 @@ export function ReadMyselfView({
                         • {item.question}
                       </p>
                       <p className="text-xs text-[#827B72] pl-3 tabular-nums">
-                        근거 기록: {item.dateLabel}
+                        {t.readMyself.sourceRecordLabel(item.dateLabel)}
                       </p>
                     </button>
                   </li>
@@ -351,7 +368,7 @@ export function ReadMyselfView({
           {/* 4. New Perspective */}
           <article className="bg-[#FFFCF6] border border-[#E7E0D5] rounded-2xl p-6 sm:p-8 space-y-3">
             <h2 className="text-xs font-medium tracking-wide text-[#777B61]">
-              기록에서 발견되는 연결점
+              {t.readMyself.connectionTitle}
             </h2>
             <p className="text-[15px] sm:text-base leading-[1.75] text-[#34312D]">
               {analysis.newPerspective}
@@ -361,7 +378,7 @@ export function ReadMyselfView({
           {/* 5. Closing Questions */}
           <article className="bg-[#FFFCF6] border border-[#E7E0D5] rounded-2xl p-6 sm:p-8 space-y-4">
             <h2 className="text-xs font-medium tracking-wide text-[#777B61]">
-              다음에 스스로 살펴볼 질문
+              {t.readMyself.closingQuestionsTitle}
             </h2>
             <ul className="space-y-3">
               {analysis.closingQuestions.map((q, idx) => (
@@ -379,8 +396,7 @@ export function ReadMyselfView({
           <div className="rounded-2xl bg-[#FFFCF6]/80 border border-[#E7E0D5] p-5 sm:p-6 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs leading-relaxed text-[#827B72]">
-                이 화면은 외부 AI 서버로 기록을 전송하지 않고, 현재 브라우저에
-                저장된 실제 기록만을 바탕으로 정리한 규칙 기반 참고 자료입니다.
+                {t.readMyself.localNoticeText}
               </p>
               <button
                 type="button"
@@ -402,15 +418,15 @@ export function ReadMyselfView({
                 )}
                 <span>
                   {isSummaryFlagged
-                    ? '나에게는 맞지 않음으로 표시됨'
-                    : '이 요약이 나에게는 맞지 않아요'}
+                    ? t.readMyself.flagMarked
+                    : t.readMyself.flagAction}
                 </span>
               </button>
             </div>
             <p className="text-xs leading-relaxed text-[#827B72]">
               {isSummaryFlagged
-                ? '표시해 두었습니다. 규칙 기반 요약은 단어와 빈도의 단순한 참고일 뿐이며, 기록에 담긴 나만의 맥락과 느낌이 언제나 가장 우선합니다.'
-                : '성격을 규정하거나 심리 상태를 진단하지 않으며, 스스로를 돌아보는 참고 관점으로만 활용해 주세요.'}
+                ? t.readMyself.flagMarkedNote
+                : t.readMyself.flagDefaultNote}
             </p>
           </div>
         </div>
