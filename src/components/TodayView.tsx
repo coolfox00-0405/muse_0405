@@ -338,212 +338,193 @@ export function TodayView({
   };
 
   if (phase !== 'revealed' || !activeCard) {
+    const isIdle = phase === 'idle';
     return (
       <section
         aria-label={t.today.sectionShuffleAria}
         className={`w-full max-w-2xl mx-auto px-5 sm:px-8 pb-8 flex flex-col items-center text-center ${
-          phase === 'idle'
-            ? onboardingDismissed
-              ? 'pt-[clamp(1.75rem,8vh,5rem)] sm:pt-7'
-              : 'pt-[clamp(1rem,2.5vh,2rem)] sm:pt-7'
-            : 'pt-3 sm:pt-7'
+          isIdle ? 'pt-1 sm:pt-7' : 'pt-3 sm:pt-7'
         }`}
       >
-        {/* Collapsible First-Visit Onboarding Card */}
-        {!onboardingDismissed && phase === 'idle' && (
-          <aside
-            aria-label={t.today.onboardingAsideAria}
-            className="w-full mb-5 sm:mb-6 rounded-2xl bg-[#FFFCF6] border border-[#E5DED1] px-3.5 py-1.5 sm:px-4 sm:py-3 text-left"
-          >
-            <div className="flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={() => setOnboardingOpen((prev) => !prev)}
-                aria-expanded={onboardingOpen}
-                className="inline-flex items-center gap-2 text-xs font-medium text-[#777B61] cursor-pointer min-h-[28px] sm:min-h-[32px] text-left"
-              >
-                <span>{t.today.onboardingToggle}</span>
-                {onboardingOpen ? (
-                  <ChevronUp className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                ) : (
-                  <ChevronDown className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={handleDismissOnboarding}
-                className="text-xs text-[#827B72] hover:text-[#34312D] underline underline-offset-2 whitespace-nowrap cursor-pointer min-h-[28px] sm:min-h-[32px] shrink-0"
-              >
-                {t.today.onboardingDismiss}
-              </button>
-            </div>
-
-            {onboardingOpen && (
-              <ul className="mt-2.5 space-y-1.5 text-xs sm:text-[13px] leading-relaxed text-[#34312D]/85 border-t border-[#E5DED1] pt-2.5">
-                {t.today.onboardingBullets.map((line, idx) => (
-                  <li key={idx}>{line}</li>
-                ))}
-              </ul>
-            )}
-          </aside>
-        )}
-
-        <header
-          className={
-            phase === 'idle'
-              ? 'mb-[clamp(1.25rem,3.5vh,2rem)] sm:mb-7'
-              : 'mb-2.5 sm:mb-4'
-          }
-        >
-          <div className="space-y-2 sm:space-y-2.5">
-            <h1 className="font-serif text-[22px] sm:text-4xl font-medium text-[#34312D] leading-tight sm:leading-normal">
-              {t.today.heroTitle}
-            </h1>
-            <p className="text-[13.5px] sm:text-[15px] leading-relaxed text-[#827B72] max-w-md mx-auto">
-              {t.today.heroLead}
-            </p>
-          </div>
-        </header>
-
-        <div className="w-full my-0 sm:my-1 overflow-x-clip">
-          <CardShuffleSpread
-            phase={phase === 'revealed' ? 'idle' : phase}
-            spreadCards={spreadCards}
-            selectedCards={selectedCards}
-            onStartShuffle={onStartShuffle}
-            onSelectCard={onSelectCard}
-          />
-        </div>
-
         <div
-          id="reading-setup-controls"
-          className={`w-full max-w-md scroll-mt-24 ${
-            phase === 'idle'
-              ? 'mt-[clamp(1.25rem,3.5vh,2rem)] sm:mt-7 space-y-[clamp(0.875rem,2.5vh,1.5rem)] sm:space-y-4'
-              : 'mt-2.5 sm:mt-5 space-y-2'
+          className={`w-full flex flex-col items-center ${
+            isIdle
+              ? 'min-h-[calc(100dvh-7.25rem)] sm:min-h-0 justify-center sm:justify-start pt-2 pb-2 [@media(max-height:700px)]:pt-1 [@media(max-height:700px)]:pb-1 sm:pt-2 sm:pb-0'
+              : ''
           }`}
         >
-          {phase === 'idle' && (
-            <>
-              <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
-                <div
-                  role="group"
-                  aria-label={t.today.deckGroupAria}
-                  className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#FFFCF6] border border-[#E7E0D5]"
-                >
-                  <button
-                    type="button"
-                    onClick={() => onChangeDeckMode('full')}
-                    aria-pressed={deckMode === 'full'}
-                    className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                      deckMode === 'full'
-                        ? 'bg-[#777B61] text-[#FFFCF6]'
-                        : 'text-[#827B72] hover:text-[#34312D]'
-                    }`}
+          <header
+            className={
+              isIdle
+                ? 'mb-[clamp(1.125rem,3.2vh,2rem)] [@media(max-height:700px)]:mb-4 sm:mb-7'
+                : 'mb-2.5 sm:mb-4'
+            }
+          >
+            {isIdle && (
+              <p className="font-display text-[13px] sm:text-[15px] font-medium tracking-[0.28em] text-[#827B72] mb-1.5 sm:mb-2 select-none">
+                LUCIDA
+              </p>
+            )}
+            <div className="space-y-1.5 sm:space-y-2.5">
+              <h1 className="font-serif text-[27px] sm:text-4xl font-medium text-[#34312D] leading-tight sm:leading-normal">
+                {t.today.heroTitle}
+              </h1>
+              <p className="text-[13.5px] sm:text-[15px] leading-relaxed text-[#7A736A] max-w-md mx-auto">
+                {t.today.heroLead}
+              </p>
+            </div>
+          </header>
+
+          <div className="w-full my-0 sm:my-1 overflow-x-clip">
+            <CardShuffleSpread
+              phase={phase === 'revealed' ? 'idle' : phase}
+              spreadCards={spreadCards}
+              selectedCards={selectedCards}
+              onStartShuffle={onStartShuffle}
+              onSelectCard={onSelectCard}
+            />
+          </div>
+
+          <div
+            id="reading-setup-controls"
+            className={`w-full max-w-md scroll-mt-24 ${
+              isIdle
+                ? 'mt-[clamp(1.125rem,3.2vh,2rem)] [@media(max-height:700px)]:mt-4 sm:mt-7'
+                : 'mt-2.5 sm:mt-5 space-y-2'
+            }`}
+          >
+            {isIdle && (
+              <>
+                <div className="flex flex-col items-center gap-2 sm:gap-2.5">
+                  <div
+                    role="group"
+                    aria-label={t.today.deckGroupAria}
+                    className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#FFFCF6] border border-[#E7E0D5]"
                   >
-                    {t.today.deckFull}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onChangeDeckMode('major')}
-                    aria-pressed={deckMode === 'major'}
-                    className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                      deckMode === 'major'
-                        ? 'bg-[#777B61] text-[#FFFCF6]'
-                        : 'text-[#827B72] hover:text-[#34312D]'
-                    }`}
-                  >
-                    {t.today.deckMajor}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => onChangeDeckMode('full')}
+                      aria-pressed={deckMode === 'full'}
+                      className={`min-h-[32px] sm:min-h-[36px] px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                        deckMode === 'full'
+                          ? 'bg-[#777B61] text-[#FFFCF6]'
+                          : 'text-[#827B72] hover:text-[#34312D]'
+                      }`}
+                    >
+                      {t.today.deckFull}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onChangeDeckMode('major')}
+                      aria-pressed={deckMode === 'major'}
+                      className={`min-h-[32px] sm:min-h-[36px] px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                        deckMode === 'major'
+                          ? 'bg-[#777B61] text-[#FFFCF6]'
+                          : 'text-[#827B72] hover:text-[#34312D]'
+                      }`}
+                    >
+                      {t.today.deckMajor}
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5">
+                    <div
+                      role="group"
+                      aria-label={t.today.drawCountGroupAria}
+                      className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#FFFCF6] border border-[#E7E0D5]"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => onChangeDrawCount(1)}
+                        aria-pressed={drawCount === 1}
+                        className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                          drawCount === 1
+                            ? 'bg-[#777B61] text-[#FFFCF6]'
+                            : 'text-[#827B72] hover:text-[#34312D]'
+                        }`}
+                      >
+                        {t.today.drawOne}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onChangeDrawCount(3)}
+                        aria-pressed={drawCount === 3}
+                        className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                          drawCount === 3
+                            ? 'bg-[#777B61] text-[#FFFCF6]'
+                            : 'text-[#827B72] hover:text-[#34312D]'
+                        }`}
+                      >
+                        {t.today.drawThree}
+                      </button>
+                    </div>
+
+                    <div
+                      role="group"
+                      aria-label={t.today.perspectiveGroupAria}
+                      className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#FFFCF6] border border-[#E7E0D5]"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => onChangeAllowReversed(false)}
+                        aria-pressed={!allowReversed}
+                        className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                          !allowReversed
+                            ? 'bg-[#777B61] text-[#FFFCF6]'
+                            : 'text-[#827B72] hover:text-[#34312D]'
+                        }`}
+                      >
+                        {t.today.perspectiveStandard}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onChangeAllowReversed(true)}
+                        aria-pressed={allowReversed}
+                        className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                          allowReversed
+                            ? 'bg-[#777B61] text-[#FFFCF6]'
+                            : 'text-[#827B72] hover:text-[#34312D]'
+                        }`}
+                      >
+                        {t.today.perspectiveOpen}
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
-                <div
-                  role="group"
-                  aria-label={t.today.drawCountGroupAria}
-                  className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#FFFCF6] border border-[#E7E0D5]"
-                >
-                  <button
-                    type="button"
-                    onClick={() => onChangeDrawCount(1)}
-                    aria-pressed={drawCount === 1}
-                    className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                      drawCount === 1
-                        ? 'bg-[#777B61] text-[#FFFCF6]'
-                        : 'text-[#827B72] hover:text-[#34312D]'
-                    }`}
-                  >
-                    {t.today.drawOne}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onChangeDrawCount(3)}
-                    aria-pressed={drawCount === 3}
-                    className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                      drawCount === 3
-                        ? 'bg-[#777B61] text-[#FFFCF6]'
-                        : 'text-[#827B72] hover:text-[#34312D]'
-                    }`}
-                  >
-                    {t.today.drawThree}
-                  </button>
-                </div>
-
-                <div
-                  role="group"
-                  aria-label={t.today.perspectiveGroupAria}
-                  className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#FFFCF6] border border-[#E7E0D5]"
-                >
-                  <button
-                    type="button"
-                    onClick={() => onChangeAllowReversed(false)}
-                    aria-pressed={!allowReversed}
-                    className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                      !allowReversed
-                        ? 'bg-[#777B61] text-[#FFFCF6]'
-                        : 'text-[#827B72] hover:text-[#34312D]'
-                    }`}
-                  >
-                    {t.today.perspectiveStandard}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onChangeAllowReversed(true)}
-                    aria-pressed={allowReversed}
-                    className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                      allowReversed
-                        ? 'bg-[#777B61] text-[#FFFCF6]'
-                        : 'text-[#827B72] hover:text-[#34312D]'
-                    }`}
-                  >
-                    {t.today.perspectiveOpen}
-                  </button>
-                </div>
-              </div>
-
-              <div className="pt-0.5 pb-1">
-                <button
-                  type="button"
-                  onClick={onStartShuffle}
-                  className="w-[72%] sm:w-full sm:max-w-[280px] mx-auto min-h-[42px] sm:min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#777B61] hover:bg-[#646850] active:scale-[0.995] text-[#FFFCF6] text-[14.5px] sm:text-[15px] font-medium shadow-xs transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
-                >
-                  <Shuffle className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  <span>{t.today.shuffleButton}</span>
-                </button>
-              </div>
-              {savedRecordCount > 0 && (
-                <p className="text-xs text-[#777B61] pt-1">
-                  <button
-                    type="button"
-                    onClick={() => onGoToJournal()}
-                    className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-[#34312D] transition-colors cursor-pointer"
-                  >
-                    <span>{t.today.savedNotesBanner(savedRecordCount)}</span>
-                    <ArrowRight className="w-3 h-3" aria-hidden="true" />
-                  </button>
+                <p className="mt-[clamp(1.125rem,2.8vh,1.75rem)] [@media(max-height:700px)]:mt-3.5 sm:mt-6 text-[13.5px] sm:text-[15px] leading-snug sm:leading-relaxed text-[#34312D]/85">
+                  {t.today.idlePrompt}
                 </p>
-              )}
-            </>
-          )}
+
+                <div className="mt-[clamp(0.75rem,2vh,1rem)] [@media(max-height:700px)]:mt-2.5 sm:mt-3.5">
+                  <button
+                    type="button"
+                    onClick={onStartShuffle}
+                    className="w-full max-w-[332px] sm:max-w-[300px] mx-auto min-h-[46px] sm:min-h-[46px] [@media(max-height:700px)]:min-h-[42px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#777B61] hover:bg-[#646850] active:scale-[0.995] text-[#FFFCF6] text-[14.5px] sm:text-[15px] font-medium shadow-xs transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
+                  >
+                    <Shuffle className="w-4 h-4 shrink-0" aria-hidden="true" />
+                    <span>{t.today.shuffleButton}</span>
+                  </button>
+                </div>
+
+                <p className="mt-[clamp(0.625rem,1.6vh,0.875rem)] [@media(max-height:700px)]:mt-2 sm:mt-3 text-xs leading-relaxed text-[#827B72]">
+                  {t.today.idleSubHint}
+                </p>
+
+                {savedRecordCount > 0 && (
+                  <p className="mt-2 text-xs text-[#777B61] pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => onGoToJournal()}
+                      className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-[#34312D] transition-colors cursor-pointer"
+                    >
+                      <span>{t.today.savedNotesBanner(savedRecordCount)}</span>
+                      <ArrowRight className="w-3 h-3" aria-hidden="true" />
+                    </button>
+                  </p>
+                )}
+              </>
+            )}
 
           {phase === 'shuffling' && (
             <p
@@ -627,10 +608,48 @@ export function TodayView({
               )}
             </>
           )}
+          </div>
         </div>
 
         {/* Gentle below-the-fold guide preview */}
-        <div className="w-full mt-9 sm:mt-11 pt-6 border-t border-[#E5DED1] text-left space-y-4">
+        <div className="w-full mt-7 sm:mt-11 pt-6 border-t border-[#E5DED1] text-left space-y-4">
+          {!onboardingDismissed && isIdle && (
+            <aside
+              aria-label={t.today.onboardingAsideAria}
+              className="w-full rounded-2xl bg-[#FFFCF6] border border-[#E5DED1] px-3.5 py-2 sm:px-4 sm:py-3 text-left"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => setOnboardingOpen((prev) => !prev)}
+                  aria-expanded={onboardingOpen}
+                  className="inline-flex items-center gap-2 text-xs font-medium text-[#777B61] cursor-pointer min-h-[28px] sm:min-h-[32px] text-left"
+                >
+                  <span>{t.today.onboardingToggle}</span>
+                  {onboardingOpen ? (
+                    <ChevronUp className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDismissOnboarding}
+                  className="text-xs text-[#827B72] hover:text-[#34312D] underline underline-offset-2 whitespace-nowrap cursor-pointer min-h-[28px] sm:min-h-[32px] shrink-0"
+                >
+                  {t.today.onboardingDismiss}
+                </button>
+              </div>
+
+              {onboardingOpen && (
+                <ul className="mt-2.5 space-y-1.5 text-xs sm:text-[13px] leading-relaxed text-[#34312D]/85 border-t border-[#E5DED1] pt-2.5">
+                  {t.today.onboardingBullets.map((line, idx) => (
+                    <li key={idx}>{line}</li>
+                  ))}
+                </ul>
+              )}
+            </aside>
+          )}
           <h2 className="font-serif text-base sm:text-lg font-medium text-[#34312D]">
             {t.today.guideTitle}
           </h2>
