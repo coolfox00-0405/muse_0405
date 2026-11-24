@@ -343,188 +343,189 @@ export function TodayView({
       <section
         aria-label={t.today.sectionShuffleAria}
         className={`w-full max-w-2xl mx-auto px-5 sm:px-8 pb-8 flex flex-col items-center text-center ${
-          isIdle ? 'pt-1 sm:pt-7' : 'pt-3 sm:pt-7'
+          isIdle ? 'pt-3 sm:pt-7' : 'pt-3 sm:pt-7'
         }`}
       >
         <div
           className={`w-full flex flex-col items-center ${
             isIdle
-              ? 'min-h-[calc(100dvh-7.25rem)] sm:min-h-0 justify-center sm:justify-start pt-2 pb-2 [@media(max-height:700px)]:pt-1 [@media(max-height:700px)]:pb-1 sm:pt-2 sm:pb-0'
+              ? 'min-h-[calc(100dvh-7.75rem)] sm:min-h-0 pt-2 pb-2 [@media(max-height:700px)]:pt-1 [@media(max-height:700px)]:pb-1 sm:pt-2 sm:pb-0'
               : ''
           }`}
         >
-          <header
-            className={
-              isIdle
-                ? 'mb-[clamp(1.125rem,3.2vh,2rem)] [@media(max-height:700px)]:mb-4 sm:mb-7'
-                : 'mb-2.5 sm:mb-4'
-            }
-          >
-            {isIdle && (
-              <p className="font-display text-[13px] sm:text-[15px] font-medium tracking-[0.28em] text-[#827B72] mb-1.5 sm:mb-2 select-none">
-                LUCIDA
-              </p>
-            )}
-            <div className="space-y-1.5 sm:space-y-2.5">
-              <h1 className="font-serif text-[27px] sm:text-4xl font-medium text-[#34312D] leading-tight sm:leading-normal">
-                {t.today.heroTitle}
-              </h1>
-              <p className="text-[13.5px] sm:text-[15px] leading-relaxed text-[#7A736A] max-w-md mx-auto">
-                {t.today.heroLead}
-              </p>
+          <div className={`w-full flex flex-col items-center ${isIdle ? 'my-auto sm:my-0' : ''}`}>
+            <header
+              className={
+                isIdle
+                  ? 'mb-[clamp(1.125rem,3.2vh,2rem)] [@media(max-height:700px)]:mb-3.5 [@media(max-height:620px)]:mb-2 sm:mb-7'
+                  : 'mb-2.5 sm:mb-4'
+              }
+            >
+              {isIdle && (
+                <p className="block font-display text-[16px] sm:text-[18px] font-medium tracking-[0.28em] text-[#756E65] mb-2 [@media(max-height:620px)]:mb-1.5 sm:mb-2.5 leading-none select-none">
+                  LUCIDA
+                </p>
+              )}
+              <div className="space-y-1.5 sm:space-y-2.5">
+                <h1 className="font-serif text-[27px] sm:text-4xl font-medium text-[#34312D] leading-tight sm:leading-normal">
+                  {t.today.heroTitle}
+                </h1>
+                <p className="text-[13.5px] sm:text-[15px] leading-relaxed text-[#7A736A] max-w-md mx-auto">
+                  {t.today.heroLead}
+                </p>
+              </div>
+            </header>
+
+            <div className="w-full my-0 sm:my-1 overflow-x-clip">
+              <CardShuffleSpread
+                phase={phase === 'revealed' ? 'idle' : phase}
+                spreadCards={spreadCards}
+                selectedCards={selectedCards}
+                onStartShuffle={onStartShuffle}
+                onSelectCard={onSelectCard}
+              />
             </div>
-          </header>
 
-          <div className="w-full my-0 sm:my-1 overflow-x-clip">
-            <CardShuffleSpread
-              phase={phase === 'revealed' ? 'idle' : phase}
-              spreadCards={spreadCards}
-              selectedCards={selectedCards}
-              onStartShuffle={onStartShuffle}
-              onSelectCard={onSelectCard}
-            />
-          </div>
-
-          <div
-            id="reading-setup-controls"
-            className={`w-full max-w-md scroll-mt-24 ${
-              isIdle
-                ? 'mt-[clamp(1.125rem,3.2vh,2rem)] [@media(max-height:700px)]:mt-4 sm:mt-7'
-                : 'mt-2.5 sm:mt-5 space-y-2'
-            }`}
-          >
-            {isIdle && (
-              <>
-                <div className="flex flex-col items-center gap-2 sm:gap-2.5">
-                  <div
-                    role="group"
-                    aria-label={t.today.deckGroupAria}
-                    className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#FFFCF6] border border-[#E7E0D5]"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => onChangeDeckMode('full')}
-                      aria-pressed={deckMode === 'full'}
-                      className={`min-h-[32px] sm:min-h-[36px] px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                        deckMode === 'full'
-                          ? 'bg-[#777B61] text-[#FFFCF6]'
-                          : 'text-[#827B72] hover:text-[#34312D]'
-                      }`}
-                    >
-                      {t.today.deckFull}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onChangeDeckMode('major')}
-                      aria-pressed={deckMode === 'major'}
-                      className={`min-h-[32px] sm:min-h-[36px] px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                        deckMode === 'major'
-                          ? 'bg-[#777B61] text-[#FFFCF6]'
-                          : 'text-[#827B72] hover:text-[#34312D]'
-                      }`}
-                    >
-                      {t.today.deckMajor}
-                    </button>
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5">
+            <div
+              id="reading-setup-controls"
+              className={`w-full max-w-md scroll-mt-24 ${
+                isIdle
+                  ? 'mt-[clamp(1.125rem,3.2vh,2rem)] [@media(max-height:700px)]:mt-3.5 [@media(max-height:620px)]:mt-2 sm:mt-7'
+                  : 'mt-2.5 sm:mt-5 space-y-2'
+              }`}
+            >
+              {isIdle && (
+                <>
+                  <div className="flex flex-col items-center gap-2 [@media(max-height:620px)]:gap-1.5 sm:gap-2.5">
                     <div
                       role="group"
-                      aria-label={t.today.drawCountGroupAria}
+                      aria-label={t.today.deckGroupAria}
                       className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#FFFCF6] border border-[#E7E0D5]"
                     >
                       <button
                         type="button"
-                        onClick={() => onChangeDrawCount(1)}
-                        aria-pressed={drawCount === 1}
-                        className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                          drawCount === 1
+                        onClick={() => onChangeDeckMode('full')}
+                        aria-pressed={deckMode === 'full'}
+                        className={`min-h-[32px] sm:min-h-[36px] px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                          deckMode === 'full'
                             ? 'bg-[#777B61] text-[#FFFCF6]'
                             : 'text-[#827B72] hover:text-[#34312D]'
                         }`}
                       >
-                        {t.today.drawOne}
+                        {t.today.deckFull}
                       </button>
                       <button
                         type="button"
-                        onClick={() => onChangeDrawCount(3)}
-                        aria-pressed={drawCount === 3}
-                        className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                          drawCount === 3
+                        onClick={() => onChangeDeckMode('major')}
+                        aria-pressed={deckMode === 'major'}
+                        className={`min-h-[32px] sm:min-h-[36px] px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                          deckMode === 'major'
                             ? 'bg-[#777B61] text-[#FFFCF6]'
                             : 'text-[#827B72] hover:text-[#34312D]'
                         }`}
                       >
-                        {t.today.drawThree}
+                        {t.today.deckMajor}
                       </button>
                     </div>
 
-                    <div
-                      role="group"
-                      aria-label={t.today.perspectiveGroupAria}
-                      className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#FFFCF6] border border-[#E7E0D5]"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => onChangeAllowReversed(false)}
-                        aria-pressed={!allowReversed}
-                        className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                          !allowReversed
-                            ? 'bg-[#777B61] text-[#FFFCF6]'
-                            : 'text-[#827B72] hover:text-[#34312D]'
-                        }`}
+                    <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5">
+                      <div
+                        role="group"
+                        aria-label={t.today.drawCountGroupAria}
+                        className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#FFFCF6] border border-[#E7E0D5]"
                       >
-                        {t.today.perspectiveStandard}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onChangeAllowReversed(true)}
-                        aria-pressed={allowReversed}
-                        className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                          allowReversed
-                            ? 'bg-[#777B61] text-[#FFFCF6]'
-                            : 'text-[#827B72] hover:text-[#34312D]'
-                        }`}
+                        <button
+                          type="button"
+                          onClick={() => onChangeDrawCount(1)}
+                          aria-pressed={drawCount === 1}
+                          className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                            drawCount === 1
+                              ? 'bg-[#777B61] text-[#FFFCF6]'
+                              : 'text-[#827B72] hover:text-[#34312D]'
+                          }`}
+                        >
+                          {t.today.drawOne}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onChangeDrawCount(3)}
+                          aria-pressed={drawCount === 3}
+                          className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                            drawCount === 3
+                              ? 'bg-[#777B61] text-[#FFFCF6]'
+                              : 'text-[#827B72] hover:text-[#34312D]'
+                          }`}
+                        >
+                          {t.today.drawThree}
+                        </button>
+                      </div>
+
+                      <div
+                        role="group"
+                        aria-label={t.today.perspectiveGroupAria}
+                        className="inline-flex items-center gap-1 p-1 rounded-xl bg-[#FFFCF6] border border-[#E7E0D5]"
                       >
-                        {t.today.perspectiveOpen}
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => onChangeAllowReversed(false)}
+                          aria-pressed={!allowReversed}
+                          className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                            !allowReversed
+                              ? 'bg-[#777B61] text-[#FFFCF6]'
+                              : 'text-[#827B72] hover:text-[#34312D]'
+                          }`}
+                        >
+                          {t.today.perspectiveStandard}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onChangeAllowReversed(true)}
+                          aria-pressed={allowReversed}
+                          className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11.5px] sm:text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                            allowReversed
+                              ? 'bg-[#777B61] text-[#FFFCF6]'
+                              : 'text-[#827B72] hover:text-[#34312D]'
+                          }`}
+                        >
+                          {t.today.perspectiveOpen}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <p className="mt-[clamp(1.125rem,2.8vh,1.75rem)] [@media(max-height:700px)]:mt-3.5 sm:mt-6 text-[13.5px] sm:text-[15px] leading-snug sm:leading-relaxed text-[#34312D]/85">
-                  {t.today.idlePrompt}
-                </p>
-
-                <div className="mt-[clamp(0.75rem,2vh,1rem)] [@media(max-height:700px)]:mt-2.5 sm:mt-3.5">
-                  <button
-                    type="button"
-                    onClick={onStartShuffle}
-                    className="w-full max-w-[332px] sm:max-w-[300px] mx-auto min-h-[46px] sm:min-h-[46px] [@media(max-height:700px)]:min-h-[42px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#777B61] hover:bg-[#646850] active:scale-[0.995] text-[#FFFCF6] text-[14.5px] sm:text-[15px] font-medium shadow-xs transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
-                  >
-                    <Shuffle className="w-4 h-4 shrink-0" aria-hidden="true" />
-                    <span>{t.today.shuffleButton}</span>
-                  </button>
-                </div>
-
-                <p className="mt-[clamp(0.625rem,1.6vh,0.875rem)] [@media(max-height:700px)]:mt-2 sm:mt-3 text-xs leading-relaxed text-[#827B72]">
-                  {t.today.idleSubHint}
-                </p>
-
-                {savedRecordCount > 0 && (
-                  <p className="mt-2 text-xs text-[#777B61] pt-0.5">
-                    <button
-                      type="button"
-                      onClick={() => onGoToJournal()}
-                      className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-[#34312D] transition-colors cursor-pointer"
-                    >
-                      <span>{t.today.savedNotesBanner(savedRecordCount)}</span>
-                      <ArrowRight className="w-3 h-3" aria-hidden="true" />
-                    </button>
+                  <p className="mt-[clamp(1.125rem,2.8vh,1.75rem)] [@media(max-height:700px)]:mt-3.5 [@media(max-height:620px)]:mt-2 sm:mt-6 text-[13.5px] sm:text-[15px] leading-snug sm:leading-relaxed text-[#34312D]/85">
+                    {t.today.idlePrompt}
                   </p>
-                )}
-              </>
-            )}
+
+                  <div className="mt-[clamp(0.75rem,2vh,1rem)] [@media(max-height:700px)]:mt-2.5 [@media(max-height:620px)]:mt-1.5 sm:mt-3.5">
+                    <button
+                      type="button"
+                      onClick={onStartShuffle}
+                      className="w-full max-w-[332px] sm:max-w-[300px] mx-auto min-h-[46px] sm:min-h-[46px] [@media(max-height:700px)]:min-h-[42px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#777B61] hover:bg-[#646850] active:scale-[0.995] text-[#FFFCF6] text-[14.5px] sm:text-[15px] font-medium shadow-xs transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] whitespace-nowrap cursor-pointer"
+                    >
+                      <Shuffle className="w-4 h-4 shrink-0" aria-hidden="true" />
+                      <span>{t.today.shuffleButton}</span>
+                    </button>
+                  </div>
+
+                  <p className="mt-[clamp(0.625rem,1.6vh,0.875rem)] [@media(max-height:700px)]:mt-2 sm:mt-3 text-xs leading-relaxed text-[#827B72]">
+                    {t.today.idleSubHint}
+                  </p>
+
+                  {savedRecordCount > 0 && (
+                    <p className="mt-2 text-xs text-[#777B61] pt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => onGoToJournal()}
+                        className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-[#34312D] transition-colors cursor-pointer"
+                      >
+                        <span>{t.today.savedNotesBanner(savedRecordCount)}</span>
+                        <ArrowRight className="w-3 h-3" aria-hidden="true" />
+                      </button>
+                    </p>
+                  )}
+                </>
+              )}
 
           {phase === 'shuffling' && (
             <p
@@ -608,6 +609,7 @@ export function TodayView({
               )}
             </>
           )}
+            </div>
           </div>
         </div>
 
@@ -766,7 +768,7 @@ export function TodayView({
       {/* 1. Main Reading Result: Card Artwork + Interpretation + Overall Synthesis */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-7 lg:gap-9 items-start">
         {/* 1-1. Selected Card & Card Title */}
-        <div className="lg:col-span-5 flex flex-row sm:flex-col items-center gap-3.5 sm:gap-0 w-full">
+        <div className="lg:col-span-5 flex flex-row sm:flex-col items-center gap-[18px] sm:gap-0 w-full">
           <div className="shrink-0">
             <TarotCardFlip
               card={activeCard}
@@ -775,7 +777,7 @@ export function TodayView({
             />
           </div>
 
-          <div className="flex-1 min-w-0 sm:mt-3.5 text-left sm:text-center space-y-1">
+          <div className="flex-1 min-w-0 sm:mt-3.5 text-left sm:text-center space-y-2 sm:space-y-1">
             {(() => {
               const metaParts = [
                 selectedCards.length > 1
@@ -785,15 +787,15 @@ export function TodayView({
               ].filter(Boolean);
               if (metaParts.length === 0) return null;
               return (
-                <p className="text-[11px] sm:text-xs tracking-[0.05em] text-[#827B72]">
+                <p className="text-[12px] sm:text-xs tracking-[0.04em] text-[#7D766D] sm:text-[#827B72] leading-snug break-keep">
                   {metaParts.join(' · ')}
                 </p>
               );
             })()}
-            <h1 className="font-serif text-[19px] sm:text-[24px] font-medium text-[#34312D] leading-snug">
+            <h1 className="font-serif text-[23px] sm:text-[24px] font-semibold sm:font-medium text-[#34312D] leading-[1.3] sm:leading-snug break-keep">
               {activeLoc.displayName}
             </h1>
-            <p className="text-[11px] sm:text-xs text-[#777B61]/90 leading-relaxed">
+            <p className="text-[12.5px] sm:text-xs text-[#6F745A] sm:text-[#777B61]/90 leading-[1.58] sm:leading-relaxed break-keep">
               {activeLoc.keywords.join(' · ')}
             </p>
           </div>
@@ -801,26 +803,26 @@ export function TodayView({
 
         {/* 1-2. Card Interpretation, Reflection Question & Overall Synthesis */}
         <div className="lg:col-span-7 space-y-2.5 sm:space-y-4">
-          <div className="bg-[#FAF7EF] border border-[#E8E3D6]/80 rounded-2xl p-4 sm:p-6 space-y-3 sm:space-y-4">
+          <div className="bg-[#FAF7EF] border border-[#E8E3D6]/80 rounded-2xl p-4 sm:p-6 space-y-3.5 sm:space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-[11px] sm:text-xs font-medium tracking-[0.06em] text-[#777B61]">
+              <p className="text-[11.5px] sm:text-xs font-medium tracking-[0.06em] text-[#777B61]">
                 {t.today.messageHeading}
               </p>
               <p className="hidden sm:block text-[11px] text-[#827B72]">
                 {activeLoc.keywords.join(' · ')}
               </p>
             </div>
-            <blockquote className="font-serif text-[17.5px] sm:text-[22px] font-medium leading-[1.58] sm:leading-[1.6] text-[#2F2C28]">
+            <blockquote className="font-serif text-[18.5px] sm:text-[22px] font-medium leading-[1.56] sm:leading-[1.6] text-[#2B2824] break-keep">
               “{activeLoc.insight}”
             </blockquote>
-            <p className="text-[13.5px] sm:text-[15px] leading-[1.68] sm:leading-[1.72] text-[#34312D]/82">
+            <p className="text-[14px] sm:text-[15px] leading-[1.72] text-[#34312D]/80 break-keep">
               {activeLoc.meaningGuide}
             </p>
-            <div className="rounded-xl bg-[#F2F1E6]/85 border border-[#E2DFCF]/75 px-3.5 py-3 sm:px-5 sm:py-4 space-y-1.5 sm:space-y-2">
-              <h2 className="text-[10.5px] sm:text-[11px] font-medium tracking-[0.06em] text-[#777B61]/90">
+            <div className="rounded-xl bg-[#F2F1E6]/85 border border-[#E2DFCF]/75 px-4 py-3.5 sm:px-5 sm:py-4 space-y-2">
+              <h2 className="text-[11px] font-medium tracking-[0.06em] text-[#777B61]/90">
                 {t.today.questionHeading}
               </h2>
-              <p className="font-question text-[16.5px] sm:text-[20px] font-medium leading-[1.68] sm:leading-[1.72] text-[#34312D] break-keep">
+              <p className="font-question text-[16.5px] sm:text-[20px] font-medium leading-[1.8] sm:leading-[1.72] text-[#34312D] break-keep">
                 {activeLoc.reflectionQuestion}
               </p>
             </div>
