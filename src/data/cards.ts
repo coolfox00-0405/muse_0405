@@ -3,7 +3,7 @@ import { MINOR_ARCANA_DECK } from './minorArcana';
 import { dedupeDeck, fisherYatesShuffle } from '../utils/deckShuffle';
 
 export const TAROT_CARD_BACK_IMAGE =
-  '/assets/aistudio/___________________b981d681.png';
+  '/src/assets/images/lucida_card_back_1795528882272.jpg';
 
 export const TAROT_DECK: TarotCard[] = [
   {

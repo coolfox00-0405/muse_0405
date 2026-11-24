@@ -48,12 +48,12 @@ export function CardShuffleSpread({
 
   if (phase === 'idle') {
     return (
-      <div className="relative w-full max-w-[540px] h-[195px] sm:h-[244px] mx-auto flex items-center justify-center select-none">
+      <div className="relative w-full max-w-[540px] h-[180px] sm:h-[224px] mx-auto flex items-center justify-center select-none">
         <button
           type="button"
           onClick={onStartShuffle}
           aria-label={t.shuffleSpread.idleAria}
-          className="relative w-[130px] sm:w-[162px] aspect-[2/3] rounded-[10px] overflow-hidden transition-opacity duration-200 hover:opacity-95 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#777B61] cursor-pointer"
+          className="relative w-[132px] sm:w-[164px] aspect-[3/4] rounded-[12px] overflow-hidden transition-opacity duration-200 hover:opacity-95 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#777B61] cursor-pointer"
         >
           <img
             src={TAROT_CARD_BACK_IMAGE}
@@ -68,7 +68,7 @@ export function CardShuffleSpread({
   }
 
   return (
-    <div className="relative w-full max-w-[540px] h-[204px] sm:h-[248px] mx-auto flex items-center justify-center overflow-visible select-none">
+    <div className="relative w-full max-w-[540px] h-[196px] sm:h-[238px] mx-auto flex items-center justify-center overflow-visible select-none">
       {cardsToRender.map((card, index) => {
         const offset = index - CENTER_INDEX; // -3 .. +3
         const fanAngle = offset * 6.5; // -19.5deg .. +19.5deg symmetrical arc
@@ -151,7 +151,7 @@ export function CardShuffleSpread({
               zIndex: isAlreadySelected ? 20 + selectedOrder : index + 1,
               transformOrigin: 'center bottom',
             }}
-            className={`absolute w-[104px] sm:w-[132px] aspect-[2/3] rounded-[10px] overflow-hidden shadow-[0_6px_16px_-8px_rgba(52,49,45,0.16)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] ${
+            className={`absolute w-[104px] sm:w-[132px] aspect-[3/4] rounded-[11px] overflow-hidden shadow-[0_6px_16px_-8px_rgba(52,49,45,0.16)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61] ${
               isAlreadySelected
                 ? 'ring-2 ring-[#777B61]/55 cursor-not-allowed'
                 : isSelecting

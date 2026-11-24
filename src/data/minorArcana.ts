@@ -1,6 +1,6 @@
 import { TarotCard, TarotSuit } from '../types/reflection';
 
-const BACK_IMAGE = '/assets/aistudio/___________________b981d681.png';
+const BACK_IMAGE = '/src/assets/images/lucida_card_back_1795528882272.jpg';
 
 const SUIT_META: Record<
   TarotSuit,
