@@ -342,10 +342,7 @@ const SUIT_PROFILES_BY_LANG: Record<
         isRev
           ? `‘${kw0}’을 향한 조급함을 내려놓고 15분 정도 아무것도 하지 않는 충전의 여백 두기`
           : `몸을 가볍게 움직이거나 기지개를 켜며 ‘${kw0}’의 답답한 에너지 풀어주기`,
-      question: (_n, kw0, _kw1, q, isRev) =>
-        isRev
-          ? `지금 내가 억지로 애쓰고 있는 ‘${kw0}’ 중, 잠시 내려놓아도 괜찮은 짐은 무엇인가요?`
-          : q,
+      question: (_n, _kw0, _kw1, q) => q,
     },
     cups: {
       emotion: (_n, kw0, _kw1, _q, isRev) =>
@@ -368,10 +365,7 @@ const SUIT_PROFILES_BY_LANG: Record<
         isRev
           ? `‘${kw0}’으로 지친 나를 위해 따뜻한 물이나 포근한 휴식으로 마음의 그릇 비워주기`
           : `좋아하는 음악을 들으며 ‘${kw1}’을 품고 수고한 내 마음에 다정한 말 건네기`,
-      question: (_n, kw0, _kw1, q, isRev) =>
-        isRev
-          ? `지금 ‘${kw0}’과 관련해 나 자신에게 먼저 건네고 싶은 위로는 무엇인가요?`
-          : q,
+      question: (_n, _kw0, _kw1, q) => q,
     },
     swords: {
       emotion: (_n, kw0, _kw1, _q, isRev) =>
@@ -394,10 +388,7 @@ const SUIT_PROFILES_BY_LANG: Record<
         isRev
           ? `‘${kw0}’으로 이어지는 생각의 소음을 잠시 멈추고 창밖을 보며 천천히 숨 내쉬기`
           : `「${name}」의 복잡한 생각에서 잠깐 벗어나 단순한 집안일이나 짧은 산책으로 머리 식히기`,
-      question: (_n, kw0, _kw1, q, isRev) =>
-        isRev
-          ? `‘${kw0}’ 앞에서 내가 스스로에게 너무 엄격한 잣대를 들이대고 있지는 않은가요?`
-          : q,
+      question: (_n, _kw0, _kw1, q) => q,
     },
     pentacles: {
       emotion: (_n, kw0, _kw1, _q, isRev) =>
@@ -420,10 +411,7 @@ const SUIT_PROFILES_BY_LANG: Record<
         isRev
           ? `‘${kw0}’에 매달리느라 미룬 식사, 수면, 휴식 중 하나를 오늘 우선 챙기기`
           : `「${name}」의 기운처럼 내 책상이나 방 한쪽을 정돈하고, 몸이 편안해지는 따뜻한 한 끼 챙겨 먹기`,
-      question: (_n, kw0, _kw1, q, isRev) =>
-        isRev
-          ? `지금 내 일상의 균형과 ‘${kw0}’을 지키기 위해 가장 먼저 속도를 늦추고 싶은 부분은 어디인가요?`
-          : q,
+      question: (_n, _kw0, _kw1, q) => q,
     },
   },
   en: {
@@ -448,10 +436,7 @@ const SUIT_PROFILES_BY_LANG: Record<
         isRev
           ? `Set aside urgency around "${kw0}" and claim 15 minutes of unscheduled rest to recharge`
           : `Stretch gently or move around lightly to loosen pent-up tension around "${kw0}"`,
-      question: (_n, kw0, _kw1, q, isRev) =>
-        isRev
-          ? `Around "${kw0}" where you have been pushing hard, what weight could you safely set down for a while?`
-          : q,
+      question: (_n, _kw0, _kw1, q) => q,
     },
     cups: {
       emotion: (_n, kw0, _kw1, _q, isRev) =>
@@ -474,10 +459,7 @@ const SUIT_PROFILES_BY_LANG: Record<
         isRev
           ? `Pour a glass of warm water or rest comfortably to soothe a heart worn thin by "${kw0}"`
           : `Listen to comforting music and offer yourself a gentle word for carrying "${kw1}"`,
-      question: (_n, kw0, _kw1, q, isRev) =>
-        isRev
-          ? `Regarding "${kw0}", what kind reassurance would you like to offer yourself first right now?`
-          : q,
+      question: (_n, _kw0, _kw1, q) => q,
     },
     swords: {
       emotion: (_n, kw0, _kw1, _q, isRev) =>
@@ -500,10 +482,7 @@ const SUIT_PROFILES_BY_LANG: Record<
         isRev
           ? `Pause the mental chatter around "${kw0}", look out a window, and exhale slowly`
           : `Step out of ${name}’s heavy thoughts for a moment with a simple chore or short walk`,
-      question: (_n, kw0, _kw1, q, isRev) =>
-        isRev
-          ? `Facing "${kw0}", have you been holding yourself to an overly harsh standard lately?`
-          : q,
+      question: (_n, _kw0, _kw1, q) => q,
     },
     pentacles: {
       emotion: (_n, kw0, _kw1, _q, isRev) =>
@@ -526,10 +505,7 @@ const SUIT_PROFILES_BY_LANG: Record<
         isRev
           ? `Prioritize one basic need—a proper meal, sleep, or rest—you postponed while chasing "${kw0}"`
           : `In the grounded spirit of ${name}, tidy one corner of your desk and nourish yourself warmly`,
-      question: (_n, kw0, _kw1, q, isRev) =>
-        isRev
-          ? `To protect your daily rhythm and "${kw0}", where would slowing down first help the most?`
-          : q,
+      question: (_n, _kw0, _kw1, q) => q,
     },
   },
   ja: {
@@ -554,10 +530,7 @@ const SUIT_PROFILES_BY_LANG: Record<
         isRev
           ? `「${kw0}」への焦りをいったんおろし、15分ほど何もしない充電の余白をつくる`
           : `軽く体を動かしたり伸びをしたりして、「${kw0}」の滞った空気をほぐしてみる`,
-      question: (_n, kw0, _kw1, q, isRev) =>
-        isRev
-          ? `今あなたが無理して力を入れている「${kw0}」の中で、少し手放しても大丈夫な重荷は何ですか？`
-          : q,
+      question: (_n, _kw0, _kw1, q) => q,
     },
     cups: {
       emotion: (_n, kw0, _kw1, _q, isRev) =>
@@ -580,10 +553,7 @@ const SUIT_PROFILES_BY_LANG: Record<
         isRev
           ? `「${kw0}」で疲れた自分のために、温かい飲み物や穏やかな休息で心の器を空けてあげる`
           : `好きな音楽を聴きながら、「${kw1}」を抱えてよくやってきた自分へやさしい言葉をかけてみる`,
-      question: (_n, kw0, _kw1, q, isRev) =>
-        isRev
-          ? `今「${kw0}」に関して、自分自身にまずかけてあげたい慰めの言葉は何ですか？`
-          : q,
+      question: (_n, _kw0, _kw1, q) => q,
     },
     swords: {
       emotion: (_n, kw0, _kw1, _q, isRev) =>
@@ -606,10 +576,7 @@ const SUIT_PROFILES_BY_LANG: Record<
         isRev
           ? `「${kw0}」へと続く思考の雑音を少し止め、窓の外を眺めながらゆっくり息を吐く`
           : `「${name}」の複雑な思考から少し離れ、簡単な片づけや短い散歩で頭を冷やしてみる`,
-      question: (_n, kw0, _kw1, q, isRev) =>
-        isRev
-          ? `「${kw0}」を前にして、自分自身に厳しすぎる物差しを当ててはいませんか？`
-          : q,
+      question: (_n, _kw0, _kw1, q) => q,
     },
     pentacles: {
       emotion: (_n, kw0, _kw1, _q, isRev) =>
@@ -632,10 +599,7 @@ const SUIT_PROFILES_BY_LANG: Record<
         isRev
           ? `「${kw0}」に追われて後回しにしていた食事・睡眠・休息のうちひとつを今日優先して整える`
           : `「${name}」の落ち着きのように机や部屋の片隅を整え、身体がほっとする温かな一食をとる`,
-      question: (_n, kw0, _kw1, q, isRev) =>
-        isRev
-          ? `今の日常のバランスと「${kw0}」を守るために、いちばん先にペースを落としたいところはどこですか？`
-          : q,
+      question: (_n, _kw0, _kw1, q) => q,
     },
   },
 };
@@ -652,8 +616,10 @@ function getMajorDefaultAngle(
   isRev: boolean,
   language: Language
 ): Omit<CardAngle, 'action' | 'reversedPerspective' | 'reversedSelfCare'> {
-  const custom = getCustomAngle(card.id, language);
-  const loc = getLocalizedCard(card, language);
+  const custom = isRev ? undefined : getCustomAngle(card.id, language);
+  const revCustom = isRev ? getCustomAngle(card.id, language) : undefined;
+  const orientation = isRev ? 'reversed' : 'upright';
+  const loc = getLocalizedCard(card, language, orientation);
   const kw0 = loc.keywords[0] || loc.displayName;
   const kw1 = loc.keywords[1] || kw0;
 
@@ -662,22 +628,26 @@ function getMajorDefaultAngle(
       emotion:
         custom?.emotion ??
         (isRev
-          ? `Notice slowly what hesitation or quiet resonance "${kw0}" of ${loc.displayName} stirs inside you`
+          ? `Notice slowly how "${kw0}" of ${loc.displayName} feels inside you right now`
           : `Notice what feeling surfaces right now in front of "${kw0} · ${kw1}" from ${loc.displayName}`),
       thought:
         custom?.thought ??
-        `Write one brief line naming the first thought or word that surfaced while reading ${loc.displayName}`,
+        (isRev
+          ? `Write one honest line about where "${kw0}" or "${kw1}" feels tangled or held back today`
+          : `Write one brief line naming the first thought or word that surfaced while reading ${loc.displayName}`),
       relationship:
         custom?.relationship ??
-        `Bring to mind one recent moment with people around you that felt touched by "${kw0}"`,
+        (isRev
+          ? `Notice quietly whether "${kw0}" has made you pull back or push too hard with someone nearby`
+          : `Bring to mind one recent moment with people around you that felt touched by "${kw0}"`),
       perspective:
-        (isRev ? custom?.reversedPerspective : undefined) ??
+        revCustom?.reversedPerspective ??
         custom?.perspective ??
         (isRev
-          ? `Step back a pace from pushing outward and check your own inner speed again`
+          ? `Step back a pace from forcing outcomes and check what "${kw1}" asks of your pace today`
           : `Look once more at a familiar situation through the fresh lens of "${kw1}"`),
       selfCare:
-        (isRev ? custom?.reversedSelfCare : undefined) ??
+        revCustom?.reversedSelfCare ??
         custom?.selfCare ??
         `Set aside just five unhurried minutes today to breathe steadily without rushing yourself`,
       question: custom?.question ?? loc.reflectionQuestion,
@@ -689,22 +659,26 @@ function getMajorDefaultAngle(
       emotion:
         custom?.emotion ??
         (isRev
-          ? `「${loc.displayName}」の「${kw0}」が、心の中でどんなためらいや余韻として響いているかゆっくり確かめてみる`
+          ? `「${loc.displayName}」の「${kw0}」が、今心の中でどんな引っかかりや余韻として響いているかゆっくり確かめてみる`
           : `「${loc.displayName}」が映す「${kw0} · ${kw1}」の前で、今心の中に浮かんでくる感情に気づいてみる`),
       thought:
         custom?.thought ??
-        `「${loc.displayName}」のメッセージを読みながら最初に浮かんだ考えや言葉を、一文で整理してみる`,
+        (isRev
+          ? `「${kw0}」や「${kw1}」をめぐって今の自分が気負っていたり抱え込んだりしている思いを、一文で整理してみる`
+          : `「${loc.displayName}」のメッセージを読みながら最初に浮かんだ考えや言葉を、一文で整理してみる`),
       relationship:
         custom?.relationship ??
-        `周囲の人との関わりの中で、「${kw0}」に関して最近心に残っていた場面をひとつ思い出してみる`,
+        (isRev
+          ? `周囲の人との関わりの中で、「${kw0}」から距離を取ったり無理に抱え込んだりしていないか振り返ってみる`
+          : `周囲の人との関わりの中で、「${kw0}」に関して最近心に残っていた場面をひとつ思い出してみる`),
       perspective:
-        (isRev ? custom?.reversedPerspective : undefined) ??
+        revCustom?.reversedPerspective ??
         custom?.perspective ??
         (isRev
-          ? `すぐに外へ押し進めようとせず、一歩引いて自分の中のペースをもう一度見つめ直してみる`
+          ? `すぐに外へ押し進めようとせず、一歩引いて「${kw1}」の視点から今の自分のペースを見つめ直してみる`
           : `見慣れた状況を、「${kw1}」という新しいレンズを通してもっと静かに眺め直してみる`),
       selfCare:
-        (isRev ? custom?.reversedSelfCare : undefined) ??
+        revCustom?.reversedSelfCare ??
         custom?.selfCare ??
         `今日一日の中で5分だけでも自分を急かさず、心地よく息を整える時間をつくってみる`,
       question: custom?.question ?? loc.reflectionQuestion,
@@ -715,22 +689,26 @@ function getMajorDefaultAngle(
     emotion:
       custom?.emotion ??
       (isRev
-        ? `「${loc.displayName}」의 ${particle(kw0, '이/가')} 내 안에서 어떤 망설임이나 여운으로 느껴지는지 천천히 살피기`
+        ? `「${loc.displayName}」의 ${particle(kw0, '이/가')} 내 안에서 어떤 망설임이나 피로로 느껴지는지 천천히 살피기`
         : `「${loc.displayName}」가 비추는 ‘${kw0} · ${kw1}’ 앞에서 지금 내 마음에 올라오는 감정 알아차리기`),
     thought:
       custom?.thought ??
-      `「${loc.displayName}」의 메시지를 읽으며 가장 먼저 떠오른 생각이나 단어를 한 문장으로 정리해 보기`,
+      (isRev
+        ? `‘${kw0}’이나 ‘${kw1}’ 앞에서 지금 내가 유독 애쓰거나 머뭇거리고 있는 마음을 한 문장으로 적어 보기`
+        : `「${loc.displayName}」의 메시지를 읽으며 가장 먼저 떠오른 생각이나 단어를 한 문장으로 정리해 보기`),
     relationship:
       custom?.relationship ??
-      `주변 사람들과의 관계 속에서 ‘${kw0}’과 관련해 요즘 마음 쓰였던 장면 하나 떠올려 보기`,
+      (isRev
+        ? `주변 사람들과의 관계 속에서 ‘${kw0}’ 때문에 움츠러들거나 혼자 다 감당하려 하지는 않았는지 돌아보기`
+        : `주변 사람들과의 관계 속에서 ‘${kw0}’과 관련해 요즘 마음 쓰였던 장면 하나 떠올려 보기`),
     perspective:
-      (isRev ? custom?.reversedPerspective : undefined) ??
+      revCustom?.reversedPerspective ??
       custom?.perspective ??
       (isRev
-        ? `당장 바깥으로 밀어붙이기보다 한 걸음 물러나 내면의 속도를 다시 살펴보는 시선 가져보기`
+        ? `당장 바깥으로 밀어붙이기보다 한 걸음 물러나 ‘${kw1}’의 시선으로 내면의 속도를 다시 살펴보기`
         : `익숙한 상황을 ‘${kw1}’이라는 새로운 렌즈로 한 번 더 바라보기`),
     selfCare:
-      (isRev ? custom?.reversedSelfCare : undefined) ??
+      revCustom?.reversedSelfCare ??
       custom?.selfCare ??
       `오늘 하루 중 5분만이라도 나를 재촉하지 않고 편안하게 숨 고르는 시간 마련하기`,
     question: custom?.question ?? loc.reflectionQuestion,
@@ -742,8 +720,10 @@ function getSuitAngle(
   isRev: boolean,
   language: Language
 ): Omit<CardAngle, 'action' | 'reversedPerspective' | 'reversedSelfCare'> {
-  const custom = getCustomAngle(card.id, language);
-  const loc = getLocalizedCard(card, language);
+  const custom = isRev ? undefined : getCustomAngle(card.id, language);
+  const revCustom = isRev ? getCustomAngle(card.id, language) : undefined;
+  const orientation = isRev ? 'reversed' : 'upright';
+  const loc = getLocalizedCard(card, language, orientation);
   const suit: TarotSuit = card.suit ?? 'pentacles';
   const profile = SUIT_PROFILES_BY_LANG[language][suit];
   const kw0 = loc.keywords[0] || loc.displayName;
@@ -766,7 +746,7 @@ function getSuitAngle(
         isRev
       ),
     perspective:
-      (isRev ? custom?.reversedPerspective : undefined) ??
+      revCustom?.reversedPerspective ??
       custom?.perspective ??
       profile.perspective(
         loc.displayName,
@@ -776,7 +756,7 @@ function getSuitAngle(
         isRev
       ),
     selfCare:
-      (isRev ? custom?.reversedSelfCare : undefined) ??
+      revCustom?.reversedSelfCare ??
       custom?.selfCare ??
       profile.selfCare(loc.displayName, kw0, kw1, loc.reflectionQuestion, isRev),
     question:
@@ -831,9 +811,9 @@ const SINGLE_CARD_PATTERNS: Record<string, AngleKey[][]> = {
     ['emotion', 'question', 'action', 'relationship'],
   ],
   reversed: [
-    ['emotion', 'perspective', 'selfcare', 'question'],
-    ['thought', 'selfcare', 'emotion', 'perspective'],
-    ['selfcare', 'thought', 'relationship', 'question'],
+    ['emotion', 'perspective', 'action', 'selfcare'],
+    ['thought', 'action', 'selfcare', 'question'],
+    ['selfcare', 'action', 'emotion', 'perspective'],
   ],
 };
 
@@ -842,20 +822,16 @@ function formatPrimaryAction(
   isRev: boolean,
   language: Language
 ): string {
-  const loc = getLocalizedCard(card, language);
+  const loc = getLocalizedCard(
+    card,
+    language,
+    isRev ? 'reversed' : 'upright'
+  );
+  if (isRev) {
+    return loc.gentleAction;
+  }
   const custom = getCustomAngle(card.id, language);
-  if (!isRev) {
-    return custom?.action || loc.gentleAction;
-  }
-
-  const kw0 = loc.keywords[0] || loc.displayName;
-  if (language === 'en') {
-    return `Rather than rushing, recall "${kw0}" from ${loc.displayName} and pause briefly to steady your breath`;
-  }
-  if (language === 'ja') {
-    return `急ぐよりも、「${loc.displayName}」が映す「${kw0}」の意味を思い浮かべながら少し立ち止まって呼吸を整える`;
-  }
-  return `서두르기보다 「${loc.displayName}」가 비추는 ‘${kw0}’의 의미를 떠올리며 잠깐 멈춰 숨 고르기`;
+  return custom?.action || loc.gentleAction;
 }
 
 function formatQuestionAttempt(questionText: string, language: Language): string {
@@ -925,8 +901,9 @@ export function generatePersonalizedAttempts(
 
   if (cards.length === 1) {
     const card = cards[0];
-    const loc = getLocalizedCard(card, language);
     const isRev = orientations[0] === 'reversed';
+    const orientation = isRev ? 'reversed' : 'upright';
+    const loc = getLocalizedCard(card, language, orientation);
     const orientKey = isRev ? 'rev' : 'up';
     const pool = buildSingleCardPool(card, isRev, language);
 
@@ -982,9 +959,9 @@ export function generatePersonalizedAttempts(
   const rev1 = orientations[1] === 'reversed';
   const rev2 = orientations[2] === 'reversed';
 
-  const loc0 = getLocalizedCard(c0, language);
-  const loc1 = getLocalizedCard(c1, language);
-  const loc2 = getLocalizedCard(c2, language);
+  const loc0 = getLocalizedCard(c0, language, rev0 ? 'reversed' : 'upright');
+  const loc1 = getLocalizedCard(c1, language, rev1 ? 'reversed' : 'upright');
+  const loc2 = getLocalizedCard(c2, language, rev2 ? 'reversed' : 'upright');
 
   const angle0 =
     c0.arcana === 'minor'
@@ -1005,7 +982,6 @@ export function generatePersonalizedAttempts(
 
   const labels = CATEGORY_LABELS[language];
   const positions = THREE_CARD_POSITIONS_BY_LANG[language];
-  const overallLabel = OVERALL_FLOW_LABEL[language];
 
   const firstItem: SelectedAttemptItem =
     flowSeed % 2 === 0
@@ -1047,12 +1023,12 @@ export function generatePersonalizedAttempts(
 
   const thirdItem: SelectedAttemptItem = rev2
     ? {
-        attemptId: `spread::2::selfcare::${c2.id}::rev`,
-        categoryLabel: labels.relationship,
+        attemptId: `spread::2::action::${c2.id}::rev`,
+        categoryLabel: labels.action,
         cardId: c2.id,
         cardName: loc2.displayName,
         positionLabel: positions[2],
-        actionText: angle2.selfCare,
+        actionText: loc2.gentleAction || angle2.selfCare,
       }
     : {
         attemptId: `spread::2::action::${c2.id}::up`,
@@ -1070,7 +1046,12 @@ export function generatePersonalizedAttempts(
     c1,
     c2,
     hasOverallContext,
-    language
+    language,
+    [
+      rev0 ? 'reversed' : 'upright',
+      rev1 ? 'reversed' : 'upright',
+      rev2 ? 'reversed' : 'upright',
+    ]
   );
 
   return [firstItem, secondItem, thirdItem, synthesisItem];
@@ -1082,17 +1063,25 @@ function buildSynthesisAttemptItem(
   c1: TarotCard,
   c2: TarotCard,
   hasOverallContext: boolean,
-  language: Language
+  language: Language,
+  orientations: ('upright' | 'reversed')[] = ['upright', 'upright', 'upright']
 ): SelectedAttemptItem {
-  const loc0 = getLocalizedCard(c0, language);
-  const loc1 = getLocalizedCard(c1, language);
-  const loc2 = getLocalizedCard(c2, language);
+  const o0 = orientations[0] ?? 'upright';
+  const o1 = orientations[1] ?? 'upright';
+  const o2 = orientations[2] ?? 'upright';
+  const loc0 = getLocalizedCard(c0, language, o0);
+  const loc1 = getLocalizedCard(c1, language, o1);
+  const loc2 = getLocalizedCard(c2, language, o2);
   const labels = CATEGORY_LABELS[language];
   const overallLabel = OVERALL_FLOW_LABEL[language];
 
   const kw0 = loc0.keywords[0] || loc0.displayName;
   const kw1 = loc1.keywords[0] || loc1.displayName;
   const kw2 = loc2.keywords[0] || loc2.displayName;
+
+  const orientSuffix = `::${o0 === 'reversed' ? 'rev' : 'up'}::${
+    o1 === 'reversed' ? 'rev' : 'up'
+  }::${o2 === 'reversed' ? 'rev' : 'up'}`;
 
   if (kind === 'flow') {
     const synthesisFlowText =
@@ -1103,7 +1092,7 @@ function buildSynthesisAttemptItem(
         : `「${loc0.displayName}」(${kw0})에서 「${loc1.displayName}」(${kw1})을 지나 「${loc2.displayName}」(${kw2})로 이어지는 흐름 중, 오늘 가장 마음에 남는 지점 한 줄 적어 보기`;
 
     return {
-      attemptId: `spread::synthesis::flow::${c0.id}::${c1.id}::${c2.id}`,
+      attemptId: `spread::synthesis::flow::${c0.id}::${c1.id}::${c2.id}${orientSuffix}`,
       categoryLabel: hasOverallContext ? labels.thought : labels.question,
       cardId: c0.id,
       cardName: `${loc0.displayName} → ${loc2.displayName}`,
@@ -1120,7 +1109,7 @@ function buildSynthesisAttemptItem(
       : `세 카드(‘${kw0}’ · ‘${kw1}’ · ‘${kw2}’)가 함께 건네는 이야기 중, 지금 내 상황에 가장 가까운 질문 하나에만 가볍게 답해 보기`;
 
   return {
-    attemptId: `spread::synthesis::question::${c0.id}::${c1.id}::${c2.id}`,
+    attemptId: `spread::synthesis::question::${c0.id}::${c1.id}::${c2.id}${orientSuffix}`,
     categoryLabel: labels.question,
     cardId: c1.id,
     cardName: `${loc0.displayName} · ${loc1.displayName} · ${loc2.displayName}`,
@@ -1147,8 +1136,15 @@ export function resolveLocalizedAttemptItem(
       const c0 = getCardByIdFn(parts[3]);
       const c1 = getCardByIdFn(parts[4]);
       const c2 = getCardByIdFn(parts[5]);
+      const o0 = parts[6] === 'rev' ? 'reversed' : 'upright';
+      const o1 = parts[7] === 'rev' ? 'reversed' : 'upright';
+      const o2 = parts[8] === 'rev' ? 'reversed' : 'upright';
       if (c0 && c1 && c2) {
-        return buildSynthesisAttemptItem(kind, c0, c1, c2, true, language);
+        return buildSynthesisAttemptItem(kind, c0, c1, c2, true, language, [
+          o0,
+          o1,
+          o2,
+        ]);
       }
       return item;
     }
@@ -1160,7 +1156,11 @@ export function resolveLocalizedAttemptItem(
       const card = getCardByIdFn(parts[3]);
       const isRev = parts[4] === 'rev';
       if (card && !Number.isNaN(slotIdx)) {
-        const loc = getLocalizedCard(card, language);
+        const loc = getLocalizedCard(
+          card,
+          language,
+          isRev ? 'reversed' : 'upright'
+        );
         const pool = buildSingleCardPool(card, isRev, language);
         const resolved = pool[angleKey];
         if (resolved) {
@@ -1184,7 +1184,11 @@ export function resolveLocalizedAttemptItem(
     const isRev = parts[1] === 'rev';
     const angleKey = parts[2] as AngleKey;
     if (card) {
-      const loc = getLocalizedCard(card, language);
+      const loc = getLocalizedCard(
+        card,
+        language,
+        isRev ? 'reversed' : 'upright'
+      );
       const pool = buildSingleCardPool(card, isRev, language);
       const resolved = pool[angleKey];
       if (resolved) {

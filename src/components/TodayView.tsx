@@ -177,9 +177,21 @@ export function TodayView({
 
   const computeOverallMessage = (): string => {
     if (selectedCards.length > 1) {
-      const l0 = getLocalizedCard(selectedCards[0], language);
-      const l1 = getLocalizedCard(selectedCards[1] ?? selectedCards[0], language);
-      const l2 = getLocalizedCard(selectedCards[2] ?? selectedCards[0], language);
+      const l0 = getLocalizedCard(
+        selectedCards[0],
+        language,
+        selectedOrientations[0] ?? 'upright'
+      );
+      const l1 = getLocalizedCard(
+        selectedCards[1] ?? selectedCards[0],
+        language,
+        selectedOrientations[1] ?? 'upright'
+      );
+      const l2 = getLocalizedCard(
+        selectedCards[2] ?? selectedCards[0],
+        language,
+        selectedOrientations[2] ?? 'upright'
+      );
       return t.today.synthesisThreeCard(
         l0.displayName,
         l0.keywords[0],
@@ -192,8 +204,8 @@ export function TodayView({
 
     const card = selectedCards[0];
     if (!card) return '';
-    const loc = getLocalizedCard(card, language);
     const orient = selectedOrientations[0] ?? 'upright';
+    const loc = getLocalizedCard(card, language, orient);
     const joined = loc.keywords.join(' · ');
     if (orient === 'reversed') {
       return t.today.synthesisSingleReversed(loc.displayName, joined);
@@ -676,13 +688,25 @@ export function TodayView({
     );
   }
 
-  const activeLoc = getLocalizedCard(activeCard, language);
+  const activeLoc = getLocalizedCard(activeCard, language, activeOrientation);
 
   const getOverallSynthesisMessage = () => {
     if (selectedCards.length > 1) {
-      const l0 = getLocalizedCard(selectedCards[0], language);
-      const l1 = getLocalizedCard(selectedCards[1] ?? selectedCards[0], language);
-      const l2 = getLocalizedCard(selectedCards[2] ?? selectedCards[0], language);
+      const l0 = getLocalizedCard(
+        selectedCards[0],
+        language,
+        selectedOrientations[0] ?? 'upright'
+      );
+      const l1 = getLocalizedCard(
+        selectedCards[1] ?? selectedCards[0],
+        language,
+        selectedOrientations[1] ?? 'upright'
+      );
+      const l2 = getLocalizedCard(
+        selectedCards[2] ?? selectedCards[0],
+        language,
+        selectedOrientations[2] ?? 'upright'
+      );
       return t.today.synthesisThreeCard(
         l0.displayName,
         l0.keywords[0],
@@ -722,7 +746,11 @@ export function TodayView({
         >
           {selectedCards.map((card, idx) => {
             const isActive = idx === activeRevealIndex;
-            const loc = getLocalizedCard(card, language);
+            const loc = getLocalizedCard(
+              card,
+              language,
+              selectedOrientations[idx] ?? 'upright'
+            );
             const positionLabel =
               t.today.threeCardPositions[idx] || t.today.positionFallback(idx);
             return (

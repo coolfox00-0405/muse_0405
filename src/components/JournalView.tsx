@@ -582,9 +582,9 @@ export function JournalView({
       const c1 = getCardById(rec.spreadCards[1].cardId);
       const c2 = getCardById(rec.spreadCards[2].cardId);
       if (c0 && c1 && c2) {
-        const l0 = getLocalizedCard(c0, language);
-        const l1 = getLocalizedCard(c1, language);
-        const l2 = getLocalizedCard(c2, language);
+        const l0 = getLocalizedCard(c0, language, rec.spreadCards[0].orientation);
+        const l1 = getLocalizedCard(c1, language, rec.spreadCards[1].orientation);
+        const l2 = getLocalizedCard(c2, language, rec.spreadCards[2].orientation);
         return t.today.synthesisThreeCard(
           l0.displayName,
           l0.keywords[0],
@@ -597,7 +597,7 @@ export function JournalView({
     }
     const card = rec.cardId !== 'freeform' ? getCardById(rec.cardId) : undefined;
     if (card) {
-      const loc = getLocalizedCard(card, language);
+      const loc = getLocalizedCard(card, language, rec.orientation ?? 'upright');
       const kwJoined = loc.keywords.join(' · ');
       return rec.orientation === 'reversed'
         ? t.today.synthesisSingleReversed(loc.displayName, kwJoined)
@@ -1166,7 +1166,8 @@ export function JournalView({
                 : getLocalizedRecordQuestion(
                     selectedRecord.reflectionQuestion,
                     detailCard,
-                    language
+                    language,
+                    selectedRecord.orientation ?? 'upright'
                   );
             const detailOverallMessage =
               resolveOverallMessageDisplay(selectedRecord);
@@ -1349,7 +1350,8 @@ export function JournalView({
                           if (!activeSnap || !activeSnapCard) return null;
                           const activeSnapLoc = getLocalizedCard(
                             activeSnapCard,
-                            language
+                            language,
+                            activeSnap.orientation
                           );
                           const activePosLabel =
                             t.today.threeCardPositions[inspectedSpreadIndex] ||
@@ -1396,7 +1398,11 @@ export function JournalView({
                       selectedRecord.spreadCards.length <= 1) &&
                     detailCard &&
                     (() => {
-                      const matchedLoc = getLocalizedCard(detailCard, language);
+                      const matchedLoc = getLocalizedCard(
+                        detailCard,
+                        language,
+                        selectedRecord.orientation ?? 'upright'
+                      );
                       return (
                         <div className="rounded-xl bg-[#F7F3EA]/70 border border-[#E5DED1] p-4 space-y-2">
                           <div className="flex flex-wrap items-center justify-between gap-2">

@@ -1,9 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Sparkles, BookOpen, Compass, Info } from 'lucide-react';
+import { Sparkles, BookOpen, Compass, Info, Bell } from 'lucide-react';
 import { ActiveTab, DeckMode, TarotCard } from './types/reflection';
 import { FULL_TAROT_DECK, MAJOR_ARCANA_DECK } from './data/cards';
 import { getUnbiasedRandomInt, shuffleUniqueSpread } from './utils/deckShuffle';
 import { useReflections } from './hooks/useReflections';
+import { useReminderSettings } from './hooks/useReminderSettings';
 import { TodayView } from './components/TodayView';
 import { JournalView } from './components/JournalView';
 import { ReadMyselfView } from './components/ReadMyselfView';
@@ -12,6 +13,7 @@ import { DrawPhase } from './components/CardShuffleSpread';
 import { DeckEncyclopediaModal } from './components/DeckEncyclopediaModal';
 import { PWAInstallButton } from './components/PWAInstallButton';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { ReminderModal } from './components/ReminderModal';
 import { useLanguage } from './i18n/LanguageContext';
 
 export type ReadingDrawCount = 1 | 3;
@@ -63,6 +65,7 @@ export default function App() {
   const [focusedRecordId, setFocusedRecordId] = useState<string | null>(null);
   const [encyclopediaOpen, setEncyclopediaOpen] = useState(false);
   const [encyclopediaCardId, setEncyclopediaCardId] = useState<string | null>(null);
+  const [reminderModalOpen, setReminderModalOpen] = useState(false);
   const shuffleTimerRef = useRef<number | null>(null);
 
   const {
@@ -76,6 +79,44 @@ export default function App() {
     deleteReflection,
     importReflections,
   } = useReflections(language);
+
+  const handleOpenTodayFromReminder = useCallback(() => {
+    setActiveTab('today');
+    setEncyclopediaOpen(false);
+    setReminderModalOpen(false);
+    if (typeof window !== 'undefined' && window.scrollY > 24) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, []);
+
+  const reminder = useReminderSettings({
+    language,
+    onOpenToday: handleOpenTodayFromReminder,
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'today' || params.get('source') === 'reminder') {
+      handleOpenTodayFromReminder();
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [handleOpenTodayFromReminder]);
+
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
+      return undefined;
+    }
+    const handleSwMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'LUCIDA_OPEN_TODAY') {
+        handleOpenTodayFromReminder();
+      }
+    };
+    navigator.serviceWorker.addEventListener('message', handleSwMessage);
+    return () => {
+      navigator.serviceWorker.removeEventListener('message', handleSwMessage);
+    };
+  }, [handleOpenTodayFromReminder]);
 
   useEffect(() => {
     return () => {
@@ -322,6 +363,26 @@ export default function App() {
               })}
             </nav>
             <PWAInstallButton variant="header" />
+            <button
+              type="button"
+              onClick={() => setReminderModalOpen(true)}
+              aria-label={t.reminder.headerButtonAria}
+              title={t.reminder.title}
+              className="relative inline-flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-[#E5DED1] bg-[#FFFCF6]/95 hover:bg-[#E5DED1]/45 text-[#6B645C] hover:text-[#34312D] transition-colors shrink-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#777B61]"
+            >
+              <Bell
+                className={`w-3.5 h-3.5 ${
+                  reminder.settings.enabled ? 'text-[#777B61]' : 'text-[#827B72]'
+                }`}
+                aria-hidden="true"
+              />
+              {reminder.settings.enabled && !reminder.isSkippedToday && (
+                <span
+                  aria-hidden="true"
+                  className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#777B61]"
+                />
+              )}
+            </button>
             <LanguageSwitcher />
           </div>
         </div>
@@ -401,7 +462,10 @@ export default function App() {
         )}
 
         {activeTab === 'about' && (
-          <AboutView onOpenEncyclopedia={() => handleOpenEncyclopedia()} />
+          <AboutView
+            onOpenEncyclopedia={() => handleOpenEncyclopedia()}
+            reminder={reminder}
+          />
         )}
       </main>
 
@@ -450,6 +514,12 @@ export default function App() {
           setActiveTab('journal');
         }}
         onAddCardReflection={(card, note) => addReflection(card, note)}
+      />
+
+      <ReminderModal
+        isOpen={reminderModalOpen}
+        onClose={() => setReminderModalOpen(false)}
+        reminder={reminder}
       />
     </div>
   );

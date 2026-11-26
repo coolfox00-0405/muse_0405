@@ -21,6 +21,7 @@ export default defineConfig(() => {
           'brand/lucida-logo-main.png',
           'brand/lucida-symbol.png',
           'brand/lucida-app-icon-1024.png',
+          'sw-notifications.js',
         ],
         manifest: {
           id: '/',
@@ -56,6 +57,7 @@ export default defineConfig(() => {
           ],
         },
         workbox: {
+          importScripts: ['/sw-notifications.js'],
           globPatterns: ['**/*.{js,css,html,ico,png,jpg,webp,svg,woff,woff2}'],
           globIgnores: ['**/assets/aistudio/**'],
           maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
@@ -92,7 +94,6 @@ export default defineConfig(() => {
         },
         devOptions: {
           enabled: true,
-          type: 'module',
         },
       }),
       // Copies src/assets into dist/ so root-relative URLs like

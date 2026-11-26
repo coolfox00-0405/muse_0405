@@ -1,13 +1,22 @@
 import { TarotCard, TarotSuit } from '../types/reflection';
-import { Language } from './types';
+import { CardOrientation, Language } from './types';
 import { MAJOR_CARD_TRANSLATIONS } from './cardsMajor';
 import { WANDS_CUPS_TRANSLATIONS } from './cardsWandsCups';
 import { SWORDS_PENTACLES_TRANSLATIONS } from './cardsSwordsPentacles';
+import { REVERSED_MAJOR_CONTENT } from './reversedMajor';
+import { REVERSED_WANDS_CUPS_CONTENT } from './reversedWandsCups';
+import { REVERSED_SWORDS_PENTACLES_CONTENT } from './reversedSwordsPentacles';
 
 const ALL_CARD_TRANSLATIONS = {
   ...MAJOR_CARD_TRANSLATIONS,
   ...WANDS_CUPS_TRANSLATIONS,
   ...SWORDS_PENTACLES_TRANSLATIONS,
+};
+
+const ALL_REVERSED_CONTENT = {
+  ...REVERSED_MAJOR_CONTENT,
+  ...REVERSED_WANDS_CUPS_CONTENT,
+  ...REVERSED_SWORDS_PENTACLES_CONTENT,
 };
 
 export interface LocalizedCardView {
@@ -40,8 +49,14 @@ const SUIT_NAME_EN: Record<TarotSuit, string> = {
 
 export function getLocalizedCard(
   card: TarotCard,
-  language: Language
+  language: Language,
+  orientation: CardOrientation = 'upright'
 ): LocalizedCardView {
+  const reversedOverride =
+    orientation === 'reversed'
+      ? ALL_REVERSED_CONTENT[card.id]?.[language]
+      : undefined;
+
   if (language === 'ko') {
     return {
       id: card.id,
@@ -50,11 +65,12 @@ export function getLocalizedCard(
       nameEn: card.nameEn,
       arcanaNumber: card.arcanaNumber,
       suitTheme: card.suitTheme,
-      keywords: card.keywords,
-      insight: card.insight,
-      reflectionQuestion: card.reflectionQuestion,
-      gentleAction: card.gentleAction,
-      meaningGuide: card.meaningGuide,
+      keywords: reversedOverride?.keywords ?? card.keywords,
+      insight: reversedOverride?.insight ?? card.insight,
+      reflectionQuestion:
+        reversedOverride?.reflectionQuestion ?? card.reflectionQuestion,
+      gentleAction: reversedOverride?.gentleAction ?? card.gentleAction,
+      meaningGuide: reversedOverride?.meaningGuide ?? card.meaningGuide,
     };
   }
 
@@ -67,11 +83,12 @@ export function getLocalizedCard(
       nameEn: card.nameEn,
       arcanaNumber: card.arcanaNumber,
       suitTheme: card.suitTheme,
-      keywords: card.keywords,
-      insight: card.insight,
-      reflectionQuestion: card.reflectionQuestion,
-      gentleAction: card.gentleAction,
-      meaningGuide: card.meaningGuide,
+      keywords: reversedOverride?.keywords ?? card.keywords,
+      insight: reversedOverride?.insight ?? card.insight,
+      reflectionQuestion:
+        reversedOverride?.reflectionQuestion ?? card.reflectionQuestion,
+      gentleAction: reversedOverride?.gentleAction ?? card.gentleAction,
+      meaningGuide: reversedOverride?.meaningGuide ?? card.meaningGuide,
     };
   }
 
@@ -92,11 +109,12 @@ export function getLocalizedCard(
     nameEn: card.nameEn,
     arcanaNumber: localizedNumber,
     suitTheme: entry.suitTheme ?? card.suitTheme,
-    keywords: entry.keywords,
-    insight: entry.insight,
-    reflectionQuestion: entry.reflectionQuestion,
-    gentleAction: entry.gentleAction,
-    meaningGuide: entry.meaningGuide,
+    keywords: reversedOverride?.keywords ?? entry.keywords,
+    insight: reversedOverride?.insight ?? entry.insight,
+    reflectionQuestion:
+      reversedOverride?.reflectionQuestion ?? entry.reflectionQuestion,
+    gentleAction: reversedOverride?.gentleAction ?? entry.gentleAction,
+    meaningGuide: reversedOverride?.meaningGuide ?? entry.meaningGuide,
   };
 }
 
@@ -116,21 +134,33 @@ export function getLocalizedRecordCardName(
 }
 
 /**
- * Resolve reflection question for display if it matches the card's stock Korean question.
+ * Resolve reflection question for display if it matches the card's stock upright or reversed question.
  * Preserves custom user prompts (such as freeform custom questions).
  */
 export function getLocalizedRecordQuestion(
   storedQuestion: string,
   card: TarotCard | undefined,
-  language: Language
+  language: Language,
+  orientation: CardOrientation = 'upright'
 ): string {
   if (!card || !storedQuestion) return storedQuestion;
+  const trimmed = storedQuestion.trim();
+
+  const revEntry = ALL_REVERSED_CONTENT[card.id];
+  if (revEntry) {
+    const revKo = revEntry.ko.reflectionQuestion.trim();
+    const revEn = revEntry.en.reflectionQuestion.trim();
+    const revJa = revEntry.ja.reflectionQuestion.trim();
+    if (trimmed === revKo || trimmed === revEn || trimmed === revJa) {
+      return getLocalizedCard(card, language, 'reversed').reflectionQuestion;
+    }
+  }
+
   const stockKo = card.reflectionQuestion.trim();
   const stockEn = ALL_CARD_TRANSLATIONS[card.id]?.en.reflectionQuestion.trim();
   const stockJa = ALL_CARD_TRANSLATIONS[card.id]?.ja.reflectionQuestion.trim();
-  const trimmed = storedQuestion.trim();
   if (trimmed === stockKo || trimmed === stockEn || trimmed === stockJa) {
-    return getLocalizedCard(card, language).reflectionQuestion;
+    return getLocalizedCard(card, language, orientation).reflectionQuestion;
   }
   return storedQuestion;
 }

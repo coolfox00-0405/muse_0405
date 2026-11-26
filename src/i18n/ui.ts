@@ -369,6 +369,52 @@ export interface UIMessages {
     iosStep3After: string;
     confirm: string;
   };
+  reminder: {
+    headerButtonAria: string;
+    modalCloseAria: string;
+    title: string;
+    subtitle: string;
+    toggleLabel: string;
+    toggleDescActive: string;
+    toggleDescPaused: string;
+    toggleAria: string;
+    statusActiveBadge: string;
+    statusPausedBadge: string;
+    statusSkippedBadge: string;
+    timeTitle: string;
+    hourLabel: string;
+    minuteLabel: string;
+    formatHourOption: (hour: number) => string;
+    formatMinuteOption: (minute: number) => string;
+    formatTimeDisplay: (hour: number, minute: number) => string;
+    repeatTitle: string;
+    dailyOption: string;
+    weekdaysShort: Record<0 | 1 | 2 | 3 | 4 | 5 | 6, string>;
+    weekdaysFull: Record<0 | 1 | 2 | 3 | 4 | 5 | 6, string>;
+    minDayWarning: string;
+    skipTodayTitle: string;
+    skipTodayDesc: string;
+    skipTodayActiveNote: (nextTimeLabel: string) => string;
+    skipTodayTomorrowLabel: string;
+    skipTodayWeekdayLabel: (weekdayName: string) => string;
+    previewTitle: string;
+    previewPhoneNow: string;
+    previewCycleButton: string;
+    previewTestButton: string;
+    testSentFeedback: string;
+    testDeniedFeedback: string;
+    testUnsupportedFeedback: string;
+    permissionDeniedTitle: string;
+    permissionDeniedBody: string;
+    permissionDefaultTitle: string;
+    permissionDefaultBody: string;
+    permissionAllowButton: string;
+    permissionUnsupportedBody: string;
+    scopeNoticeTitle: string;
+    scopeNoticeBody: string;
+    scheduleSummaryDaily: (timeStr: string) => string;
+    scheduleSummaryWeekly: (daysStr: string, timeStr: string) => string;
+  };
 }
 
 export const UI_TRANSLATIONS: Record<Language, UIMessages> = {
@@ -831,6 +877,81 @@ export const UI_TRANSLATIONS: Record<Language, UIMessages> = {
       iosStep3Bold: '추가',
       iosStep3After: '를 누르면 LUCIDA 아이콘이 생성됩니다.',
       confirm: '확인',
+    },
+    reminder: {
+      headerButtonAria: '나를 만나는 시간 알림 설정 열기',
+      modalCloseAria: '알림 설정 닫기',
+      title: '나를 만나는 시간',
+      subtitle: '잠시 멈추어 내 마음을 바라보는 시간을 정해보세요.',
+      toggleLabel: '성찰 알림 켜기',
+      toggleDescActive: '정해둔 시간과 요일에 맞춰 다정한 성찰 문구를 준비해 둡니다.',
+      toggleDescPaused: '꺼 두어도 정해둔 시간과 요일 설정은 그대로 유지됩니다.',
+      toggleAria: '나를 만나는 시간 성찰 알림 켜기 또는 끄기',
+      statusActiveBadge: '켜짐',
+      statusPausedBadge: '일시 멈춤',
+      statusSkippedBadge: '오늘 건너뜀',
+      timeTitle: '알림 시간',
+      hourLabel: '시',
+      minuteLabel: '분',
+      formatHourOption: (hour) => {
+        const period = hour < 12 ? '오전' : '오후';
+        const h12 = hour % 12 === 0 ? 12 : hour % 12;
+        return `${period} ${h12}시 (${String(hour).padStart(2, '0')})`;
+      },
+      formatMinuteOption: (minute) => `${String(minute).padStart(2, '0')}분`,
+      formatTimeDisplay: (hour, minute) => {
+        const period = hour < 12 ? '오전' : '오후';
+        const h12 = hour % 12 === 0 ? 12 : hour % 12;
+        return `${period} ${h12}:${String(minute).padStart(2, '0')}`;
+      },
+      repeatTitle: '반복 주기',
+      dailyOption: '매일',
+      weekdaysShort: {
+        1: '월',
+        2: '화',
+        3: '수',
+        4: '목',
+        5: '금',
+        6: '토',
+        0: '일',
+      },
+      weekdaysFull: {
+        1: '월요일',
+        2: '화요일',
+        3: '수요일',
+        4: '목요일',
+        5: '금요일',
+        6: '토요일',
+        0: '일요일',
+      },
+      minDayWarning: '반복 알림을 유지하려면 최소 하루 이상의 요일을 선택해 주세요.',
+      skipTodayTitle: '오늘 알림 건너뛰기',
+      skipTodayDesc: '오늘은 잠시 쉬고, 다음 예정된 날부터 다시 이어집니다.',
+      skipTodayActiveNote: (nextTimeLabel) =>
+        `오늘 알림은 건너뛰도록 설정했어요. ${nextTimeLabel}에 다시 안내할게요.`,
+      skipTodayTomorrowLabel: '내일',
+      skipTodayWeekdayLabel: (weekdayName) => `다음 ${weekdayName}`,
+      previewTitle: '휴대폰 알림 미리보기',
+      previewPhoneNow: '지금',
+      previewCycleButton: '다른 문구 보기',
+      previewTestButton: '테스트 알림 보내기',
+      testSentFeedback: '테스트 알림을 보냈습니다. 알림을 누르면 ‘지금, 나에게’로 이동합니다.',
+      testDeniedFeedback: '브라우저 알림 권한이 차단되어 있어 실제 알림을 보낼 수 없습니다.',
+      testUnsupportedFeedback: '현재 브라우저 환경에서는 시스템 알림 API를 지원하지 않습니다.',
+      permissionDeniedTitle: '브라우저 알림 권한이 차단되어 있어요',
+      permissionDeniedBody:
+        '시간과 요일 설정은 그대로 저장되어 있습니다. 실제 알림을 받으려면 브라우저 주소창 왼쪽의 사이트 설정 또는 기기 알림 설정에서 LUCIDA 알림을 허용해 주세요.',
+      permissionDefaultTitle: '알림 권한이 아직 허용되지 않았어요',
+      permissionDefaultBody:
+        '설정은 안전하게 저장되었지만, 브라우저 알림을 받으려면 권한 허용이 필요합니다.',
+      permissionAllowButton: '알림 권한 허용하기',
+      permissionUnsupportedBody:
+        '이 브라우저에서는 시스템 알림 기능을 지원하지 않지만, 설정한 시간과 문구는 저장됩니다.',
+      scopeNoticeTitle: '현재 알림 동작 범위 안내',
+      scopeNoticeBody:
+        '지금은 설정 저장과 앱이 열려 있는 브라우저 상태에서의 성찰 알림을 지원합니다. 앱이 완전히 닫혀 있거나 휴대폰 화면이 잠긴 상태의 예약 푸시 알림은 향후 푸시 서버 연동이 추가될 때 제공될 예정입니다.',
+      scheduleSummaryDaily: (timeStr) => `매일 ${timeStr}`,
+      scheduleSummaryWeekly: (daysStr, timeStr) => `매주 ${daysStr} · ${timeStr}`,
     },
   },
 
@@ -1298,6 +1419,81 @@ export const UI_TRANSLATIONS: Record<Language, UIMessages> = {
       iosStep3After: ' in the top-right corner to place LUCIDA on your screen.',
       confirm: 'Done',
     },
+    reminder: {
+      headerButtonAria: 'Open reflection reminder settings',
+      modalCloseAria: 'Close reminder settings',
+      title: 'A Time to Meet Myself',
+      subtitle: 'Choose a quiet moment to pause and look inward.',
+      toggleLabel: 'Enable reflection reminder',
+      toggleDescActive: 'A gentle reflection prompt will wait for you at your chosen time.',
+      toggleDescPaused: 'Turning reminders off keeps your time and weekday preferences saved.',
+      toggleAria: 'Toggle reflection reminder',
+      statusActiveBadge: 'Active',
+      statusPausedBadge: 'Paused',
+      statusSkippedBadge: 'Skipped today',
+      timeTitle: 'Reminder time',
+      hourLabel: 'Hour',
+      minuteLabel: 'Minute',
+      formatHourOption: (hour) => {
+        const period = hour < 12 ? 'AM' : 'PM';
+        const h12 = hour % 12 === 0 ? 12 : hour % 12;
+        return `${h12} ${period} (${String(hour).padStart(2, '0')})`;
+      },
+      formatMinuteOption: (minute) => `${String(minute).padStart(2, '0')} min`,
+      formatTimeDisplay: (hour, minute) => {
+        const period = hour < 12 ? 'AM' : 'PM';
+        const h12 = hour % 12 === 0 ? 12 : hour % 12;
+        return `${h12}:${String(minute).padStart(2, '0')} ${period}`;
+      },
+      repeatTitle: 'Repeat schedule',
+      dailyOption: 'Every day',
+      weekdaysShort: {
+        1: 'Mon',
+        2: 'Tue',
+        3: 'Wed',
+        4: 'Thu',
+        5: 'Fri',
+        6: 'Sat',
+        0: 'Sun',
+      },
+      weekdaysFull: {
+        1: 'Monday',
+        2: 'Tuesday',
+        3: 'Wednesday',
+        4: 'Thursday',
+        5: 'Friday',
+        6: 'Saturday',
+        0: 'Sunday',
+      },
+      minDayWarning: 'Please keep at least one weekday selected.',
+      skipTodayTitle: 'Skip today’s reminder',
+      skipTodayDesc: 'Rest today and automatically resume on your next scheduled day.',
+      skipTodayActiveNote: (nextTimeLabel) =>
+        `Today’s reminder is skipped. Your schedule will resume ${nextTimeLabel}.`,
+      skipTodayTomorrowLabel: 'tomorrow',
+      skipTodayWeekdayLabel: (weekdayName) => `next ${weekdayName}`,
+      previewTitle: 'Mobile notification preview',
+      previewPhoneNow: 'now',
+      previewCycleButton: 'Preview another prompt',
+      previewTestButton: 'Send test notification',
+      testSentFeedback: 'Test notification sent. Clicking it brings you to Look Within.',
+      testDeniedFeedback: 'Browser notifications are currently blocked in your browser settings.',
+      testUnsupportedFeedback: 'System notifications are not supported in this browser.',
+      permissionDeniedTitle: 'Notifications are blocked in your browser',
+      permissionDeniedBody:
+        'Your schedule is safely saved. To receive browser alerts, allow notifications for LUCIDA in your browser site settings or device settings.',
+      permissionDefaultTitle: 'Notification permission not granted yet',
+      permissionDefaultBody:
+        'Your settings are saved, and browser permission is needed to show notifications.',
+      permissionAllowButton: 'Allow notifications',
+      permissionUnsupportedBody:
+        'System notifications are unavailable in this browser, though your preferences are saved locally.',
+      scopeNoticeTitle: 'How reminders currently work',
+      scopeNoticeBody:
+        'Your schedule is saved locally and triggers notifications while LUCIDA is open in your browser. Background push notifications when the app is completely closed or the screen is locked require a future push server integration.',
+      scheduleSummaryDaily: (timeStr) => `Every day at ${timeStr}`,
+      scheduleSummaryWeekly: (daysStr, timeStr) => `Every ${daysStr} · ${timeStr}`,
+    },
   },
 
   ja: {
@@ -1758,6 +1954,81 @@ export const UI_TRANSLATIONS: Record<Language, UIMessages> = {
       iosStep3Bold: '追加',
       iosStep3After: ' を押すとLUCIDAのアイコンが作成されます。',
       confirm: '閉じる',
+    },
+    reminder: {
+      headerButtonAria: '私と出会う時間のリマインダー設定を開く',
+      modalCloseAria: 'リマインダー設定を閉じる',
+      title: '私と出会う時間',
+      subtitle: '少し立ち止まり、自分の心を見つめる時間を決めてみてください。',
+      toggleLabel: '内省リマインダーをオンにする',
+      toggleDescActive: '設定した時間と曜日に合わせて、静かな問いかけをお届けします。',
+      toggleDescPaused: 'オフにしても、設定した時刻や曜日はそのまま保存されます。',
+      toggleAria: '内省リマインダーのオン・オフ',
+      statusActiveBadge: 'オン',
+      statusPausedBadge: '一時停止',
+      statusSkippedBadge: '今日はお休み',
+      timeTitle: '通知する時間',
+      hourLabel: '時',
+      minuteLabel: '分',
+      formatHourOption: (hour) => {
+        const period = hour < 12 ? '午前' : '午後';
+        const h12 = hour % 12 === 0 ? 12 : hour % 12;
+        return `${period} ${h12}時 (${String(hour).padStart(2, '0')})`;
+      },
+      formatMinuteOption: (minute) => `${String(minute).padStart(2, '0')}分`,
+      formatTimeDisplay: (hour, minute) => {
+        const period = hour < 12 ? '午前' : '午後';
+        const h12 = hour % 12 === 0 ? 12 : hour % 12;
+        return `${period} ${h12}:${String(minute).padStart(2, '0')}`;
+      },
+      repeatTitle: '繰り返し',
+      dailyOption: '毎日',
+      weekdaysShort: {
+        1: '月',
+        2: '火',
+        3: '水',
+        4: '木',
+        5: '金',
+        6: '土',
+        0: '日',
+      },
+      weekdaysFull: {
+        1: '月曜日',
+        2: '火曜日',
+        3: '水曜日',
+        4: '木曜日',
+        5: '金曜日',
+        6: '土曜日',
+        0: '日曜日',
+      },
+      minDayWarning: '繰り返しのために少なくとも1つの曜日を選択してください。',
+      skipTodayTitle: '今日の通知をスキップ',
+      skipTodayDesc: '今日だけお休みし、次回の予定日から自動で再開します。',
+      skipTodayActiveNote: (nextTimeLabel) =>
+        `今日の通知はスキップしました。${nextTimeLabel}から再開されます。`,
+      skipTodayTomorrowLabel: '明日',
+      skipTodayWeekdayLabel: (weekdayName) => `次の${weekdayName}`,
+      previewTitle: 'スマホ通知のプレビュー',
+      previewPhoneNow: '今',
+      previewCycleButton: '別のメッセージを見る',
+      previewTestButton: 'テスト通知を送る',
+      testSentFeedback: 'テスト通知を送信しました。通知を開くと「今の私へ」に移動します。',
+      testDeniedFeedback: 'ブラウザの通知がブロックされているため送信できませんでした。',
+      testUnsupportedFeedback: 'このブラウザではシステム通知を利用できません。',
+      permissionDeniedTitle: 'ブラウザの通知許可がオフになっています',
+      permissionDeniedBody:
+        '設定した時間と曜日は保存されています。通知を受け取るには、ブラウザのサイト設定または端末の通知設定からLUCIDAの通知を許可してください。',
+      permissionDefaultTitle: '通知の許可がまだ設定されていません',
+      permissionDefaultBody:
+        '設定は保存されていますが、通知を表示するにはブラウザの許可が必要です。',
+      permissionAllowButton: '通知を許可する',
+      permissionUnsupportedBody:
+        'お使いのブラウザは通知機能に対応していませんが、設定内容は端末に保存されます。',
+      scopeNoticeTitle: '現在の通知動作について',
+      scopeNoticeBody:
+        '現在は設定の保存と、ブラウザでLUCIDAが開いている状態での通知に対応しています。アプリが完全に閉じている状態や画面ロック中の定時プッシュ通知には、今後のプッシュサーバー連携が必要です。',
+      scheduleSummaryDaily: (timeStr) => `毎日 ${timeStr}`,
+      scheduleSummaryWeekly: (daysStr, timeStr) => `毎週 ${daysStr} · ${timeStr}`,
     },
   },
 };

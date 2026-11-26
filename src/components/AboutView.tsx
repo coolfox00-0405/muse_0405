@@ -1,12 +1,17 @@
 import { BookOpen } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
+import {
+  ReminderSettingsController,
+  ReminderSettingsPanel,
+} from './ReminderSettingsPanel';
 import { useLanguage } from '../i18n/LanguageContext';
 
 interface AboutViewProps {
   onOpenEncyclopedia?: () => void;
+  reminder?: ReminderSettingsController;
 }
 
-export function AboutView({ onOpenEncyclopedia }: AboutViewProps) {
+export function AboutView({ onOpenEncyclopedia, reminder }: AboutViewProps) {
   const { t } = useLanguage();
 
   return (
@@ -58,6 +63,8 @@ export function AboutView({ onOpenEncyclopedia }: AboutViewProps) {
           </button>
         </div>
       )}
+
+      {reminder && <ReminderSettingsPanel reminder={reminder} />}
 
       <PWAInstallButton variant="card" />
 

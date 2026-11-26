@@ -176,7 +176,7 @@ export function useReflections(language: Language = 'ko') {
 
         const now = new Date();
         const newId = createRecordId();
-        const locCard = getLocalizedCard(card, language);
+        const locCard = getLocalizedCard(card, language, orientation);
         const newRecord: ReflectionRecord = {
           id: newId,
           readingSessionId,
@@ -322,7 +322,7 @@ export function useReflections(language: Language = 'ko') {
           idx === existingIndex ? updated : item
         );
       } else {
-        const locCard = getLocalizedCard(card, language);
+        const locCard = getLocalizedCard(card, language, orientation);
         const newRecord: ReflectionRecord = {
           id: createRecordId(),
           readingSessionId,
